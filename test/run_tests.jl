@@ -3,7 +3,9 @@ include("../src/graph.jl")
 
 const testdir = dirname(@__FILE__)
 filepath = "./test_grid_4x4.json"
-graph = Graph(filepath)
+
+graph_dict = JSON.parsefile(filepath)
+graph = Graph(graph_dict)
 
 tests = [
     "graph"

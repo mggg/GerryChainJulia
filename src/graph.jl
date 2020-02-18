@@ -24,7 +24,11 @@ struct Graph<:AbstractGraph
     simple_graph::SimpleGraph
 end
 
-function Graph(filepath::AbstractString)::Graph
+function Graph(raw_graph::Dict{String, Any},
+               nodes_str::AbstractString = "nodes",
+               adjacency_str::AbstractString = "adjacency",
+               edge_id_str::AbstractString = "id")::Graph
+
     """ Builds the base Graph object. This is the underlying network of our
         districts, and should never need to be changed.
 
@@ -34,16 +38,14 @@ function Graph(filepath::AbstractString)::Graph
                       function http://tiny.cc/7ya2jz of the Python implementation
                       of Gerrychain.
     """
-
-    json_graph = JSON.parsefile(filepath)
-    num_nodes = length(json_graph["nodes"])
+    num_nodes = length(raw_graph[nodes_str])
 
     # Generate the base SimpleGraph.
     simple_graph = SimpleGraph(num_nodes)
-    for (index, edges) in enumerate(json_graph["adjacency"])
+    for (index, edges) in enumerate(raw_graph[adjacency_str])
         for edge in edges
-            if edge["id"] + 1 > index
-                add_edge!(simple_graph, index, edge["id"] + 1)
+            if edge[edge_id_str] + 1 > index
+                add_edge!(simple_graph, index, edge[edge_id_str] + 1)
             end
         end
     end

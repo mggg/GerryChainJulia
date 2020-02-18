@@ -31,6 +31,9 @@
 #  01 - 10 - 01 - 20
 
 @testset "Graph tests" begin
+    raw_graph = JSON.parsefile(filepath)
+    graph = Graph(raw_graph)
+
     @test graph.num_nodes == 16
     @test graph.num_edges == 24
 

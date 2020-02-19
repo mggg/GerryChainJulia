@@ -1,41 +1,55 @@
+"""
+    the test graph being loaded is labeled as
 
+    01 - 02 - 03 - 04
+     |    |   |    |
+    05 - 06 - 07 - 08
+     |    |   |    |
+    09 - 10 - 11 - 12
+     |    |   |    |
+    13 - 14 - 15 - 16
 
-# the test graph being loaded is labeled as
-#
-#  01 - 02 - 03 - 04
-#   |    |   |    |
-#  05 - 06 - 07 - 08
-#   |    |   |    |
-#  09 - 10 - 11 - 12
-#   |    |   |    |
-#  13 - 14 - 15 - 16
+    the initial assignment is
 
-# the initial assignment is
+    01 - 01 - 02 - 02
+     |    |   |    |
+    01 - 01 - 02 - 02
+     |    |   |    |
+    03 - 03 - 04 - 04
+     |    |   |    |
+    03 - 03 - 04 - 04
 
-#  01 - 01 - 02 - 02
-#   |    |   |    |
-#  01 - 01 - 02 - 02
-#   |    |   |    |
-#  03 - 03 - 04 - 04
-#   |    |   |    |
-#  03 - 03 - 04 - 04
+    the population distribution is
 
-# the population distribution is
-
-#  20 - 10 - 10 - 10
-#   |    |   |    |
-#  01 - 10 - 20 - 01
-#   |    |   |    |
-#  20 - 10 - 10 - 10
-#   |    |   |    |
-#  01 - 10 - 01 - 20
+    20 - 10 - 10 - 10
+     |    |   |    |
+    01 - 10 - 20 - 01
+     |    |   |    |
+    20 - 10 - 10 - 10
+     |    |   |    |
+    01 - 10 - 01 - 20
+"""
 
 @testset "Graph tests" begin
-    raw_graph = JSON.parsefile(filepath)
-    graph = Graph(raw_graph)
+    # raw_graph = JSON.parsefile(filepath)
+    graph = Graph(filepath, "population", "assignment")
 
     @test graph.num_nodes == 16
     @test graph.num_edges == 24
+    @test graph.total_pop == 164
+    @test graph.num_dists == 4
+
+    @testset "Populations" begin
+        for i in [1, 7, 9, 16]
+            @test graph.populations[i] == 20
+        end
+        for i in [5, 8, 13, 15]
+            @test graph.populations[i] == 1
+        end
+        for i in [2, 3, 4, 6, 10, 11, 12, 14]
+            @test graph.populations[i] == 10
+        end
+    end
 
     # test adjacencies
     @test graph.adj_matrix[1,2] != 0
@@ -43,8 +57,8 @@
     @test graph.adj_matrix[1,6] == 0
 
     @testset "Graph Adjacency Symmetry" begin
-        for i=1:graph.num_nodes
-            for j=1:graph.num_nodes
+        for i in 1:graph.num_nodes
+            for j in 1:graph.num_nodes
                 @test graph.adj_matrix[i,j] == graph.adj_matrix[j,i]
             end
         end
@@ -59,9 +73,9 @@
     @test length(graph.edge_dst) == graph.num_edges
 
     # test the node neighbors
-    @test sort(graph.node_neighbors[1]) == [2,5]
-    @test sort(graph.node_neighbors[6]) == [2,5, 7, 10]
-    @test sort(graph.node_neighbors[14]) == [10, 13, 15]
+    @test sort(graph.neighbors[1]) == [2,5]
+    @test sort(graph.neighbors[6]) == [2,5, 7, 10]
+    @test sort(graph.neighbors[14]) == [10, 13, 15]
 
     # test the simple graph
     @test nv(graph.simple_graph) == graph.num_nodes

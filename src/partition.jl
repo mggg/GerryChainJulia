@@ -1,63 +1,49 @@
 mutable struct Partition
-    num_districts::Int
     num_cut_edges::Int
-    total_population::Int
-
-    district_populations::Array{Int, 1} # of length(num_districts)
-    cut_edges::Array{Int, 1}            # of length(num_edges)
-    populations::Array{Int, 1}          # of length(num_nodes)
-    assignments::Array{Int, 1}          # of length(num_nodes)
-    district_adj::SparseMatrixCSC{Int, Int}
-    district_nodes::Array{Set{Int}, 1}
-    attributes::Array{Dict{String, Any}}
+    assignments::Array{Int, 1}                  # of length(num_nodes)
+    dist_populations::Array{Int, 1}             # of length(num_districts)
+    cut_edges::Array{Int, 1}                    # of length(num_edges)
+    dist_adj::SparseMatrixCSC{Int, Int}
+    dist_nodes::Array{Set{Int}, 1}
 end
 
-function Partition(graph::Graph,
-                   raw_graph::Dict{String, Any},
+function Partition(filepath::AbstractString,
+                   graph::Graph,
                    pop_col::AbstractString,
                    assignment_col::AbstractString,
                    nodes_str::AbstractString = "nodes")::Partition
-    """ Builds the Partition Struct, which stores all the information of our
-        districting plan. It does not have any knowledge of the underlying graph
-        structure (that is available in the Graph object, which has reciprocally
-        has no idea of the districting plans.)
+
+    """
+        Partition represents a partition of the nodes of the graph.
+        It contains plan-specific information that will change each time we change
+        our plan.
 
         Arguments:
+            filepath:  Filepath to the .json graph file
             graph:     Graph object that has the underlying network structure of the plan.
-            raw_graph: Dict that was obtained by JSON.parsefile(filepath). Stores
-                       the attributes metadata (among others).
             pop_col:   the key denoting the population attribute at the node level
             assignment_col: the key denoting the district assignment at the node level
             nodes_str: the key that has denotes the nodes
     """
-    # get populations, assignments and num_districts
+    raw_graph = JSON.parsefile(filepath)
+
     populations, assignments = get_populations_and_assignments(raw_graph, pop_col, assignment_col,
                                                                graph.num_nodes, nodes_str)
-    num_districts = length(Set(assignments))
 
     # get cut_edges, district_adjacencies
-    district_adj, cut_edges = get_district_adj_and_cut_edges(graph, assignments, num_districts)
+    dist_adj, cut_edges = get_district_adj_and_cut_edges(graph, assignments, graph.num_dists)
     num_cut_edges = sum(cut_edges)
 
     # get district populations
-    district_populations = get_district_populations(assignments, populations, graph.num_nodes, num_districts)
-
-    # get total_population
-    total_population = sum(populations)
+    dist_populations = get_district_populations(assignments, populations, graph.num_nodes, graph.num_dists)
 
     # get district_nodes
-    district_nodes = get_district_nodes(assignments, graph.num_nodes, num_districts)
+    dist_nodes = get_district_nodes(assignments, graph.num_nodes, graph.num_dists)
 
-    # get attributes
-    attributes = get_attributes(raw_graph, graph.num_nodes, nodes_str)
-
-    return Partition(num_districts, num_cut_edges, total_population,
-                     district_populations, cut_edges, populations,
-                     assignments, district_adj, district_nodes, attributes)
+    return Partition(num_cut_edges, assignments, dist_populations, cut_edges,
+                     dist_adj, dist_nodes)
 end
 
-################################################################################
-################################################################################
 function get_populations_and_assignments(raw_graph::Dict{String, Any},
                                          pop_col::AbstractString,
                                          assignment_col::AbstractString,
@@ -68,7 +54,7 @@ function get_populations_and_assignments(raw_graph::Dict{String, Any},
     """
     populations = zeros(Int, num_nodes)
     assignments = zeros(Int, num_nodes)
-    for i = 1:num_nodes
+    for i in 1:num_nodes
         populations[i] = raw_graph[nodes_str][i][pop_col]
         if raw_graph[nodes_str][i][assignment_col] isa String
             assignments[i] = parse(Int, raw_graph[nodes_str][i][assignment_col])
@@ -87,7 +73,7 @@ function get_district_nodes(assignments::Array{Int, 1},
         be at district_nodes[i] as a set.
     """
     district_nodes = [Set() for _ in 1:num_districts]
-    for i=1:num_nodes
+    for i in 1:num_nodes
         push!(district_nodes[assignments[i]], i)
     end
     return district_nodes
@@ -101,7 +87,7 @@ function get_district_populations(assignments::Array{Int, 1},
         is at district_populations[i].
     """
     district_populations = zeros(Int, num_districts)
-    for i=1:num_nodes
+    for i in 1:num_nodes
         district_populations[assignments[i]] += populations[i]
     end
     return district_populations
@@ -134,17 +120,4 @@ function get_district_adj_and_cut_edges(graph::Graph,
         end
     end
     return district_adj, cut_edges
-end
-
-function get_attributes(raw_graph::Dict{String, Any},
-                        num_nodes::Int,
-                        nodes_str::AbstractString = "nodes")
-    """ Returns an array of dicts where the attributes of the i'th node is
-        at attributes[i] as a dictionary.
-    """
-    attributes = Array{Dict{String, Any}}(undef, num_nodes)
-    for (index, node) in enumerate(raw_graph["nodes"])
-        attributes[index] = node
-    end
-    return attributes
 end

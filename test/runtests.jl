@@ -1,4 +1,4 @@
-# using GerryChain
+using GerryChain
 using Test
 
 include("../src/graph.jl")
@@ -12,7 +12,7 @@ tests = [
     "partition"
 ]
 
-@testset "GerryChain" begin
+@testset "GerryChainJulia" begin
     for t in tests
         tp = joinpath(testdir, "$(t).jl")
         include(tp)

@@ -1,5 +1,9 @@
 module GerryChain
 
+import JSON
+import SparseArrays
+import LightGraphs
+
 export
 
 AbstractGraph, Graph, Partition,

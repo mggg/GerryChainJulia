@@ -1,4 +1,4 @@
-using GerryChain
+# using GerryChain
 using Test
 
 include("../src/graph.jl")

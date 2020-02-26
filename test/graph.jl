@@ -32,7 +32,7 @@
 
 @testset "Graph tests" begin
     # raw_graph = JSON.parsefile(filepath)
-    graph = Graph(filepath, "population", "assignment")
+    graph = BaseGraph(filepath, "population", "assignment")
 
     @test graph.num_nodes == 16
     @test graph.num_edges == 24

@@ -32,7 +32,7 @@
 
 # partition tests
 @testset "Partition tests" begin
-    graph = Graph(filepath, "population", "assignment")
+    graph = BaseGraph(filepath, "population", "assignment")
     partition = Partition(filepath, graph, "population", "assignment")
 
     @test partition.num_cut_edges == 8

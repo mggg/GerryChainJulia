@@ -8,7 +8,7 @@ mutable struct Partition
 end
 
 function Partition(filepath::AbstractString,
-                   graph::Graph,
+                   graph::BaseGraph,
                    pop_col::AbstractString,
                    assignment_col::AbstractString,
                    nodes_str::AbstractString = "nodes")::Partition
@@ -93,7 +93,7 @@ function get_district_populations(assignments::Array{Int, 1},
     return district_populations
 end
 
-function get_district_adj_and_cut_edges(graph::Graph,
+function get_district_adj_and_cut_edges(graph::BaseGraph,
                                         assignments::Array{Int, 1},
                                         num_districts::Int)
     """ Returns:

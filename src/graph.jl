@@ -1,6 +1,10 @@
+# using JSON
+# using SparseArrays
+# using LightGraphs
+
 abstract type AbstractGraph end
 
-struct Graph<:AbstractGraph
+struct BaseGraph<:AbstractGraph
     num_nodes::Int
     num_edges::Int
     num_dists::Int
@@ -14,12 +18,12 @@ struct Graph<:AbstractGraph
     attributes::Array{Dict{String, Any}}
 end
 
-function Graph(filepath::AbstractString,
+function BaseGraph(filepath::AbstractString,
                pop_col::AbstractString,
                assignment_col::AbstractString,
                nodes_str::AbstractString = "nodes",
                adjacency_str::AbstractString = "adjacency",
-               edge_id_str::AbstractString = "id")::Graph
+               edge_id_str::AbstractString = "id")::BaseGraph
 
     """ Builds the base Graph object. This is the underlying network of our
         districts, and its properties are immutable i.e they will not change
@@ -74,8 +78,9 @@ function Graph(filepath::AbstractString,
     # get attributes
     attributes = get_attributes(raw_graph, num_nodes, nodes_str)
 
-    return Graph(num_nodes, num_edges, num_districts, total_pop, populations,
-                 adj_matrix, edge_src, edge_dst, neighbors, simple_graph, attributes)
+    return BaseGraph(num_nodes, num_edges, num_districts, total_pop,
+                     populations, adj_matrix, edge_src, edge_dst, neighbors,
+                     simple_graph, attributes)
 end
 
 

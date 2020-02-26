@@ -1,8 +1,8 @@
-# using GerryChain
+using GerryChain
 using Test
-
-include("../src/graph.jl")
-include("../src/partition.jl")
+# using JSON
+# using SparseArrays
+using LightGraphs
 
 const testdir = dirname(@__FILE__)
 filepath = "./test_grid_4x4.json"

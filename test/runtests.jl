@@ -1,7 +1,5 @@
 using GerryChain
 using Test
-# using JSON
-# using SparseArrays
 using LightGraphs
 
 const testdir = dirname(@__FILE__)

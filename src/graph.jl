@@ -96,3 +96,20 @@ function get_attributes(raw_graph::Dict{String, Any},
     end
     return attributes
 end
+
+function induced_subgraph(graph::BaseGraph, vlist::Array{Int})::Array{Int, 1}
+    """ Returns a list of edges of the subgraph induced by vlist, which is an array of vertices.
+    """
+    # allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
+    induced_edges = Array{Int, 1}()
+
+    vset = Set(vlist)
+    for src in vlist
+        for dst in graph.neighbors[src]
+            if dst in vset
+                push!(induced_edges, graph.adj_matrix[src, dst])
+            end
+        end
+    end
+    return induced_edges
+end

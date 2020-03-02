@@ -96,3 +96,14 @@ function get_attributes(raw_graph::Dict{String, Any},
     end
     return attributes
 end
+
+function get_population_of_subgraph(graph::BaseGraph, nodes::Set{Int})::Int
+    """ Returns the population of the subgraph induced by `nodes`.
+        Potential TODO: `nodes` is a set, and iterating over a set is slower than an array.
+    """
+    total_pop = 0
+    for node in nodes
+        total_pop += graph.populations[node]
+    end
+    return total_pop
+end

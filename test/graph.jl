@@ -80,4 +80,15 @@
     # test the simple graph
     @test nv(graph.simple_graph) == graph.num_nodes
     @test ne(graph.simple_graph) == graph.num_edges
+
+    # test induced_subgraph
+    @test begin
+        induced_edges = induced_subgraph_edges(graph, [1, 2, 3, 4])
+        induced_vertices = Set{Int}()
+        for edge in induced_edges
+            push!(induced_vertices, graph.edge_src[edge], graph.edge_dst[edge])
+        end
+        induced_vertices == Set{Int}([1, 2, 3, 4])
+    end
+    @test_throws ArgumentError induced_subgraph_edges(graph, [1, 1, 4])
 end

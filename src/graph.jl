@@ -97,10 +97,10 @@ function get_attributes(raw_graph::Dict{String, Any},
     return attributes
 end
 
-function induced_subgraph(graph::BaseGraph, vlist::Array{Int})::Array{Int, 1}
+function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{Int, 1}
     """ Returns a list of edges of the subgraph induced by vlist, which is an array of vertices.
     """
-    # allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
+    allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
     induced_edges = Array{Int, 1}()
 
     vset = Set(vlist)

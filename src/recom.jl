@@ -11,7 +11,7 @@ function sample_subgraph(graph::BaseGraph, partition::Partition)
                   partition.dist_nodes[D₂])
 
     # get a subgraph of these two districts
-    subgraph_edges = induced_subgraph(graph, collect(nodes))
+    edges = induced_subgraph_edges(graph, collect(nodes))
 
-    return D₁, D₂, subgraph_edges, nodes
+    return D₁, D₂, edges, nodes
 end

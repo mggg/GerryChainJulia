@@ -9,8 +9,6 @@ function PopulationConstraint(graph::BaseGraph,
                               population_col::AbstractString,
                               tolerance::Float64=0.01)
 
-    # ideal_pop is a float, because rounding it right now could change the
-    # min/max pop a little bit
     ideal_pop = graph.total_pop / graph.num_dists
 
     # no particular reason to not use floor() instead of ceil()

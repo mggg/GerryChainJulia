@@ -93,10 +93,10 @@
         @test begin # are there loops in the tree?
             # find by union-find algorithm
             connected_vs = DisjointSets{Int}(nodes)
-            cycle_found = true
+            cycle_found = false
             for edge in mst
                 if in_same_set(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
-                    cycle_found = false
+                    cycle_found = true
                     break
                 else
                     union!(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])

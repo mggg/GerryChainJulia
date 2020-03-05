@@ -96,3 +96,53 @@ function get_attributes(raw_graph::Dict{String, Any},
     end
     return attributes
 end
+
+function get_subgraph_population(graph::BaseGraph, nodes::Set{Int})::Int
+    """ Returns the population of the subgraph induced by `nodes`.
+        Potential TODO: `nodes` is a set, and iterating over a set is slower than an array.
+    """
+    total_pop = sum(graph.populations[node] for node in nodes)
+    return total_pop
+end
+
+function random_weighted_kruskal_mst(graph::BaseGraph,
+                                     edges::Array{Int, 1},
+                                     nodes::Array{Int, 1},
+                                     rng=MersenneTwister(1234))::Array{Int, 1}
+    """ Generates and returns a minimum spanning tree from the subgraph induced by
+        `edges` and `nodes`, using Kruskal's MST algorithm.
+
+        Note: the `graph` represents the entire graph of
+        the plan, where as `edges` and `nodes` represent only the sub-graph on
+        which we want to draw the MST.
+
+        Arguments:
+            graph: Underlying Graph object
+            edges: Arr of edges of the sub-graph
+            nodes: Set of nodes of the sub-graph
+
+        Returns:
+            mst: Array{Int, 1} of edges that form a mst
+    """
+    num_nodes = length(nodes)
+
+    # generate random weights for each edge
+    weights = rand(rng, length(edges))
+
+    # sort the edges arr by their weights
+    sorted_indices = sortperm(weights)
+    sorted_edges = edges[sorted_indices]
+
+    mst = Array{Int, 1}()
+    connected_vs = DisjointSets{Int}(nodes)
+
+    for edge in sorted_edges
+        if !in_same_set(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
+            union!(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
+            push!(mst, edge)
+            (length(mst) >= num_nodes - 1) && break
+        end
+    end
+
+    return mst
+end

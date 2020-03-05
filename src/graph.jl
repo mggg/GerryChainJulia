@@ -101,7 +101,7 @@ function get_subgraph_population(graph::BaseGraph, nodes::Set{Int})::Int
     """ Returns the population of the subgraph induced by `nodes`.
         Potential TODO: `nodes` is a set, and iterating over a set is slower than an array.
     """
-    total_pop = sum(graph.populations[node] for node in nodes)
+    total_pop = sum([graph.populations[node] for node in nodes])
     return total_pop
 end
 

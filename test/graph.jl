@@ -80,6 +80,11 @@
     @test nv(graph.simple_graph) == graph.num_nodes
     @test ne(graph.simple_graph) == graph.num_edges
 
+    # get_subgraph_population()
+    @test get_subgraph_population(graph, Set{Int}([1, 2, 3, 4])) == 50
+    @test get_subgraph_population(graph, Set{Int}([5])) == 1
+    @test get_subgraph_population(graph, Set{Int}([1, 6, 11, 16])) == 60
+    
     # test random_weighted_kruskal_mst
     @testset "Random weighted Kruskal MST" begin
         rng = MersenneTwister(1234)

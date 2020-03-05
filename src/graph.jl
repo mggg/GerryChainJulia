@@ -97,6 +97,14 @@ function get_attributes(raw_graph::Dict{String, Any},
     return attributes
 end
 
+function get_subgraph_population(graph::BaseGraph, nodes::Set{Int})::Int
+    """ Returns the population of the subgraph induced by `nodes`.
+        Potential TODO: `nodes` is a set, and iterating over a set is slower than an array.
+    """
+    total_pop = sum(graph.populations[node] for node in nodes)
+    return total_pop
+end
+
 function random_weighted_kruskal_mst(graph::BaseGraph,
                                      edges::Array{Int, 1},
                                      nodes::Array{Int, 1},

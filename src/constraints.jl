@@ -13,7 +13,7 @@ function PopulationConstraint(graph::BaseGraph,
 
     # no particular reason to not use floor() instead of ceil()
     min_pop = Int(ceil((1-tolerance) * ideal_pop))
-    max_pop = Int(ceil((1+tolerance) * ideal_pop))
+    max_pop = Int(floor((1+tolerance) * ideal_pop))
     return PopulationConstraint(min_pop, max_pop)
 end
 

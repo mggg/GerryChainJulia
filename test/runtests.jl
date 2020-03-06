@@ -1,13 +1,16 @@
 using GerryChain
 using Test
 using LightGraphs
+using Random
+using DataStructures
 
 const testdir = dirname(@__FILE__)
 filepath = "./test_grid_4x4.json"
 
 tests = [
     "graph",
-    "partition"
+    "partition",
+    "constraints"
 ]
 
 @testset "GerryChainJulia" begin

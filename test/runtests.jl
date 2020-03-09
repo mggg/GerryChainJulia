@@ -10,7 +10,8 @@ filepath = "./test_grid_4x4.json"
 tests = [
     "graph",
     "partition",
-    "constraints"
+    "constraints",
+    "recom"
 ]
 
 @testset "GerryChainJulia" begin

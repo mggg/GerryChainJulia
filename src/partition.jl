@@ -126,7 +126,6 @@ function sample_adjacent_districts_randomly(partition::Partition, num_dists::Int
     """ Randomly sample two adjacent districts and return them.
     """
     while true
-        # keep sampling until we find adjacent districts
         D₁ = rand(rng, 1:num_dists)
         D₂ = rand(rng, 1:num_dists)
         if partition.dist_adj[D₁, D₂] != 0

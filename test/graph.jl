@@ -79,7 +79,7 @@
     # test the simple graph
     @test nv(graph.simple_graph) == graph.num_nodes
     @test ne(graph.simple_graph) == graph.num_edges
-    
+
     # test induced_subgraph
     @test begin
         induced_edges = induced_subgraph_edges(graph, [1, 2, 3, 4])
@@ -92,19 +92,20 @@
     @test_throws ArgumentError induced_subgraph_edges(graph, [1, 1, 4])
 
     # get_subgraph_population()
-    @test get_subgraph_population(graph, Set{Int}([1, 2, 3, 4])) == 50
-    @test get_subgraph_population(graph, Set{Int}([5])) == 1
-    @test get_subgraph_population(graph, Set{Int}([1, 6, 11, 16])) == 60
+    @test get_subgraph_population(graph, BitSet([1, 2, 3, 4])) == 50
+    @test get_subgraph_population(graph, BitSet([5])) == 1
+    @test get_subgraph_population(graph, BitSet([1, 6, 11, 16])) == 60
 
     # test random_weighted_kruskal_mst
-    @testset "Random weighted Kruskal MST" begin
+    @testset "Kruskal MST" begin
         rng = MersenneTwister(1234)
         nodes = [1, 2, 3, 4, 5, 6, 7, 8]
         edges = [graph.adj_matrix[1,2], graph.adj_matrix[2,3], graph.adj_matrix[3,4],
                  graph.adj_matrix[5,6], graph.adj_matrix[6,7], graph.adj_matrix[7,8],
                  graph.adj_matrix[1,5], graph.adj_matrix[2,6], graph.adj_matrix[3,7],
                  graph.adj_matrix[4,8]]
-        mst = random_weighted_kruskal_mst(graph, edges, nodes, rng)
+        weights = rand(rng, length(edges))
+        mst = weighted_kruskal_mst(graph, edges, nodes, weights, rng)
         @test length(mst) == length(nodes) - 1
         @test begin # are there loops in the tree?
             # find by union-find algorithm

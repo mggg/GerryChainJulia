@@ -16,17 +16,15 @@ function sample_subgraph(graph::BaseGraph, partition::Partition)
     return D₁, D₂, edges, BitSet(nodes)
 end
 
-function build_mst(graph::BaseGraph, mst_nodes::BitSet,
-                   mst_edges::BitSet)::Dict{Int, Array{Int, 1}}
-    """ TODO: this function naming should DEFINITELY be better.
-
-        Builds a graph as an adjacency list from the `mst_nodes` and `mst_edges`.
+function build_mst(graph::BaseGraph, nodes::BitSet,
+                   edges::BitSet)::Dict{Int, Array{Int, 1}}
+    """ Builds a graph as an adjacency list from the `mst_nodes` and `mst_edges`.
     """
     mst = Dict{Int, Array{Int, 1}}()
-    for node in mst_nodes
+    for node in nodes
         mst[node] = Array{Int, 1}()
     end
-    for edge in mst_edges
+    for edge in edges
         add_edge_to_mst!(graph, mst, edge)
     end
     return mst
@@ -46,58 +44,38 @@ function add_edge_to_mst!(graph::BaseGraph, mst::Dict{Int, Array{Int,1}}, edge::
     push!(mst[graph.edge_dst[edge]], graph.edge_src[edge])
 end
 
-function grab_a_component(mst::Dict{Int, Array{Int, 1}},
-                          start_node::Int,
-                          avoid_node::Int,
-                          stack::Stack{Int},
-                          component::BitSet)::BitSet
-    """ Returns the component of the MST `mst_graph` that contains the vertex
-        `vertex`.
+function traverse_mst(mst::Dict{Int, Array{Int, 1}},
+                      start_node::Int,
+                      avoid_node::Int,
+                      stack::Stack{Int},
+                      traversed_nodes::BitSet)::BitSet
+    """ Returns the component of the MST `mst` that contains the vertex
+        `start_node`.
 
-        `stack` is an empty Stack and `component` is an empty set that is to
-        be populated. These two variables are pre-allocated and passed in to
+        Arguments:
+            mst:        mst to traverse
+            start_node: the node to start traversing from
+            avoid_node: the node to avoid adn which seperates the mst into
+                        two components
+            stack:      an empty Stack
+            traversed_nodes: an empty BitSet that is to be populated.
+
+        `stack` and `traversed_nodes` are are pre-allocated and passed in to
         reduce the number of memory allocations and consequently, time taken.
         In the course of calling this function multiple times, it is intended that
         we pass in the same (empty) objects repeatedly.
     """
     @assert isempty(stack)
-    empty!(component)
-
-    push!(stack, start_node)
-
-    while !isempty(stack)
-        new_vertex = pop!(stack)
-
-        # add this vertex to component
-        push!(component, new_vertex)
-
-        # add the neighbors of this new vertex on the stack
-        for neighbor in mst[new_vertex]
-            if !(neighbor in component) && neighbor != avoid_node
-                push!(stack, neighbor)
-            end
-        end
-    end
-
-    return component
-end
-
-function get_a_component(graph::BaseGraph,
-                         start_node::Int,
-                         avoid_node::Int,
-                         mst_edges::BitSet,
-                         traversed_nodes::BitSet,
-                         stack::Stack{Int})::BitSet
     empty!(traversed_nodes)
+
     push!(stack, start_node)
 
     while !isempty(stack)
-        next_node = pop!(stack)
-        push!(traversed_nodes, next_node)
+        new_node = pop!(stack)
+        push!(traversed_nodes, new_node)
 
-        for neighbor in graph.neighbors[next_node]
-            neighbor_edge = graph.adj_matrix[neighbor, next_node]
-            if (neighbor_edge in mst_edges && !(neighbor in traversed_nodes) && neighbor != avoid_node)
+        for neighbor in mst[new_node]
+            if !(neighbor in traversed_nodes) && neighbor != avoid_node
                 push!(stack, neighbor)
             end
         end
@@ -105,15 +83,39 @@ function get_a_component(graph::BaseGraph,
     return traversed_nodes
 end
 
-function get_balanced_cut(graph::BaseGraph,
-                          mst_edges::BitSet,
-                          mst_nodes::BitSet,
-                          partition::Partition,
-                          pop_constraint::PopulationConstraint,
-                          D₁::Int,
-                          D₂::Int)
+# function get_a_component(graph::BaseGraph,
+#                          start_node::Int,
+#                          avoid_node::Int,
+#                          mst_edges::BitSet,
+#                          traversed_nodes::BitSet,
+#                          stack::Stack{Int})::BitSet
+#     empty!(traversed_nodes)
+#     push!(stack, start_node)
+#
+#     while !isempty(stack)
+#         next_node = pop!(stack)
+#         push!(traversed_nodes, next_node)
+#
+#         for neighbor in graph.neighbors[next_node]
+#             neighbor_edge = graph.adj_matrix[neighbor, next_node]
+#             if (neighbor_edge in mst_edges && !(neighbor in traversed_nodes) && neighbor != avoid_node)
+#                 push!(stack, neighbor)
+#             end
+#         end
+#     end
+#     return traversed_nodes
+# end
+
+function get_balanced_proposal(graph::BaseGraph,
+                               mst_edges::BitSet,
+                               mst_nodes::BitSet,
+                               partition::Partition,
+                               pop_constraint::PopulationConstraint,
+                               D₁::Int,
+                               D₂::Int)
     """ Tries to find a balanced cut on the subgraph induced by `mst_edges` and
-        `mst_nodes` such that the population is balanced.
+        `mst_nodes` such that the population is balanced accoriding to
+        `pop_constraint`.
         This subgraph was formed by the combination of districts `D₁` and `D₂`.
     """
     mst = build_mst(graph, mst_nodes, mst_edges)
@@ -124,55 +126,49 @@ function get_balanced_cut(graph::BaseGraph,
     component_container = BitSet([])
 
     for edge in mst_edges
-        # remove_edge_from_mst!(graph, mst, edge)
-
-        component₁ = grab_a_component(mst,
-                                      graph.edge_src[edge],
-                                      graph.edge_dst[edge],
-                                      stack,
-                                      component_container)
-        # component₁ = get_a_component(graph,
-        #                               graph.edge_src[edge],
-        #                               graph.edge_dst[edge],
-        #                               mst_edges,
-        #                               component_container,
-        #                               stack,
-        #                               )
+        component₁ = traverse_mst(mst,
+                                  graph.edge_src[edge],
+                                  graph.edge_dst[edge],
+                                  stack,
+                                  component_container)
 
         population₁ = get_subgraph_population(graph, component₁)
         population₂ = subgraph_pop - population₁
 
-        # check if the populations are balanced
         if satisfy_constraint(pop_constraint, population₁, population₂)
             component₂ = setdiff(mst_nodes, component₁)
             proposal = RecomProposal(D₁, D₂, population₁, population₂, component₁, component₂)
             return proposal
         end
-        # add_edge_to_mst!(graph, mst, edge)
     end
     return DummyProposal("Could not find balanced cut.")
 end
 
 
-function get_accepted_proposal(graph::BaseGraph,
-                               partition::Partition,
-                               pop_constraint::PopulationConstraint,
-                               num_tries::Int)
+function get_valid_proposal(graph::BaseGraph,
+                            partition::Partition,
+                            pop_constraint::PopulationConstraint,
+                            num_tries::Int=3)
+    """ Returns a population balanced proposal.
 
-    # keep generating new subgraphs until we find one that work
+        Arguments:
+            graph:          BaseGraph
+            partition:      Partition
+            pop_constraint: PopulationConstraint to adhere to
+            num_tries:      num times to try getting a balanced cut from a subgraph
+                            before giving up
+    """
     while true
-        D₁, D₂, subgraph_edges, subgraph_nodes = sample_subgraph(graph, partition)
-
-        sg_nodes_arr = collect(subgraph_nodes)
+        D₁, D₂, sg_edges, sg_nodes = sample_subgraph(graph, partition)
 
         for _ in 1:num_tries
-            weights = rand(rng, length(subgraph_edges))
-            mst_edges = random_weighted_kruskal_mst(graph, subgraph_edges, sg_nodes_arr, weights)
+            weights = rand(rng, length(sg_edges))
+            mst_edges = weighted_kruskal_mst(graph, sg_edges, collect(sg_nodes), weights)
 
             # see if we can get a population-balanced cut in this mst
-            proposal = get_balanced_cut(graph, mst_edges, subgraph_nodes,
-                                                         partition, pop_constraint,
-                                                         D₁, D₂)
+            proposal = get_balanced_proposal(graph, mst_edges, sg_nodes,
+                                             partition, pop_constraint,
+                                             D₁, D₂)
 
             if proposal isa RecomProposal return proposal end
         end
@@ -180,9 +176,11 @@ function get_accepted_proposal(graph::BaseGraph,
 end
 
 
-function update!(graph::BaseGraph, partition::Partition,
+function update!(graph::BaseGraph,
+                 partition::Partition,
                  proposal::RecomProposal)
-
+    """ Updates the Partition with the RecomProposal
+    """
     partition.dist_populations[proposal.D₁] = proposal.D₁_pop
     partition.dist_populations[proposal.D₂] = proposal.D₂_pop
 
@@ -215,16 +213,25 @@ function update!(graph::BaseGraph, partition::Partition,
     end
 end
 
-function chain(graph::BaseGraph, partition::Partition,
-               pop_constraint::PopulationConstraint,
-               num_steps::Int, num_tries::Int)
-    """ the chain that runs it all
+function recom_chain(graph::BaseGraph,
+                     partition::Partition,
+                     pop_constraint::PopulationConstraint,
+                     num_steps::Int,
+                     num_tries::Int=3)
+    """ Runs a Markov Chain for `num_steps` steps using ReCom.
+
+        Arguments:
+            graph:          BaseGraph
+            partition:      Partition with the plan information
+            pop_constraint: PopulationConstraint
+            num_steps:      Number of steps to run the chain for
+            num_tries:      num times to try getting a balanced cut from a subgraph
+                            before giving up
     """
     steps_taken = 0
     while steps_taken < num_steps
-        proposal = get_accepted_proposal(graph, partition, pop_constraint, num_tries)
+        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
         update!(graph, partition, proposal)
         steps_taken += 1
-        # println(steps_taken)
     end
 end

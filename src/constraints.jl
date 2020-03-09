@@ -7,7 +7,7 @@ end
 
 function PopulationConstraint(graph::BaseGraph,
                               population_col::AbstractString,
-                              tolerance::Float64=0.01)
+                              tolerance::Float64)
 
     ideal_pop = graph.total_pop / graph.num_dists
 

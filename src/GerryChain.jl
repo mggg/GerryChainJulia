@@ -20,10 +20,12 @@ RecomProposal,
 PopulationConstraint,
 satisfy_constraint
 
+# recom functions
 
 include("./graph.jl")
 include("./partition.jl")
 include("./proposals.jl")
 include("./constraints.jl")
+# include("./recom.jl")
 
 end # module

@@ -4,7 +4,7 @@ mutable struct Partition
     dist_populations::Array{Int, 1}             # of length(num_districts)
     cut_edges::Array{Int, 1}                    # of length(num_edges)
     dist_adj::SparseMatrixCSC{Int, Int}
-    dist_nodes::Array{Set{Int}, 1}
+    dist_nodes::Array{BitSet}
 end
 
 function Partition(filepath::AbstractString,
@@ -72,7 +72,7 @@ function get_district_nodes(assignments::Array{Int, 1},
     """ Returns an array of sets where the nodes of the i'th district will
         be at district_nodes[i] as a set.
     """
-    district_nodes = [Set() for _ in 1:num_districts]
+    district_nodes = [BitSet([]) for _ in 1:num_districts]
     for i in 1:num_nodes
         push!(district_nodes[assignments[i]], i)
     end
@@ -120,4 +120,16 @@ function get_district_adj_and_cut_edges(graph::BaseGraph,
         end
     end
     return district_adj, cut_edges
+end
+
+function sample_adjacent_districts_randomly(partition::Partition, num_dists::Int)
+    """ Randomly sample two adjacent districts and return them.
+    """
+    while true
+        D₁ = rand(rng, 1:num_dists)
+        D₂ = rand(rng, 1:num_dists)
+        if partition.dist_adj[D₁, D₂] != 0
+            return D₁, D₂
+        end
+    end
 end

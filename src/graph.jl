@@ -97,18 +97,38 @@ function get_attributes(raw_graph::Dict{String, Any},
     return attributes
 end
 
-function get_subgraph_population(graph::BaseGraph, nodes::Set{Int})::Int
-    """ Returns the population of the subgraph induced by `nodes`.
-        Potential TODO: `nodes` is a set, and iterating over a set is slower than an array.
+function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{Int, 1}
+    """ Returns a list of edges of the subgraph induced by vlist, which is an array of vertices.
     """
-    total_pop = sum([graph.populations[node] for node in nodes])
+    allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
+    induced_edges = Array{Int, 1}()
+
+    vset = Set(vlist)
+    for src in vlist
+        for dst in graph.neighbors[src]
+            if dst in vset
+                push!(induced_edges, graph.adj_matrix[src, dst])
+            end
+        end
+    end
+    return induced_edges
+end
+
+function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int
+    """ Returns the population of the subgraph induced by `nodes`.
+    """
+    total_pop = 0
+    for node in nodes
+        total_pop += graph.populations[node]
+    end
     return total_pop
 end
 
-function random_weighted_kruskal_mst(graph::BaseGraph,
-                                     edges::Array{Int, 1},
-                                     nodes::Array{Int, 1},
-                                     rng=MersenneTwister(1234))::Array{Int, 1}
+function weighted_kruskal_mst(graph::BaseGraph,
+                              edges::Array{Int, 1},
+                              nodes::Array{Int, 1},
+                              weights::Array{Float64, 1},
+                              rng=MersenneTwister(1234))::BitSet
     """ Generates and returns a minimum spanning tree from the subgraph induced by
         `edges` and `nodes`, using Kruskal's MST algorithm.
 
@@ -126,14 +146,12 @@ function random_weighted_kruskal_mst(graph::BaseGraph,
     """
     num_nodes = length(nodes)
 
-    # generate random weights for each edge
-    weights = rand(rng, length(edges))
-
     # sort the edges arr by their weights
     sorted_indices = sortperm(weights)
     sorted_edges = edges[sorted_indices]
 
-    mst = Array{Int, 1}()
+    # mst = Array{Int, 1}()
+    mst = BitSet()
     connected_vs = DisjointSets{Int}(nodes)
 
     for edge in sorted_edges
@@ -143,6 +161,5 @@ function random_weighted_kruskal_mst(graph::BaseGraph,
             (length(mst) >= num_nodes - 1) && break
         end
     end
-
     return mst
 end

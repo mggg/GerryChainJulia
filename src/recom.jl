@@ -217,6 +217,8 @@ function recom_chain(graph::BaseGraph,
                      partition::Partition,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
+                     elections::Array{Election, 1},
+                     racial_pops::Array{RacePopulations, 1},
                      num_tries::Int=3)
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
@@ -228,10 +230,16 @@ function recom_chain(graph::BaseGraph,
             num_tries:      num times to try getting a balanced cut from a subgraph
                             before giving up
     """
+    all_measures = Array{Dict{String, Any}, 1}()
     steps_taken = 0
     while steps_taken < num_steps
         proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
         update!(graph, partition, proposal)
+        measures = get_measures(graph, partition, elections, racial_pops)
+        # println(length(measures["SEN10"].P₁_counts))
+        push!(all_measures, measures)
         steps_taken += 1
     end
+    # println(length(all_measures))
+    # println(all_measures[10])
 end

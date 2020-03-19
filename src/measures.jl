@@ -1,7 +1,5 @@
 abstract type AbstractMOI end # MOI : "Measures of Interest"
 
-# abstract type ElectionCount <: AbstractMOI end
-
 struct Election <: AbstractMOI
     name::AbstractString
     P₁::AbstractString
@@ -15,9 +13,7 @@ struct RacePopulations <: AbstractMOI
     col_name::AbstractString
 end
 
-# just run the normal for 1 election first
 function get_measures(graph, partition, elections, racial_pops)
-    # initialize shit first
     measures = Dict{String, Any}()
     measures["num_cut_edges"] = partition.num_cut_edges
     for election in elections
@@ -28,9 +24,7 @@ function get_measures(graph, partition, elections, racial_pops)
         measures[racial_pop.name] = Array{Int, 1}()
     end
 
-    # calculate
     for i in 1:graph.num_dists
-        # initialize counter
         counter = Dict{String, Int}()
         for election in elections
             counter[string(election.name, "_", election.P₁)] = 0

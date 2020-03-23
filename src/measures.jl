@@ -56,3 +56,44 @@ function get_measures(graph, partition, elections, racial_pops)
 
     return measures
 end
+
+function get_measures(graph, partition, elections, racial_pops, proposal)
+    Δ_measures = Dict{String, Any}()
+    Δ_measures["num_cut_edges"] = partition.num_cut_edges
+    Δ_measures["D₁"] = proposal.D₁
+    Δ_measures["D₂"] = proposal.D₂
+
+    # initialize
+    for election in elections
+        Δ_measures[string(election.name, "_", election.P₁, "_D₁")] = 0
+        Δ_measures[string(election.name, "_", election.P₁, "_D₂")] = 0
+        Δ_measures[string(election.name, "_", election.P₂, "_D₁")] = 0
+        Δ_measures[string(election.name, "_", election.P₂, "_D₂")] = 0
+    end
+    for racial_pop in racial_pops
+        Δ_measures[string(racial_pop.name, "_D₁")] = 0
+        Δ_measures[string(racial_pop.name, "_D₂")] = 0
+    end
+
+    # calculate
+    for node in proposal.D₁_nodes
+        for election in elections
+            Δ_measures[string(election.name, "_", election.P₁, "_D₁")] += graph.attributes[node][election.P₁_col]
+            Δ_measures[string(election.name, "_", election.P₂, "_D₁")] += graph.attributes[node][election.P₂_col]
+        end
+        for racial_pop in racial_pops
+            Δ_measures[string(racial_pop.name, "_D₁")] += graph.attributes[node][racial_pop.col_name]
+        end
+    end
+    for node in proposal.D₂_nodes
+        for election in elections
+            Δ_measures[string(election.name, "_", election.P₁, "_D₂")] += graph.attributes[node][election.P₁_col]
+            Δ_measures[string(election.name, "_", election.P₂, "_D₂")] += graph.attributes[node][election.P₂_col]
+        end
+        for racial_pop in racial_pops
+            Δ_measures[string(racial_pop.name, "_D₂")] += graph.attributes[node][racial_pop.col_name]
+        end
+    end
+
+    return Δ_measures
+end

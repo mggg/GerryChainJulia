@@ -233,13 +233,18 @@ function recom_chain(graph::BaseGraph,
     all_measures = Array{Dict{String, Any}, 1}()
     steps_taken = 0
     while steps_taken < num_steps
+        steps_taken += 1
         proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
         update!(graph, partition, proposal)
-        measures = get_measures(graph, partition, elections, racial_pops)
-        # println(length(measures["SEN10"].P₁_counts))
+        if steps_taken == 1
+            measures = get_measures(graph, partition, elections, racial_pops)
+        else
+            measures = get_measures(graph, partition, elections, racial_pops, proposal)
+        end
         push!(all_measures, measures)
-        steps_taken += 1
     end
-    # println(length(all_measures))
-    # println(all_measures[10])
+    for measure in all_measures
+        println(measure)
+        println()
+    end
 end

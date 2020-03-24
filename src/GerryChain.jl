@@ -24,12 +24,19 @@ satisfy_constraint,
 # recom
 sample_subgraph, build_mst, add_edge_to_mst!, remove_edge_from_mst!,
 traverse_mst, get_balanced_proposal, get_valid_proposal, update!,
-recom_chain
+recom_chain,
+
+# measures
+AbstractMOI, Election, RacePopulations,
+initialize_counter, fill_counter!, update_measures!,
+initialize_measures, get_measures, parse_measure_at_index
 
 include("./graph.jl")
 include("./partition.jl")
 include("./proposals.jl")
 include("./constraints.jl")
+include("./measures.jl")
 include("./recom.jl")
+
 
 end # module

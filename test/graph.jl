@@ -122,4 +122,8 @@
             !cycle_found
         end
     end
+
+    # test that attributes can be accessed
+    @test graph.attributes[1]["purple"] == 15
+    @test graph.attributes[1]["pink"] == 5
 end

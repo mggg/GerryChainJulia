@@ -178,7 +178,7 @@ function get_populations_and_assignments(graph::Dict{String, Any},
         populations[i] = graph[nodes_str][i][pop_col]
         if graph[nodes_str][i][assignment_col] isa String
             assignments[i] = parse(Int, graph[nodes_str][i][assignment_col])
-        elseif raw_graph[nodes_str][i][assignment_col] isa Int
+        elseif graph[nodes_str][i][assignment_col] isa Int
             assignments[i] = graph[nodes_str][i][assignment_col]
         end
     end

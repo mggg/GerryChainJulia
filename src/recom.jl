@@ -219,6 +219,7 @@ function recom_chain(graph::BaseGraph,
                      num_steps::Int,
                      elections::Array{Election, 1},
                      racial_pops::Array{RacePopulations, 1},
+                     measures_save_dir::AbstractString="measures.json",
                      num_tries::Int=3)
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
@@ -243,8 +244,13 @@ function recom_chain(graph::BaseGraph,
         end
         push!(all_measures, measures)
     end
-    for measure in all_measures
-        println(measure)
-        println()
+
+    # measures = parse_measure_at_index(all_measures, 7)
+    # println(measures)
+    # println(length(keys(measures)))
+    # println(all_measures)
+    json_string = JSON.json(all_measures)
+    open(measures_save_dir, "w") do f
+        write(f, json_string)
     end
 end

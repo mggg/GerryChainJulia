@@ -83,29 +83,6 @@ function traverse_mst(mst::Dict{Int, Array{Int, 1}},
     return traversed_nodes
 end
 
-# function get_a_component(graph::BaseGraph,
-#                          start_node::Int,
-#                          avoid_node::Int,
-#                          mst_edges::BitSet,
-#                          traversed_nodes::BitSet,
-#                          stack::Stack{Int})::BitSet
-#     empty!(traversed_nodes)
-#     push!(stack, start_node)
-#
-#     while !isempty(stack)
-#         next_node = pop!(stack)
-#         push!(traversed_nodes, next_node)
-#
-#         for neighbor in graph.neighbors[next_node]
-#             neighbor_edge = graph.adj_matrix[neighbor, next_node]
-#             if (neighbor_edge in mst_edges && !(neighbor in traversed_nodes) && neighbor != avoid_node)
-#                 push!(stack, neighbor)
-#             end
-#         end
-#     end
-#     return traversed_nodes
-# end
-
 function get_balanced_proposal(graph::BaseGraph,
                                mst_edges::BitSet,
                                mst_nodes::BitSet,
@@ -176,9 +153,9 @@ function get_valid_proposal(graph::BaseGraph,
 end
 
 
-function update!(graph::BaseGraph,
-                 partition::Partition,
-                 proposal::RecomProposal)
+function update_partition!(partition::Partition,
+                           graph::BaseGraph,
+                           proposal::RecomProposal)
     """ Updates the Partition with the RecomProposal
     """
     partition.dist_populations[proposal.D₁] = proposal.D₁_pop
@@ -218,8 +195,8 @@ function recom_chain(graph::BaseGraph,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
                      elections::Array{Election, 1},
-                     racial_pops::Array{RacePopulations, 1},
-                     measures_save_dir::AbstractString="measures.json",
+                     racial_pops::Array{RacePopulation, 1},
+                     measures_save_dir::AbstractString="./measures.json",
                      num_tries::Int=3)
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
@@ -232,25 +209,13 @@ function recom_chain(graph::BaseGraph,
                             before giving up
     """
     all_measures = Array{Dict{String, Any}, 1}()
-    steps_taken = 0
     while steps_taken < num_steps
         steps_taken += 1
-        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
-        update!(graph, partition, proposal)
-        if steps_taken == 1
-            measures = get_measures(graph, partition, elections, racial_pops)
-        else
-            measures = get_measures(graph, partition, elections, racial_pops, proposal)
-        end
-        push!(all_measures, measures)
-    end
 
-    # measures = parse_measure_at_index(all_measures, 7)
-    # println(measures)
-    # println(length(keys(measures)))
-    # println(all_measures)
-    json_string = JSON.json(all_measures)
-    open(measures_save_dir, "w") do f
-        write(f, json_string)
+        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
+        update_partition!(partition, graph, proposal)
+
+        measures = get_measures(graph, partition, elections, racial_pops, steps_taken, proposal)
+        push!(all_measures, measures)
     end
 end

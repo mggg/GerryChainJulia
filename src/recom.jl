@@ -208,7 +208,9 @@ function recom_chain(graph::BaseGraph,
             num_tries:      num times to try getting a balanced cut from a subgraph
                             before giving up
     """
+    steps_taken = 0
     all_measures = Array{Dict{String, Any}, 1}()
+    
     while steps_taken < num_steps
         steps_taken += 1
 

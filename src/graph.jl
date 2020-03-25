@@ -159,24 +159,3 @@ function weighted_kruskal_mst(graph::BaseGraph,
     end
     return mst
 end
-
-function get_populations_and_assignments(graph::Dict{String, Any},
-                                         pop_col::AbstractString,
-                                         assignment_col::AbstractString,
-                                         num_nodes::Int,
-                                         nodes_str::AbstractString = "nodes")
-    """ Returns the arrays of populations and assignments of the graph, where
-        i'th node's population is populations[i] and assignment is assignments[i].
-    """
-    populations = zeros(Int, num_nodes)
-    assignments = zeros(Int, num_nodes)
-    for i in 1:num_nodes
-        populations[i] = graph[nodes_str][i][pop_col]
-        if graph[nodes_str][i][assignment_col] isa String
-            assignments[i] = parse(Int, graph[nodes_str][i][assignment_col])
-        elseif graph[nodes_str][i][assignment_col] isa Int
-            assignments[i] = graph[nodes_str][i][assignment_col]
-        end
-    end
-    return populations, assignments
-end

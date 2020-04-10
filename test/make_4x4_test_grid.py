@@ -27,39 +27,12 @@ def set_election_data(graph):
         graph.nodes[j]["electionR"] = 3
 
 def set_race_populations(graph):
-    graph.nodes[0]["purple"] = 15
-    graph.nodes[1]["purple"] = 6
-    graph.nodes[2]["purple"] = 6
-    graph.nodes[3]["purple"] = 6
-    graph.nodes[4]["purple"] = 1
-    graph.nodes[5]["purple"] = 6
-    graph.nodes[6]["purple"] = 15
-    graph.nodes[7]["purple"] = 1
-    graph.nodes[8]["purple"] = 5
-    graph.nodes[9]["purple"] = 4
-    graph.nodes[10]["purple"] = 4
-    graph.nodes[11]["purple"] = 4
-    graph.nodes[12]["purple"] = 0
-    graph.nodes[13]["purple"] = 4
-    graph.nodes[14]["purple"] = 0
-    graph.nodes[15]["purple"] = 5
+    purple_pops = [15, 6, 6, 6, 1, 6, 15, 1, 5, 4, 4, 4, 0, 4, 0, 5]
+    pink_pops = [5, 4, 4, 4, 0, 4, 5, 0, 15, 6, 6, 6, 1, 6, 1, 15]
 
-    graph.nodes[0]["pink"] = 5
-    graph.nodes[1]["pink"] = 4
-    graph.nodes[2]["pink"] = 4
-    graph.nodes[3]["pink"] = 4
-    graph.nodes[4]["pink"] = 0
-    graph.nodes[5]["pink"] = 4
-    graph.nodes[6]["pink"] = 5
-    graph.nodes[7]["pink"] = 0
-    graph.nodes[8]["pink"] = 15
-    graph.nodes[9]["pink"] = 6
-    graph.nodes[10]["pink"] = 6
-    graph.nodes[11]["pink"] = 6
-    graph.nodes[12]["pink"] = 1
-    graph.nodes[13]["pink"] = 6
-    graph.nodes[14]["pink"] = 1
-    graph.nodes[15]["pink"] = 15
+    for node, purple, pink in zip(graph.nodes, purple_pops, pink_pops):
+        graph.nodes[node]["purple"] = purple
+        graph.nodes[node]["pink"] = pink
 
 # simple script to create a 4x4 graph to test the population constraint
 import matplotlib.pyplot as plt

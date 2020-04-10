@@ -12,7 +12,7 @@ tests = [
     "partition",
     "constraints",
     "recom",
-    "measures"
+    "scores"
 ]
 
 @testset "GerryChainJulia" begin

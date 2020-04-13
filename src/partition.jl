@@ -44,28 +44,6 @@ function Partition(filepath::AbstractString,
                      dist_adj, dist_nodes)
 end
 
-function get_populations_and_assignments(raw_graph::Dict{String, Any},
-                                         pop_col::AbstractString,
-                                         assignment_col::AbstractString,
-                                         num_nodes::Int,
-                                         nodes_str::AbstractString = "nodes")
-    """ Returns the arrays of populations and assignments of the graph, where
-        i'th node's population is populations[i] and assignment is assignments[i].
-    """
-    populations = zeros(Int, num_nodes)
-    assignments = zeros(Int, num_nodes)
-    for i in 1:num_nodes
-        populations[i] = raw_graph[nodes_str][i][pop_col]
-        if raw_graph[nodes_str][i][assignment_col] isa String
-            assignments[i] = parse(Int, raw_graph[nodes_str][i][assignment_col])
-        elseif raw_graph[nodes_str][i][assignment_col] isa Int
-            assignments[i] = raw_graph[nodes_str][i][assignment_col]
-        end
-    end
-
-    return populations, assignments
-end
-
 function get_district_nodes(assignments::Array{Int, 1},
                             num_nodes::Int,
                             num_districts::Int)::Array{Set{Int}, 1}
@@ -132,4 +110,25 @@ function sample_adjacent_districts_randomly(partition::Partition, num_dists::Int
             return D₁, D₂
         end
     end
+end
+
+function get_populations_and_assignments(graph::Dict{String, Any},
+                                         pop_col::AbstractString,
+                                         assignment_col::AbstractString,
+                                         num_nodes::Int,
+                                         nodes_str::AbstractString = "nodes")
+    """ Returns the arrays of populations and assignments of the graph, where
+        i'th node's population is populations[i] and assignment is assignments[i].
+    """
+    populations = zeros(Int, num_nodes)
+    assignments = zeros(Int, num_nodes)
+    for i in 1:num_nodes
+        populations[i] = graph[nodes_str][i][pop_col]
+        if graph[nodes_str][i][assignment_col] isa String
+            assignments[i] = parse(Int, graph[nodes_str][i][assignment_col])
+        elseif graph[nodes_str][i][assignment_col] isa Int
+            assignments[i] = graph[nodes_str][i][assignment_col]
+        end
+    end
+    return populations, assignments
 end

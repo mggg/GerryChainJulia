@@ -83,29 +83,6 @@ function traverse_mst(mst::Dict{Int, Array{Int, 1}},
     return traversed_nodes
 end
 
-# function get_a_component(graph::BaseGraph,
-#                          start_node::Int,
-#                          avoid_node::Int,
-#                          mst_edges::BitSet,
-#                          traversed_nodes::BitSet,
-#                          stack::Stack{Int})::BitSet
-#     empty!(traversed_nodes)
-#     push!(stack, start_node)
-#
-#     while !isempty(stack)
-#         next_node = pop!(stack)
-#         push!(traversed_nodes, next_node)
-#
-#         for neighbor in graph.neighbors[next_node]
-#             neighbor_edge = graph.adj_matrix[neighbor, next_node]
-#             if (neighbor_edge in mst_edges && !(neighbor in traversed_nodes) && neighbor != avoid_node)
-#                 push!(stack, neighbor)
-#             end
-#         end
-#     end
-#     return traversed_nodes
-# end
-
 function get_balanced_proposal(graph::BaseGraph,
                                mst_edges::BitSet,
                                mst_nodes::BitSet,
@@ -176,9 +153,9 @@ function get_valid_proposal(graph::BaseGraph,
 end
 
 
-function update!(graph::BaseGraph,
-                 partition::Partition,
-                 proposal::RecomProposal)
+function update_partition!(partition::Partition,
+                           graph::BaseGraph,
+                           proposal::RecomProposal)
     """ Updates the Partition with the RecomProposal
     """
     partition.dist_populations[proposal.D₁] = proposal.D₁_pop
@@ -217,6 +194,8 @@ function recom_chain(graph::BaseGraph,
                      partition::Partition,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
+                     score_keys::Array{String, 1},
+                     scores_save_dir::AbstractString="./scores.json",
                      num_tries::Int=3)
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
@@ -229,9 +208,15 @@ function recom_chain(graph::BaseGraph,
                             before giving up
     """
     steps_taken = 0
+    all_scores = Array{Dict{String, Any}, 1}()
+
     while steps_taken < num_steps
-        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
-        update!(graph, partition, proposal)
         steps_taken += 1
+
+        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
+        update_partition!(partition, graph, proposal)
+
+        scores = get_scores(graph, partition, score_keys, steps_taken, proposal)
+        push!(all_scores, scores)
     end
 end

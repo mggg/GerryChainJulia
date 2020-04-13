@@ -1,7 +1,3 @@
-# using JSON
-# using SparseArrays
-# using LightGraphs
-
 abstract type AbstractGraph end
 
 struct BaseGraph<:AbstractGraph
@@ -91,7 +87,7 @@ function get_attributes(raw_graph::Dict{String, Any},
         at attributes[i] as a dictionary.
     """
     attributes = Array{Dict{String, Any}}(undef, num_nodes)
-    for (index, node) in enumerate(raw_graph["nodes"])
+    for (index, node) in enumerate(raw_graph[nodes_str])
         attributes[index] = node
     end
     return attributes

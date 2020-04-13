@@ -11,7 +11,8 @@ tests = [
     "graph",
     "partition",
     "constraints",
-    "recom"
+    "recom",
+    "scores"
 ]
 
 @testset "GerryChainJulia" begin

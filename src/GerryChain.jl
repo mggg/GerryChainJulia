@@ -23,13 +23,17 @@ satisfy_constraint,
 
 # recom
 sample_subgraph, build_mst, add_edge_to_mst!, remove_edge_from_mst!,
-traverse_mst, get_balanced_proposal, get_valid_proposal, update!,
-recom_chain
+traverse_mst, get_balanced_proposal, get_valid_proposal, update_partition!,
+recom_chain,
+
+# measures
+get_scores, get_scores_at_step
 
 include("./graph.jl")
 include("./partition.jl")
 include("./proposals.jl")
 include("./constraints.jl")
+include("./scores.jl")
 include("./recom.jl")
 
 end # module

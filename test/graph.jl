@@ -1,3 +1,7 @@
+using LightGraphs
+using Random
+using DataStructures
+
 """
     the test graph being loaded is labeled as
 
@@ -77,8 +81,8 @@
     @test sort(graph.neighbors[14]) == [10, 13, 15]
 
     # test the simple graph
-    @test nv(graph.simple_graph) == graph.num_nodes
-    @test ne(graph.simple_graph) == graph.num_edges
+    @test LightGraphs.nv(graph.simple_graph) == graph.num_nodes
+    @test LightGraphs.ne(graph.simple_graph) == graph.num_edges
 
     # test induced_subgraph
     @test begin

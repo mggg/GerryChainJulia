@@ -10,7 +10,8 @@ tests = [
     "constraints",
     "recom",
     "scores",
-    "election"
+    "election",
+    "partisan_metrics"
 ]
 
 @testset "GerryChainJulia" begin

@@ -9,7 +9,8 @@ tests = [
     "partition",
     "constraints",
     "recom",
-    "scores"
+    "scores",
+    "election"
 ]
 
 @testset "GerryChainJulia" begin

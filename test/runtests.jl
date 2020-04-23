@@ -11,8 +11,7 @@ tests = [
     "recom",
     "scores",
     "election",
-    "partisan_metrics",
-    "election"
+    "partisan_metrics"
 ]
 
 @testset "GerryChainJulia" begin

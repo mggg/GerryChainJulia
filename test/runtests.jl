@@ -10,6 +10,8 @@ tests = [
     "constraints",
     "recom",
     "scores",
+    "election",
+    "partisan_metrics",
     "election"
 ]
 

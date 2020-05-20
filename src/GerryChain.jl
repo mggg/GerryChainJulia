@@ -33,7 +33,11 @@ AbstractElection, Election, update_elections!, seats_won, total_vote_counts,
 vote_counts_by_district, vote_shares_by_district,
 
 # partisan metric
-mean_median, efficiency_gap
+mean_median, efficiency_gap,
+
+# For parallel experiments (TODO: remove?)
+ sample_subgraph, get_balanced_proposal
+
 
 include("./graph.jl")
 include("./partition.jl")
@@ -43,5 +47,7 @@ include("./scores.jl")
 include("./recom.jl")
 include("./election.jl")
 include("./partisan_metrics.jl")
+
+
 
 end # module

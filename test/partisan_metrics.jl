@@ -4,7 +4,7 @@
 
     @testset "Mean-Median Tests" begin
         partition = Partition(filepath, graph, "population", "assignment")
-        election = Election("Test Election", "electionD", "electionR")
+        election = Election("Test Election", Array{AbstractString, 1}(["electionD", "electionR"]))
         update_elections!([election], graph, partition, DummyProposal(""), 1)
         @test mean_median(election, "electionD") == 0
         @test mean_median(election, "electionR") == 0
@@ -14,7 +14,7 @@
     @testset "Efficiency Gap Tests" begin
         graph = BaseGraph(filepath, "population", "assignment")
         partition = Partition(filepath, graph, "population", "assignment")
-        election = Election("Test Election", "electionD", "electionR")
+        election = Election("Test Election", Array{AbstractString, 1}(["electionD", "electionR"]))
 
         # Seed elections
         update_elections!([election], graph, partition, DummyProposal(""), 1)

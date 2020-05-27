@@ -48,18 +48,18 @@
 
         @test seats_won(election, "electionD") == 2
         @test seats_won(election, "electionR") == 2
-        # @test_throws ArgumentError seats_won(election, "fake_party")
+        @test_throws ArgumentError seats_won(election, "fake_party")
 
         @test total_vote_counts(election, "electionD") == 24
         @test total_vote_counts(election, "electionR") == 24
-        # @test_throws ArgumentError total_vote_counts(election, "fake_party")
+        @test_throws ArgumentError total_vote_counts(election, "fake_party")
 
         @test vote_counts_by_district(election, "electionD") == [5, 7, 7, 5]
         @test vote_counts_by_district(election, "electionR") == [9, 3, 3, 9]
-        # @test_throws ArgumentError vote_counts_by_district(election, "fake_party")
+        @test_throws ArgumentError vote_counts_by_district(election, "fake_party")
 
         @test vote_shares_by_district(election, "electionD") == [5/14, 7/10, 7/10, 5/14]
         @test vote_shares_by_district(election, "electionR") == [9/14, 3/10, 3/10, 9/14]
-        # @test_throws ArgumentError vote_shares_by_district(election, "fake_party")
+        @test_throws ArgumentError vote_shares_by_district(election, "fake_party")
     end
 end

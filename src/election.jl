@@ -1,29 +1,16 @@
 
-# TODO: Perhaps these elements should not be subscripts because people might want to access them.
-#       This problem could also be fixed if we allow for more than a 2 party race.
 abstract type AbstractElection end
 
-struct Election <: AbstractElection
+mutable struct Election <: AbstractElection
     name::AbstractString
-    party₁::AbstractString
-    party₂::AbstractString
-    party₁_votes::Array{Int, 1}
-    party₂_votes::Array{Int, 1}
-    party₁_vote_shares::Array{Float64, 1}
-    party₂_vote_shares::Array{Float64, 1}
+    party::Array{AbstractString, 1}
+    vote_counts::Array{Int64}
+    vote_shares::Array{Float64}
 end
 
 function Election(name::AbstractString,
-                  party₁::AbstractString,
-                  party₂::AbstractString)::Election
-    return Election(name,
-                    party₁,
-                    party₂,
-                    Array{Int, 1}(),
-                    Array{Int, 1}(),
-                    Array{Float64, 1}(),
-                    Array{Float64, 1}()
-                    )
+                  party_names::Array{AbstractString, 1})::Election
+    return Election(name, party_names, Array{Int64}[], Array{Float64}[])
 end
 
 function update_elections!(elections::Array{Election, 1},
@@ -45,93 +32,85 @@ function update_elections!(elections::Array{Election, 1},
 
     for election in elections
         if steps_taken == 1
-            update_election_detailed!(election, graph, partition)
+            update_election!(election, graph, partition)
         else
-            update_election_Δ!(election, graph, partition, proposal)
+            update_election!(election, graph, partition, proposal)
         end
     end
 end
 
-function update_election_detailed!(election::Election,
-                                   graph::BaseGraph,
-                                   partition::Partition)
+function update_election!(election::Election,
+                          graph::BaseGraph,
+                          partition::Partition)
     """ Computes all the values for each Election in `elections` for the
         districts in `partition`.
     """
+    num_parties = length(election.party)
+    election.vote_counts = zeros(Int64, graph.num_dists, num_parties)
+    election.vote_shares = zeros(Float64, graph.num_dists, num_parties)
+
     for dist in 1:graph.num_dists
-        party₁_votes = 0
-        party₂_votes = 0
         for node in partition.dist_nodes[dist]
-            party₁_votes += graph.attributes[node][election.party₁]
-            party₂_votes += graph.attributes[node][election.party₂]
+            for i in 1:num_parties
+                election.vote_counts[dist, i] += graph.attributes[node][election.party[i]]
+            end
         end
-        push!(election.party₁_votes, party₁_votes)
-        push!(election.party₂_votes, party₂_votes)
 
-        total_votes = party₁_votes + party₂_votes
-
-        push!(election.party₁_vote_shares, party₁_votes / total_votes)
-        push!(election.party₂_vote_shares, party₂_votes / total_votes)
+        total_votes = sum(election.vote_counts[dist, :])
+        election.vote_shares[dist, :] = map(x -> x / total_votes, election.vote_counts[dist,:])
     end
+
 end
 
-function update_election_Δ!(election::Election,
-                            graph::BaseGraph,
-                            partition::Partition,
-                            proposal::AbstractProposal)
+function update_election!(election::Election,
+                          graph::BaseGraph,
+                          partition::Partition,
+                          proposal::AbstractProposal)
     """ Updates only the vote counts and vote shares of the districts changed
         in `proposal` for each Election in `elections`.
 
         The vote counts districts not modified by `proposal` are left untouched.
     """
-    update_election_Δ_for_dist!(election, graph, partition, proposal.D₁)
-    update_election_Δ_for_dist!(election, graph, partition, proposal.D₂)
+    update_election_for_dist!(election, graph, partition, proposal.D₁)
+    update_election_for_dist!(election, graph, partition, proposal.D₂)
 end
 
-function update_election_Δ_for_dist!(election::Election,
-                                     graph::BaseGraph,
-                                     partition::Partition,
-                                     dist::Int)
+function update_election_for_dist!(election::Election,
+                                   graph::BaseGraph,
+                                   partition::Partition,
+                                   dist::Int)
     """ Updates the vote counts and vote shares of the district `dist` for
         each Election in `elections`.
     """
-    party₁_votes = 0
-    party₂_votes = 0
+    num_parties = length(election.party)
+    vote_counts = zeros(Int64, num_parties)
 
     for node in partition.dist_nodes[dist]
-        party₁_votes += graph.attributes[node][election.party₁]
-        party₂_votes += graph.attributes[node][election.party₂]
+        for i in 1:num_parties
+            vote_counts[i] += graph.attributes[node][election.party[i]]
+        end
     end
 
-    election.party₁_votes[dist] = party₁_votes
-    election.party₂_votes[dist] = party₂_votes
-
-    total_votes = party₁_votes + party₂_votes
-
-    election.party₁_vote_shares[dist] = party₁_votes / total_votes
-    election.party₂_vote_shares[dist] = party₂_votes / total_votes
+    total_votes = sum(vote_counts)
+    election.vote_counts[dist, :] = vote_counts
+    election.vote_shares[dist, :] = map(x -> x / total_votes, vote_counts)
 end
 
 function seats_won(election::Election,
                    party::AbstractString)::Int
     """ Returns the number of seats won by `party` in the `election`
     """
+    validate_party(party, election)
+
     wins = 0
-    if party == election.party₁
-        for i in 1:length(election.party₁_votes)
-            if election.party₁_votes[i] > election.party₂_votes[i]
-                wins += 1
-            end
+    party_idx  = findfirst(x -> x == party, election.party)
+
+    for dist in 1:size(election.vote_counts)[1]
+        if argmax(election.vote_counts[dist, :]) == party_idx
+            wins += 1
         end
-    elseif party == election.party₂
-        for i in 1:length(election.party₁_votes)
-            if election.party₁_votes[i] < election.party₂_votes[i]
-                wins += 1
-            end
-        end
-    else
-        throw(ArgumentError(string("Party ", party, " not contesting in election.")))
     end
+
     return wins
 end
 
@@ -139,13 +118,9 @@ function total_vote_counts(election::Election,
                            party::AbstractString)::Int
     """ Returns the total vote counts of `party` in `election`.
     """
-    if party == election.party₁
-        return sum(election.party₁_votes)
-    elseif party == election.party₂
-        return sum(election.party₂_votes)
-    else
-        throw(ArgumentError(string("Party ", party,  " not contesting in election.")))
-    end
+    validate_party(party, election)
+    party_idx  = findfirst(x -> x == party, election.party)
+    return sum(election.vote_counts[:, party_idx])
 end
 
 function vote_counts_by_district(election::Election,
@@ -153,13 +128,9 @@ function vote_counts_by_district(election::Election,
     """ Returns an array of vote counts by district for
         `party` in `election`.
     """
-    if party == election.party₁
-        return deepcopy(election.party₁_votes)
-    elseif party == election.party₂
-        return deepcopy(election.party₂_votes)
-    else
-        throw(ArgumentError(string("Party ", party, " not contesting in election.")))
-    end
+    validate_party(party, election)
+    party_idx  = findfirst(x -> x == party, election.party)
+    return election.vote_counts[:, party_idx]
 end
 
 function vote_shares_by_district(election::Election,
@@ -167,11 +138,16 @@ function vote_shares_by_district(election::Election,
     """ Returns an array of vote shares by district for
         `party` in `election`.
     """
-    if party == election.party₁
-        return deepcopy(election.party₁_vote_shares)
-    elseif party == election.party₂
-        return deepcopy(election.party₂_vote_shares)
-    else
-        throw(ArgumentError(string("Party ", party, " not contesting in election.")))
+    validate_party(party, election)
+    party_idx  = findfirst(x -> x == party, election.party)
+    return election.vote_shares[:, party_idx]
+end
+
+function validate_party(party::AbstractString,
+                        election::Election)
+    """ Throws an ArgumentError if `party` is not in `election`.
+    """
+    if party ∉ election.party
+        throw(ArgumentError(string("Party ", party,  " not contesting in election ", election, ".")))
     end
 end

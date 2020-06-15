@@ -60,12 +60,32 @@ function initialize_scores(partition::Partition,
         for each key in score_keys
     """
     scores = Dict{String, Any}()
-    scores["num_cut_edges"] = partition.num_cut_edges
+    # scores["num_cut_edges"] = partition.num_cut_edges
     for key in score_keys
         scores[key] = Array{Int, 1}()
     end
     return scores
 end
+
+# function initialize_score!(scores:: Dict{String, Any}, key::String)
+#     scores[key] = Array{Int, 1}()
+# end
+
+# function initialize_score!(scores:: Dict{String, Any}, key::Tuple)
+#     """ key should be of atleast length 2
+#         arg1 will be the score name
+#         arg2 will be th function
+#         the rest of the args will be the arguments to the function
+#
+#         TODO: change the variable name for "key" to something more appropriate
+#     """
+#     key_name = key[1]
+#     func = key[2]
+#     args = key[3:length(key)]
+#
+#     scores[key_name] = func(args...)
+# end
+#
 
 function update_scores!(scores::Dict{String, Any},
                         nodes::BitSet,
@@ -82,9 +102,9 @@ function update_scores!(scores::Dict{String, Any},
     end
 end
 
-function initialize_Δ_scores(partition::Partition,
-                             score_keys::Array{String, 1},
-                             proposal::AbstractProposal)
+function initialize_scores(partition::Partition,
+                           score_keys::Array{String, 1},
+                           proposal::AbstractProposal)
     """ Returns a Dict of the form
         {
             "num_cut_edges" : partition.num_cut_edges,
@@ -96,7 +116,7 @@ function initialize_Δ_scores(partition::Partition,
         for each key in score_keys
     """
     Δ_scores = Dict{String, Any}()
-    Δ_scores["num_cut_edges"] = partition.num_cut_edges
+    # Δ_scores["num_cut_edges"] = partition.num_cut_edges
     Δ_scores["dists"] = (proposal.D₁, proposal.D₂)
 
     for score_key in score_keys
@@ -105,6 +125,7 @@ function initialize_Δ_scores(partition::Partition,
 
     return Δ_scores
 end
+
 
 function get_detailed_scores(graph::BaseGraph,
                              partition::Partition,
@@ -146,7 +167,7 @@ function get_Δ_scores(graph::BaseGraph,
             }
 
     """
-    Δ_scores = initialize_Δ_scores(partition, score_keys, proposal)
+    Δ_scores = initialize_scores(partition, score_keys, proposal)
     update_scores!(Δ_scores, proposal.D₁_nodes, graph, score_keys, 1)
     update_scores!(Δ_scores, proposal.D₂_nodes, graph, score_keys, 2)
     return Δ_scores
@@ -154,7 +175,9 @@ end
 
 function get_scores(graph::BaseGraph,
                     partition::Partition,
-                    score_keys::Array{String, 1},
+                    dist_score_keys::Array{String, 1},
+                    partition_score_keys::Array{Any, 1}, #TODO: fix this type check
+                    # score_keys::Array{String, 1},
                     steps_taken::Int=1,
                     proposal::AbstractProposal=DummyProposal("Optional argument used when you want Δ metrics."))
     """ Return all the scores of `partition`.
@@ -169,15 +192,24 @@ function get_scores(graph::BaseGraph,
             If steps_taken == 1, then it returns the detailed scores instead
             of just the Δ scores.
     """
+    # first get the district scores
     if steps_taken == 1
-        scores = get_detailed_scores(graph, partition, score_keys)
+        scores = get_detailed_scores(graph, partition, dist_score_keys)
     else
-        scores = get_Δ_scores(graph, partition, score_keys, proposal)
+        scores = get_Δ_scores(graph, partition, dist_score_keys, proposal)
     end
+
+    # then get the partition scores
+    partition_scores = get_partition_scores(partition_score_keys)
+    merge!(scores, partition_scores)
+
     return scores
 end
 
-function get_scores_at_step(all_scores::Array{}, step::Int)
+function get_scores_at_step(all_scores::Array{},
+                            dist_keys::Array{String, 1},
+                            partition_keys::Array{Any, 1},
+                            step::Int)
     """ Returns the detailed scores of the partition at step `step`.
 
         Arguments:
@@ -196,16 +228,63 @@ function get_scores_at_step(all_scores::Array{}, step::Int)
         curr_scores = all_scores[i]
         (D₁, D₂) = all_scores[i]["dists"]
 
-        for key in keys(scores)
-            # TODO: this handling for non-array singular values is poor
-            if key == "num_cut_edges"
-                scores[key] = curr_scores[key]
-                continue
-            end
+        for key in dist_keys
             scores[key][D₁] = curr_scores[key][1]
             scores[key][D₂] = curr_scores[key][2]
         end
     end
 
+    # fill the rest with partition keys
+    for key in partition_keys
+        scores[key[1]] = all_scores[step][key[1]]
+    end
+
     return scores
+end
+
+function get_partition_scores(partition_score_keys)
+    scores = Dict{String, Any}()
+    for key in partition_score_keys
+        compute_partition_score!(scores, key)
+    end
+    return scores
+end
+
+function compute_partition_score!(scores:: Dict{String, Any}, key::Tuple)
+    """ key should be of atleast length 2
+        arg1 will be the score name
+        arg2 will be th function
+        the rest of the args will be the arguments to the function
+
+        TODO: change the variable name for "key" to something more appropriate
+    """
+    key_name = key[1]
+    func = key[2]
+    args = key[3:length(key)]
+
+    scores[key_name] = func(args...)
+end
+
+function save_scores(filename::String,
+                     scores::Array{Dict{String, Any}, 1})
+    """ Save the `scores` as `filename`.
+        `filename` needs to be a .json.
+    """
+    open(filename, "w") do f
+        JSON.print(f, all_scores)
+    end
+end
+
+function seperate_score_keys(score_keys::Array{Any, 1})
+    """ Seperate scores into `DistrictScores` and `PartitionScores`.
+        TODO: This needs to be redone.
+    """
+    dist_scores = Array{String, 1}()
+    partition_scores = Array{Any, 1}()
+    for key in score_keys
+        if key isa String push!(dist_scores, key) end
+        if key isa Tuple push!(partition_scores, key) end
+        # TODO: if wrong type then raise an error
+    end
+    return dist_scores, partition_scores
 end

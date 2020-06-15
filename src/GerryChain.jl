@@ -10,6 +10,8 @@ export
 
 AbstractGraph, BaseGraph, Partition,
 
+num_cut_edges,
+
 get_attributes, get_populations_and_assignments, get_district_nodes,
 get_district_populations, get_district_adj_and_cut_edges,
 weighted_kruskal_mst, get_subgraph_population,
@@ -40,8 +42,8 @@ include("./partition.jl")
 include("./proposals.jl")
 include("./constraints.jl")
 include("./scores.jl")
-include("./recom.jl")
 include("./election.jl")
+include("./recom.jl")
 include("./partisan_metrics.jl")
 
 end # module

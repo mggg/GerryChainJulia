@@ -132,3 +132,9 @@ function get_populations_and_assignments(graph::Dict{String, Any},
     end
     return populations, assignments
 end
+
+function num_cut_edges(partition)
+    """ Returns the number of cut_edges in `partition`.
+    """
+    return partition.num_cut_edges
+end

@@ -194,7 +194,7 @@ function recom_chain(graph::BaseGraph,
                      partition::Partition,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
-                     score_keys::Array{Any, 1},
+                     score_keys::Array{NamedTuple, 1},
                      elections::Array{Election, 1},
                      scores_save_dir::AbstractString="./scores.json",
                      num_tries::Int=3)

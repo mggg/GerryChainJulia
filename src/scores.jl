@@ -1,4 +1,8 @@
 
+abstract type AbstractScore end
+abstract type DistrictScore <: AbstractScore end
+abstract type PartitionScore <: AbstractScore end
+
 function initialize_dist_scores(score_keys::Array{String, 1})
     """ Initializes a Dict of the form
             {
@@ -271,11 +275,11 @@ function save_scores(filename::String,
         `filename` needs to be a .json.
     """
     open(filename, "w") do f
-        JSON.print(f, all_scores)
+        JSON.print(f, scores)
     end
 end
 
-function seperate_score_keys(score_keys::Array{Any, 1})
+function seperate_score_keys(score_keys::Array{NamedTuple, 1})
     """ Seperate scores into `DistrictScores` and `PartitionScores`.
         TODO: This needs to be redone.
     """

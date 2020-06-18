@@ -143,6 +143,28 @@ function vote_shares_by_district(election::Election,
     return election.vote_shares[:, party_idx]
 end
 
+function vote_counts_by_district(election::Election,
+                                 party::AbstractString,
+                                 dist::Int)::Int
+    """ Returns an array of vote counts by district for
+        `party` in `election`.
+    """
+    validate_party(party, election)
+    party_idx  = findfirst(x -> x == party, election.party)
+    return election.vote_counts[:, party_idx][dist]
+end
+
+function vote_shares_by_district(election::Election,
+                                 party::AbstractString,
+                                 dist::Int)::Float64
+    """ Returns an array of vote shares by district for
+        `party` in `election`.
+    """
+    validate_party(party, election)
+    party_idx  = findfirst(x -> x == party, election.party)
+    return election.vote_shares[:, party_idx][dist]
+end
+
 function validate_party(party::AbstractString,
                         election::Election)
     """ Throws an ArgumentError if `party` is not in `election`.

@@ -37,9 +37,28 @@ function propose_random_flip(graph::BaseGraph,
 end
 
 
+function is_valid(graph::BaseGraph,
+                  partition::Partition,
+                  pop_constraint::PopulationConstraint,
+                  cont_constraint::ContiguityConstraint,
+                  proposal::FlipProposal)
+    """ Helper function that checks if a proposal is population
+        balanced and does not break contiguity.
+    """
+    return satisfy_constraint(pop_constraint,
+                              proposal.D₂_pop,
+                              proposal.D₁_pop) &&
+           satisfy_constraint(cont_constraint,
+                              graph,
+                              partition,
+                              proposal)
+end
+
+
 function get_valid_proposal(graph::BaseGraph,
                             partition::Partition,
-                            pop_constraint::PopulationConstraint)
+                            pop_constraint::PopulationConstraint,
+                            cont_constraint::ContiguityConstraint)
     """ Returns a population balanced proposal.
 
         Arguments:
@@ -50,9 +69,7 @@ function get_valid_proposal(graph::BaseGraph,
                             before giving up
     """
     proposal = propose_random_flip(graph, partition)
-    while satisfy_constraint(pop_constraint,
-                             proposal.D₂_pop,
-                             proposal.D₁_pop)
+    while !is_valid(graph, partition, pop_constraint, cont_constraint, proposal)
         proposal = propose_random_flip(graph, partition)
     end
     return proposal
@@ -81,6 +98,7 @@ end
 function flip_chain(graph::BaseGraph,
                     partition::Partition,
                     pop_constraint::PopulationConstraint,
+                    cont_constraint::ContiguityConstraint,
                     num_steps::Int,
                     score_keys::Array{String, 1},
                     scores_save_dir::AbstractString="./scores.json",
@@ -99,7 +117,8 @@ function flip_chain(graph::BaseGraph,
     while steps_taken < num_steps
         steps_taken += 1
 
-        proposal = get_valid_proposal(graph, partition, pop_constraint)
+        proposal = get_valid_proposal(graph, partition, pop_constraint,
+                                      cont_constraint)
         update_partition!(partition, graph, proposal)
 
         scores = get_scores(graph, partition, score_keys, steps_taken, proposal)

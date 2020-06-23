@@ -1,7 +1,7 @@
 using DataStructures
 
 @testset "Recom tests" begin
-    graph = BaseGraph(filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @testset "traverse_mst()" begin
         nodes = [1, 2, 3, 4, 5, 6, 7, 8]

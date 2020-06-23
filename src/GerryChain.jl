@@ -20,6 +20,7 @@ RecomProposal, FlipProposal, DummyProposal,
 
 # constraints
 PopulationConstraint,
+ContiguityConstraint,
 satisfy_constraint,
 
 # recom

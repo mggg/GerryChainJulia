@@ -7,7 +7,7 @@ def populate(graph):
     for i in (4, 7, 12, 14):
         graph.nodes[i]["population"] = 1
 
-def set_assignments(graph):
+def set_square_assignments(graph):
     # assignments
     for i in (0, 1, 4, 5):
         graph.nodes[i]["assignment"] = 1
@@ -16,6 +16,17 @@ def set_assignments(graph):
     for i in (8, 9, 12, 13):
         graph.nodes[i]["assignment"] = 3
     for i in (10, 11, 14, 15):
+        graph.nodes[i]["assignment"] = 4
+
+def set_col_assignments(graph):
+    # assignments
+    for i in (0, 4, 8, 12):
+        graph.nodes[i]["assignment"] = 1
+    for i in (1, 5, 9, 13):
+        graph.nodes[i]["assignment"] = 2
+    for i in (2, 6, 10, 14):
+        graph.nodes[i]["assignment"] = 3
+    for i in (3, 7, 11, 15):
         graph.nodes[i]["assignment"] = 4
 
 def set_election_data(graph):
@@ -41,22 +52,25 @@ from gerrychain.graph import Graph
 
 graph = nx.grid_graph([4,4])
 graph = nx.convert_node_labels_to_integers(graph)
-# node_coords = list(graph.nodes())
+print(graph.nodes())
+node_coords = list(graph.nodes())
 
 populate(graph)
-set_assignments(graph)
+# set_col_assignments(graph)
+set_square_assignments(graph)
 set_election_data(graph)
 set_race_populations(graph)
 
 # we are going to use gerrychain's to_json method to convert the graph
 g = Graph(graph)
+# g.to_json("cols_grid_4x4.json")
 g.to_json("test_grid_4x4.json")
 
 # color by assignment
 plt.figure()
 nx.draw(
     graph,
-    # pos={x: x for x in node_coords},
+    labels={x: x for x in node_coords},
     node_color=[graph.nodes[x]["assignment"] for x in graph.nodes()]
 )
 plt.show()

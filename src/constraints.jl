@@ -5,6 +5,12 @@ struct PopulationConstraint <: AbstractConstraint
     max_pop::Int
 end
 
+
+struct ContiguityConstraint <: AbstractConstraint
+    # No metadata (for now); implements the `AbstractConstraint` interface.
+end
+
+
 function PopulationConstraint(graph::BaseGraph,
                               population_col::AbstractString,
                               tolerance::Float64)
@@ -38,4 +44,39 @@ function satisfy_constraint(constraint::PopulationConstraint,
         end
     end
     return false
+end
+
+
+function satisfy_constraint(constraint::ContiguityConstraint, graph::BaseGraph,
+                            partition::Partition, flip::FlipProposal)::Bool
+    neighbors = [n for n in graph.neighbors[flip.Node]
+                 if partition.assignments[n] == flip.D₁]
+    source_node = pop!(neighbors)
+
+    @inbounds for target_node in neighbors
+        visited = zeros(Bool, graph.num_nodes)
+        queue = Queue{Int}(64)  # TODO: auto-tune?
+        enqueue!(queue, target_node)
+        visited[target_node] = true
+        found = false
+        while !isempty(queue)
+            curr_node = dequeue!(queue)
+            if curr_node == source_node
+                found = true
+                break
+            end
+            for neighbor in graph.neighbors[curr_node]
+                if (!visited[neighbor] &&
+                    partition.assignments[neighbor] == flip.D₁ &&
+                    neighbor != flip.Node)
+                    visited[neighbor] = true
+                    enqueue!(queue, neighbor)
+                end
+            end
+        end
+        if (isempty(queue) && !found)
+            return false
+        end
+    end
+    return true
 end

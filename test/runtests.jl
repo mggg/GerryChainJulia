@@ -2,7 +2,8 @@ using GerryChain
 using Test
 
 const testdir = dirname(@__FILE__)
-filepath = "./test_grid_4x4.json"
+square_grid_filepath = "./maps/test_grid_4x4.json"
+cols_grid_filepath = "./maps/cols_grid_4x4.json"
 
 tests = [
     "graph",

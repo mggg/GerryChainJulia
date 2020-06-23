@@ -2,11 +2,11 @@
 # We generate a new Partition for each testset because the partition object is
 # modified in each testset
 @testset "Score tests" begin
-    graph = BaseGraph(filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population", "assignment")
     score_keys = ["electionD", "electionR", "purple", "pink"]
 
     @testset "get_scores() detailed" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         scores = get_scores(graph, partition, score_keys, 1)
         @test scores["num_cut_edges"] == 8
         @test sort(scores["purple"]) == sort([28, 28, 13, 13])
@@ -16,7 +16,7 @@
     end
 
     @testset "get_scores() Δ" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         proposal = RecomProposal(1,2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
         scores = get_scores(graph, partition, score_keys, 2, proposal)
@@ -28,7 +28,7 @@
     end
 
     @testset "get_scores_at_step()" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         all_scores = Array{Dict{String, Any}, 1}()
         scores = get_scores(graph, partition, score_keys, 1)
         push!(all_scores, scores)

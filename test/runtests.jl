@@ -8,6 +8,7 @@ tests = [
     "graph",
     "partition",
     "constraints",
+    "flip",
     "recom",
     "scores",
     "election",

@@ -17,6 +17,7 @@ function PopulationConstraint(graph::BaseGraph,
     return PopulationConstraint(min_pop, max_pop)
 end
 
+
 function satisfy_constraint(constraint::PopulationConstraint,
                             proposal::RecomProposal)
     if proposal.D₁_pop >= constraint.min_pop && proposal.D₁_pop <= constraint.max_pop
@@ -26,6 +27,7 @@ function satisfy_constraint(constraint::PopulationConstraint,
     end
     return false
 end
+
 
 function satisfy_constraint(constraint::PopulationConstraint,
                             D₁_pop::Int,

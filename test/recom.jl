@@ -1,5 +1,3 @@
-using DataStructures
-
 @testset "Recom tests" begin
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 

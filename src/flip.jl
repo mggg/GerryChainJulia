@@ -83,10 +83,10 @@ function update_partition!(partition::Partition,
     partition.dist_populations[proposal.D₂] = proposal.D₂_pop
 
     # relabel node with new district
-    partition.assignments[proposal.Node] = proposal.D₂
+    partition.assignments[proposal.node] = proposal.D₂
 
-    pop!(partition.dist_nodes[proposal.D₁], proposal.Node)
-    push!(partition.dist_nodes[proposal.D₂], proposal.Node)
+    pop!(partition.dist_nodes[proposal.D₁], proposal.node)
+    push!(partition.dist_nodes[proposal.D₂], proposal.node)
 
     update_partition_adjacency(partition, graph)
 end

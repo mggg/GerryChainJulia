@@ -57,7 +57,7 @@ function satisfy_constraint(constraint::ContiguityConstraint, graph::BaseGraph,
         repository at src/constraints.jl.
     """
     # get node's neighbors who were in its old district
-    neighbors = [n for n in graph.neighbors[flip.Node]
+    neighbors = [n for n in graph.neighbors[flip.node]
                  if partition.assignments[n] == flip.D₁]
     source_node = pop!(neighbors)
 
@@ -77,7 +77,7 @@ function satisfy_constraint(constraint::ContiguityConstraint, graph::BaseGraph,
             for neighbor in graph.neighbors[curr_node]
                 if (!visited[neighbor] &&
                     partition.assignments[neighbor] == flip.D₁ &&
-                    neighbor != flip.Node)
+                    neighbor != flip.node)
                     visited[neighbor] = true
                     enqueue!(queue, neighbor)
                 end

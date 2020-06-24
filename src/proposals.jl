@@ -10,7 +10,7 @@ struct RecomProposal <: AbstractProposal
 end
 
 struct FlipProposal <: AbstractProposal
-    Node::Int # node that is being flipped
+    node::Int # node that is being flipped
     D₁::Int # original district
     D₂::Int # new district
     D₁_pop::Int

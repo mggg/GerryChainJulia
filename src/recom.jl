@@ -211,7 +211,7 @@ function recom_chain(graph::BaseGraph,
     steps_taken = 0
     all_scores = Array{Dict{String, Any}, 1}()
 
-    node_attrs, dist_score_keys, partition_score_keys = seperate_score_keys(score_keys)
+    node_attrs, dist_score_keys, partition_score_keys = categorize_score_keys(score_keys)
 
     while steps_taken < num_steps
         steps_taken += 1

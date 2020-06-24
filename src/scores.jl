@@ -234,8 +234,9 @@ function get_scores(graph::BaseGraph,
 end
 
 function get_scores_at_step(all_scores::Array{},
-                            dist_keys::Array{String, 1},
-                            partition_keys::Array{Any, 1},
+                            node_attrs::Array{NamedTuple, 1},
+                            dist_score_keys::Array{NamedTuple, 1},
+                            partition_score_keys::Array{NamedTuple, 1},
                             step::Int)
     """ Returns the detailed scores of the partition at step `step`.
 
@@ -255,15 +256,19 @@ function get_scores_at_step(all_scores::Array{},
         curr_scores = all_scores[i]
         (D₁, D₂) = all_scores[i]["dists"]
 
-        for key in dist_keys
-            scores[key][D₁] = curr_scores[key][1]
-            scores[key][D₂] = curr_scores[key][2]
+        for score in node_attrs
+            scores[score.name][D₁] = curr_scores[score.name][1]
+            scores[score.name][D₂] = curr_scores[score.name][2]
+        end
+        for score in dist_score_keys
+            scores[score.name][D₁] = curr_scores[score.name][1]
+            scores[score.name][D₂] = curr_scores[score.name][2]
         end
     end
 
     # fill the rest with partition keys
-    for key in partition_keys
-        scores[key[1]] = all_scores[step][key[1]]
+    for score in partition_score_keys
+        scores[score.name] = all_scores[step][score.name]
     end
 
     return scores

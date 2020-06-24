@@ -7,11 +7,14 @@ function propose_random_flip(graph::BaseGraph,
         graph:      BaseGraph
     """
     if partition.num_cut_edges == 0
-        return partition
+        throw(ArgumentError("No cut edges in the districting plan"))
     end
+    # select a random cut edge
     cut_edge_idx = rand(1:partition.num_cut_edges)
     cut_edge_tracker = 0
     edge_idx = 0
+    # iterate through array of bools indicating cut edge, stop at the
+    # randomly chosen index-th edge
     for i in 1:graph.num_edges
         cut_edge_tracker += partition.cut_edges[i]
         if cut_edge_tracker == cut_edge_idx
@@ -19,21 +22,20 @@ function propose_random_flip(graph::BaseGraph,
             break
         end
     end
-
+    # randomly choose which of the nodes from the edge get flipped
     edge = (graph.edge_src[edge_idx], graph.edge_dst[edge_idx])
     index = rand((0, 1))
     flipped_node, other_node = edge[index + 1], edge[2 - index]
     node_pop = graph.populations[flipped_node]
-    old_dist = partition.assignments[flipped_node]
-    new_dist = partition.assignments[other_node]
-    flip = FlipProposal(flipped_node,
-                        old_dist,
-                        new_dist,
-                        partition.dist_populations[new_dist] + node_pop,
-                        partition.dist_populations[old_dist] - node_pop,
-                        union(partition.dist_nodes[new_dist], flipped_node),
-                        setdiff(partition.dist_nodes[old_dist], flipped_node))
-    return flip
+    # old district
+    D₁ = partition.assignments[flipped_node]
+    D₁_pop = partition.dist_populations[D₁] - node_pop
+    D₁_n = setdiff(partition.dist_nodes[D₁], flipped_node)
+    # new district
+    D₂ = partition.assignments[other_node]
+    D₂_pop = partition.dist_populations[D₂] + node_pop
+    D₂_n = union(partition.dist_nodes[D₂], flipped_node)
+    return FlipProposal(flipped_node, D₁, D₂, D₁_pop, D₂_pop, D₁_n, D₂_n)
 end
 
 
@@ -42,8 +44,8 @@ function is_valid(graph::BaseGraph,
                   pop_constraint::PopulationConstraint,
                   cont_constraint::ContiguityConstraint,
                   proposal::FlipProposal)
-    """ Helper function that checks if a proposal is population
-        balanced and does not break contiguity.
+    """ Helper function that checks whether a proposal both (a) is population
+        balanced and (b) does not break contiguity.
     """
     return satisfy_constraint(pop_constraint,
                               proposal.D₂_pop,
@@ -59,16 +61,11 @@ function get_valid_proposal(graph::BaseGraph,
                             partition::Partition,
                             pop_constraint::PopulationConstraint,
                             cont_constraint::ContiguityConstraint)
-    """ Returns a population balanced proposal.
-
-        Arguments:
-            graph:          BaseGraph
-            partition:      Partition
-            pop_constraint: PopulationConstraint to adhere to
-            num_tries:      num times to try getting a balanced cut from a subgraph
-                            before giving up
+    """ Returns a population balanced FlipProposal subject to a contiguity
+        constraint.
     """
     proposal = propose_random_flip(graph, partition)
+    # continuously generate new proposals until one satisfies our constraints
     while !is_valid(graph, partition, pop_constraint, cont_constraint, proposal)
         proposal = propose_random_flip(graph, partition)
     end
@@ -81,15 +78,15 @@ function update_partition!(partition::Partition,
                            proposal::FlipProposal)
     """ Updates the Partition with the FlipProposal
     """
-    orig_dist = partition.assignments[proposal.Node]
-    new_dist = proposal.D₂
-    partition.dist_populations[orig_dist] = proposal.D₁_pop
-    partition.dist_populations[new_dist] = proposal.D₂_pop
+    # update district population counts
+    partition.dist_populations[proposal.D₁] = proposal.D₁_pop
+    partition.dist_populations[proposal.D₂] = proposal.D₂_pop
 
-    partition.assignments[proposal.Node] = new_dist
+    # relabel node with new district
+    partition.assignments[proposal.Node] = proposal.D₂
 
-    pop!(partition.dist_nodes[orig_dist], proposal.Node)
-    push!(partition.dist_nodes[new_dist], proposal.Node)
+    pop!(partition.dist_nodes[proposal.D₁], proposal.Node)
+    push!(partition.dist_nodes[proposal.D₂], proposal.Node)
 
     update_partition_adjacency(partition, graph)
 end
@@ -106,10 +103,13 @@ function flip_chain(graph::BaseGraph,
     """ Runs a Markov Chain for `num_steps` steps using Flip proposals.
 
         Arguments:
-            graph:          BaseGraph
-            partition:      Partition with the plan information
-            pop_constraint: PopulationConstraint
-            num_steps:      Number of steps to run the chain for
+            graph:              BaseGraph
+            partition:          Partition with the plan information
+            pop_constraint:     PopulationConstraint
+            cont_constraint:    ContiguityConstraint
+            score_keys:         list of scores to evaluate plans with
+            score_save_dir:     directory of where to store the scores
+            num_steps:          Number of steps to run the chain for
     """
     steps_taken = 0
     all_scores = Array{Dict{String, Any}, 1}()

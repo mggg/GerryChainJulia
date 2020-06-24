@@ -19,7 +19,8 @@ def set_square_assignments(graph):
         graph.nodes[i]["assignment"] = 4
 
 def set_col_assignments(graph):
-    # assignments
+    # creates a map where districts appear in four "columns," making it easy to
+    # test contiguity constraints
     for i in (0, 4, 8, 12):
         graph.nodes[i]["assignment"] = 1
     for i in (1, 5, 9, 13):
@@ -52,8 +53,7 @@ from gerrychain.graph import Graph
 
 graph = nx.grid_graph([4,4])
 graph = nx.convert_node_labels_to_integers(graph)
-print(graph.nodes())
-node_coords = list(graph.nodes())
+# node_coords = list(graph.nodes())
 
 populate(graph)
 # set_col_assignments(graph)
@@ -70,7 +70,7 @@ g.to_json("test_grid_4x4.json")
 plt.figure()
 nx.draw(
     graph,
-    labels={x: x for x in node_coords},
+    # labels={x: x for x in node_coords},
     node_color=[graph.nodes[x]["assignment"] for x in graph.nodes()]
 )
 plt.show()

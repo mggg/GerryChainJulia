@@ -21,9 +21,6 @@ end
     graph = BaseGraph(cols_grid_filepath, "population", "assignment")
     partition = Partition(cols_grid_filepath, graph, "population", "assignment")
     cont_constraint = ContiguityConstraint()
-    # naturally, recom proposals will always satisfy contiguity
-    # however, we are using artificial recom proposals to test contiguity
-    # constraints
     discont_proposal = FlipProposal(5, 1, 0, 30, 42,
                                     BitSet([1, 9, 13]),
                                     BitSet([0, 4, 5, 8, 12]))

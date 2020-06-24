@@ -14,7 +14,6 @@ end
 function PopulationConstraint(graph::BaseGraph,
                               population_col::AbstractString,
                               tolerance::Float64)
-
     ideal_pop = graph.total_pop / graph.num_dists
 
     # no particular reason to not use floor() instead of ceil()
@@ -26,6 +25,8 @@ end
 
 function satisfy_constraint(constraint::PopulationConstraint,
                             proposal::RecomProposal)
+    """ Test whether a RecomProposal satisfies a population constraint.
+    """
     if proposal.D₁_pop >= constraint.min_pop && proposal.D₁_pop <= constraint.max_pop
         if proposal.D₂_pop >= constraint.min_pop && proposal.D₂_pop <= constraint.max_pop
             return true
@@ -38,6 +39,8 @@ end
 function satisfy_constraint(constraint::PopulationConstraint,
                             D₁_pop::Int,
                             D₂_pop::Int)
+    """ Test whether two population counts satisfy a PopulationConstraint.
+    """
     if D₁_pop >= constraint.min_pop && D₁_pop <= constraint.max_pop
         if D₂_pop >= constraint.min_pop && D₂_pop <= constraint.max_pop
             return true
@@ -48,11 +51,17 @@ end
 
 
 function satisfy_constraint(constraint::ContiguityConstraint, graph::BaseGraph,
-                            partition::Partition, flip::FlipProposal)::Bool
+                            partition::Partition, flip::FlipProposal)
+    """ Test whether a FlipProposal satisfies the contiguity constraint.
+        Based on Parker's implementation on GitHub, located in the Flips.jl
+        repository at src/constraints.jl.
+    """
+    # get node's neighbors who were in its old district
     neighbors = [n for n in graph.neighbors[flip.Node]
                  if partition.assignments[n] == flip.D₁]
     source_node = pop!(neighbors)
 
+    # DFS search to verify contiguity is not broken
     @inbounds for target_node in neighbors
         visited = zeros(Bool, graph.num_nodes)
         queue = Queue{Int}(64)  # TODO: auto-tune?

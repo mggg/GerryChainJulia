@@ -132,3 +132,28 @@ function get_populations_and_assignments(graph::Dict{String, Any},
     end
     return populations, assignments
 end
+
+
+function update_partition_adjacency(partition::Partition,
+                                    graph::BaseGraph)
+    """ Updates the district adjacency matrix and cut edges
+        to reflect the partition's assignments for each node.
+    """
+    partition.dist_adj = spzeros(Int, graph.num_dists, graph.num_dists)
+    partition.num_cut_edges = 0
+
+    for i=1:graph.num_edges
+        src_assignment = partition.assignments[graph.edge_src[i]]
+        dst_assignment = partition.assignments[graph.edge_dst[i]]
+
+        if src_assignment != dst_assignment
+            partition.cut_edges[i] = 1
+            partition.num_cut_edges += 1
+
+            partition.dist_adj[src_assignment, dst_assignment] += 1
+            partition.dist_adj[dst_assignment, src_assignment] += 1
+        else
+            partition.cut_edges[i] = 0
+        end
+    end
+end

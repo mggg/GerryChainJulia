@@ -35,7 +35,7 @@ using DataStructures
 """
 
 @testset "Graph tests" begin
-    graph = BaseGraph(filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16
     @test graph.num_edges == 24

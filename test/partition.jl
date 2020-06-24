@@ -32,8 +32,8 @@
 
 # partition tests
 @testset "Partition tests" begin
-    graph = BaseGraph(filepath, "population", "assignment")
-    partition = Partition(filepath, graph, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    partition = Partition(square_grid_filepath, graph, "population", "assignment")
 
     @test partition.num_cut_edges == 8
     @test partition.dist_populations[1] == 41

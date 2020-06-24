@@ -110,12 +110,7 @@ end
 
 function compute_function_score!(scores:: Dict{String, Any},
                                  key::NamedTuple)
-    """ key should be of atleast length 2
-        arg1 will be the score name
-        arg2 will be th function
-        the rest of the args will be the arguments to the function
-
-        TODO: change the variable name for "key" to something more appropriate
+    """ `key` is a tuple that is of the form (name=N, key=F, args=[,]).
     """
     func = key.key
     args = key.args
@@ -126,28 +121,14 @@ function compute_function_score!(scores:: Dict{String, Any},
                                  key::NamedTuple,
                                  dist_idx::Int,
                                  dist::Int)
-    """ key should be of atleast length 2
-        arg1 will be the score name
-        arg2 will be th function
-        the rest of the args will be the arguments to the function
-
+    """ For the Δ function.
         TODO: change the variable name for "key" to something more appropriate
     """
     func = key.key
     args = key.args
-    push!(args, dist) # This is extremely ugly, and is only happening because
-                      # the district functions are set up such that the Δ take a dist index at the end.
+    push!(args, dist) # This is extremely ugly, and is only happening because the district functions are set up such that the Δ take a dist index at the end.
     scores[key.name][dist_idx] = func(args...)
     pop!(key.args)
-end
-
-function fill_function_scores!(scores::Dict{String, Any},
-                               score_keys:: Array{NamedTuple, 1})
-    """
-    """
-    for score_key in score_keys
-        compute_function_score!(scores, score_key)
-    end
 end
 
 function update_scores!(scores::Dict{String, Any},
@@ -156,9 +137,7 @@ function update_scores!(scores::Dict{String, Any},
         The `scores` dictionary holds scores for the entire partition, and the
         `dist_scores` dictionary only holds the scores for a single district.
     """
-    for key in keys(dist_scores)
-        push!(scores[key], dist_scores[key])
-    end
+    foreach(key -> push!(scores[key], dist_scores[key]), keys(dist_scores))
 end
 
 function update_scores!(scores::Dict{String, Any},
@@ -170,13 +149,8 @@ function update_scores!(scores::Dict{String, Any},
                         dist::Int)
     """ Used for Δ updates.
     """
-    # node attrs
     fill_node_scores!(scores, nodes, graph, node_attrs, dist_idx)
-
-    # dist_scores
-    for score in dist_score_keys
-        compute_function_score!(scores, score, dist_idx, dist)
-    end
+    foreach(score -> compute_function_score!(scores, score, dist_idx, dist), dist_score_keys)
 end
 
 function get_detailed_scores(graph::BaseGraph,
@@ -197,7 +171,7 @@ function get_detailed_scores(graph::BaseGraph,
         dist_scores = get_scores_of_dist(graph, partition, dist, node_attrs)
         update_scores!(scores, dist_scores)
     end
-    fill_function_scores!(scores, dist_score_keys)
+    foreach(key -> compute_function_score!(scores, key), dist_score_keys)
     return scores
 end
 
@@ -214,7 +188,6 @@ function get_Δ_scores(graph::BaseGraph,
         is 22 and new Sen2010_Dem population is 66. The Δ scores would
         look like:
             {
-                "num_cut_edges" : partition.num_cut_edges,
                 "dists"         : (5, 8),
                 "White"         : [43, 22],
                 "Sen2010_Dem"   : [62, 66],
@@ -300,7 +273,7 @@ function get_partition_scores(partition_score_keys)
     """
     """
     scores = Dict{String, Any}()
-    fill_function_scores!(scores, partition_score_keys)
+    foreach(key -> compute_function_score!(scores, key), partition_score_keys)
     return scores
 end
 

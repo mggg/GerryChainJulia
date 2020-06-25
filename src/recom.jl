@@ -180,7 +180,6 @@ function recom_chain(graph::BaseGraph,
                      num_steps::Int,
                      score_keys::Array{NamedTuple, 1},
                      elections::Array{Election, 1},
-                     scores_save_dir::AbstractString="./scores.json",
                      num_tries::Int=3)
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
@@ -210,5 +209,5 @@ function recom_chain(graph::BaseGraph,
         push!(all_scores, scores)
     end
 
-    save_scores(scores_save_dir, all_scores)
+    return all_scores
 end

@@ -155,9 +155,16 @@ end
 
 function update_partition!(partition::Partition,
                            graph::BaseGraph,
-                           proposal::RecomProposal)
+                           proposal::RecomProposal,
+                           copy_parent::Bool=false)
     """ Updates the Partition with the RecomProposal
     """
+    if copy_parent
+        partition.parent = nothing
+        old_partition = deepcopy(partition)
+        partition.parent = old_partition
+    end
+
     partition.dist_populations[proposal.D₁] = proposal.D₁_pop
     partition.dist_populations[proposal.D₂] = proposal.D₂_pop
 
@@ -174,13 +181,18 @@ function update_partition!(partition::Partition,
     update_partition_adjacency(partition, graph)
 end
 
+
+function
+
+
 function recom_chain(graph::BaseGraph,
                      partition::Partition,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
                      score_keys::Array{String, 1},
                      scores_save_dir::AbstractString="./scores.json",
-                     num_tries::Int=3)
+                     num_tries::Int=3,
+                     acceptance_fn::Function=always_accept)
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
         Arguments:
@@ -190,17 +202,19 @@ function recom_chain(graph::BaseGraph,
             num_steps:      Number of steps to run the chain for
             num_tries:      num times to try getting a balanced cut from a subgraph
                             before giving up
+            acceptance_fn:  A function generating a probability in [0, 1]
+                            representing the likelihood of accepting the
+                            proposal
     """
     steps_taken = 0
     all_scores = Array{Dict{String, Any}, 1}()
 
     while steps_taken < num_steps
-        steps_taken += 1
-
-        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
+        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)            
         update_partition!(partition, graph, proposal)
 
         scores = get_scores(graph, partition, score_keys, steps_taken, proposal)
         push!(all_scores, scores)
+        steps_taken += 1
     end
 end

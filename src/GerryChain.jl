@@ -32,6 +32,9 @@ flip_chain,
 # scores
 get_scores, get_scores_at_step,
 
+# acceptance functions
+always_accept,
+
 # election
 AbstractElection, Election, update_elections!, seats_won, total_vote_counts,
 vote_counts_by_district, vote_shares_by_district,
@@ -46,6 +49,7 @@ include("./constraints.jl")
 include("./scores.jl")
 include("./recom.jl")
 include("./flip.jl")
+include("./accept.jl")
 include("./election.jl")
 include("./partisan_metrics.jl")
 

@@ -1,5 +1,5 @@
 
-function initialize_dist_scores(score_keys::Array{NamedTuple, 1})
+function initialize_dist_scores(score_keys::Array{NamedTuple, 1})::Dict{String, Int}
     """ Initializes a Dict of the form
             {
               score_key.name₁ : 0,
@@ -11,6 +11,43 @@ function initialize_dist_scores(score_keys::Array{NamedTuple, 1})
     dist_scores = Dict{String, Int}()
     foreach(key -> dist_scores[key.name] = 0, score_keys)
     return dist_scores
+end
+
+function initialize_scores(partition::Partition,
+                           node_attrs::Array{NamedTuple, 1},
+                           dist_score_keys::Array{NamedTuple, 1})
+    """ Returns a Dict of the form
+            {
+              dist_score_key.name₁     : Array{Int, 1}(),
+                 ...
+              dist_score_key.nameᵥ     : Array{Int, 1}()
+            }
+        for each score key in dist_score_keys.
+    """
+    scores = Dict{String, Any}()
+    foreach(key -> scores[key.name] = Array{Int, 1}(), node_attrs)
+    foreach(key -> scores[key.name] = Array{Int, 1}(), dist_score_keys)
+    return scores
+end
+
+function initialize_scores(partition::Partition,
+                           node_attrs::Array{NamedTuple, 1},
+                           dist_score_keys::Array{NamedTuple, 1},
+                           proposal::AbstractProposal)::Dict{String, Any}
+    """ Returns a Dict of the form
+        {
+            "dists"         : (proposal.D₁, proposal.D₂)
+            score.name₁      : [0, 0],
+              ...
+            score.nameᵥ      : [0, 0]
+        }
+        for each key in {node_attrs} ∪ {dist_score_keys}.
+    """
+    Δ_scores = Dict{String, Any}()
+    Δ_scores["dists"] = (proposal.D₁, proposal.D₂)
+    foreach(key -> Δ_scores[key.name] = [0, 0], node_attrs)
+    foreach(key -> Δ_scores[key.name] = [0, 0], dist_score_keys)
+    return Δ_scores
 end
 
 function fill_node_scores!(scores::Dict{String, Int},
@@ -54,7 +91,7 @@ end
 function get_scores_of_dist(graph::BaseGraph,
                             partition::Partition,
                             dist::Int,
-                            node_attrs::Array{NamedTuple, 1})
+                            node_attrs::Array{NamedTuple, 1})::Dict{String, Int}
     """ Return a Dict of the form
         {
             node_attr₁.name : x₁
@@ -71,64 +108,40 @@ function get_scores_of_dist(graph::BaseGraph,
     return scores
 end
 
-function initialize_scores(partition::Partition,
-                           node_attrs::Array{NamedTuple, 1},
-                           dist_score_keys::Array{NamedTuple, 1})
-    """ Returns a Dict of the form
-            {
-              dist_score_key.name₁     : Array{Int, 1}(),
-                 ...
-              dist_score_key.nameᵥ     : Array{Int, 1}()
-            }
-        for each score key in dist_score_keys.
-    """
-    scores = Dict{String, Any}()
-    foreach(key -> scores[key.name] = Array{Int, 1}(), node_attrs)
-    foreach(key -> scores[key.name] = Array{Int, 1}(), dist_score_keys)
-    return scores
-end
+function compute_function_score!(scores:: Dict{String, Any},
+                                 score_key::NamedTuple)
+    """ Applies the function score_key.key on score_key.args and stores the result
+        in scores[score_key.name].
 
-function initialize_scores(partition::Partition,
-                           node_attrs::Array{NamedTuple, 1},
-                           dist_score_keys::Array{NamedTuple, 1},
-                           proposal::AbstractProposal)
-    """ Returns a Dict of the form
-        {
-            "dists"         : (proposal.D₁, proposal.D₂)
-            score.name₁      : [0, 0],
-              ...
-            score.nameᵥ      : [0, 0]
-        }
-        for each key in {node_attrs} ∪ {dist_score_keys}.
+        `score_key` is a tuple that is of the form (name=N, key=F, args=[,]).
     """
-    Δ_scores = Dict{String, Any}()
-    Δ_scores["dists"] = (proposal.D₁, proposal.D₂)
-    foreach(key -> Δ_scores[key.name] = [0, 0], node_attrs)
-    foreach(key -> Δ_scores[key.name] = [0, 0], dist_score_keys)
-    return Δ_scores
+    func = score_key.key
+    args = score_key.args
+    scores[score_key.name] = func(args...)
 end
 
 function compute_function_score!(scores:: Dict{String, Any},
-                                 key::NamedTuple)
-    """ `key` is a tuple that is of the form (name=N, key=F, args=[,]).
-    """
-    func = key.key
-    args = key.args
-    scores[key.name] = func(args...)
-end
-
-function compute_function_score!(scores:: Dict{String, Any},
-                                 key::NamedTuple,
+                                 score_key::NamedTuple,
                                  dist_idx::Int,
                                  dist::Int)
-    """ For the Δ function.
-        TODO: change the variable name for "key" to something more appropriate
+    """ Applies the function score_key.key on [score_key.args, dist] and
+        stores the result in scores[score_key.name][dist_idx].
+
+        `score_key` is a tuple that is of the form (name=N, key=F, args=[,]).
     """
-    func = key.key
-    args = key.args
-    push!(args, dist) # This is extremely ugly, and is only happening because the district functions are set up such that the Δ take a dist index at the end.
-    scores[key.name][dist_idx] = func(args...)
-    pop!(key.args)
+    func = score_key.key
+    args = score_key.args
+    push!(args, dist)
+    scores[score_key.name][dist_idx] = func(args...)
+    pop!(score_key.args)
+end
+
+function get_partition_scores(score_keys::Array{NamedTuple, 1})::Dict{String, Any}
+    """ TODO:
+    """
+    scores = Dict{String, Any}()
+    foreach(key -> compute_function_score!(scores, key), score_keys)
+    return scores
 end
 
 function update_scores!(scores::Dict{String, Any},
@@ -147,7 +160,11 @@ function update_scores!(scores::Dict{String, Any},
                         dist_score_keys::Array{NamedTuple, 1},
                         dist_idx::Int,
                         dist::Int)
-    """ Used for Δ updates.
+    """ Updates `scores` with the `node_attrs` and `dist_score_keys` scores of
+        district `dist`. The update is done at scores[score.name][dist_idx] for
+        score in {node_attrs} ∪ {dist_score_keys}. `nodes` is the set of nodes in
+        district `dist`.
+        Used for Δ updates.
     """
     fill_node_scores!(scores, nodes, graph, node_attrs, dist_idx)
     foreach(score -> compute_function_score!(scores, score, dist_idx, dist), dist_score_keys)
@@ -244,6 +261,8 @@ function get_scores_at_step(all_scores::Array{},
             all_scores : List of scores of partitions at each step of
                          the Markov Chain
             step       : The step of the chain at which scores are desired
+            node_attrs, dist_score_keys, partition_score_keys: Different kinds of
+                         scores, as obtained from categorize_score_keys)()
     """
     if step == 1
         return all_scores[1]
@@ -274,14 +293,6 @@ function get_scores_at_step(all_scores::Array{},
     return scores
 end
 
-function get_partition_scores(partition_score_keys)
-    """
-    """
-    scores = Dict{String, Any}()
-    foreach(key -> compute_function_score!(scores, key), partition_score_keys)
-    return scores
-end
-
 function save_scores(filename::String,
                      scores::Array{Dict{String, Any}, 1})
     """ Save the `scores` as `filename`.
@@ -293,8 +304,8 @@ function save_scores(filename::String,
 end
 
 function categorize_score_keys(scores::Array{NamedTuple, 1})
-    """ Seperate scores into `DistrictScores` and `PartitionScores`.
-        TODO: This needs to be redone.
+    """ Seperate scores into node attribute scores, district_wide scores
+        and partition scores.
     """
     validate_score_keys(scores)
     district_wide_scores = [vote_counts_by_district, vote_shares_by_district]

@@ -2,7 +2,7 @@
 # We generate a new Partition for each testset because the partition object is
 # modified in each testset
 @testset "Score tests" begin
-    graph = BaseGraph(filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population", "assignment")
     node_attrs = Array{NamedTuple, 1}()
     push!(node_attrs, (name="purples", key="purple"))
     push!(node_attrs, (name="pinks", key="pink"))
@@ -27,7 +27,7 @@
     end
 
     @testset "get_scores() Δ" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         election = Election("TestElection", Array{AbstractString, 1}(["electionD", "electionR"]))
         update_elections!([election], graph, partition, DummyProposal(""), 1)
 
@@ -51,7 +51,7 @@
     end
 
     @testset "get_scores_at_step()" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         election = Election("TestElection", Array{AbstractString, 1}(["electionD", "electionR"]))
         update_elections!([election], graph, partition, DummyProposal(""), 1)
 
@@ -78,7 +78,7 @@
         # sneaky... simply calling detailed_scores on the new partition with step=1
         detailed_scores = get_scores(graph, partition, node_attrs, dist_score_keys, plan_score_keys, 1)
         parsed_scores = get_scores_at_step(all_scores, node_attrs, dist_score_keys, plan_score_keys, 2)
-        
+
         @test keys(detailed_scores) == keys(parsed_scores)
         for key in keys(detailed_scores)
             @test detailed_scores[key] == parsed_scores[key]

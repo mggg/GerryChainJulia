@@ -171,23 +171,7 @@ function update_partition!(partition::Partition,
     partition.dist_nodes[proposal.D₁] = proposal.D₁_nodes
     partition.dist_nodes[proposal.D₂] = proposal.D₂_nodes
 
-    partition.dist_adj = spzeros(Int, graph.num_dists, graph.num_dists)
-    partition.num_cut_edges = 0
-
-    for i=1:graph.num_edges
-        src_assignment = partition.assignments[graph.edge_src[i]]
-        dst_assignment = partition.assignments[graph.edge_dst[i]]
-
-        if src_assignment != dst_assignment
-            partition.cut_edges[i] = 1
-            partition.num_cut_edges += 1
-
-            partition.dist_adj[src_assignment, dst_assignment] += 1
-            partition.dist_adj[dst_assignment, src_assignment] += 1
-        else
-            partition.cut_edges[i] = 0
-        end
-    end
+    update_partition_adjacency(partition, graph)
 end
 
 function recom_chain(graph::BaseGraph,

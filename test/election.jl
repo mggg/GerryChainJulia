@@ -1,9 +1,9 @@
 
 @testset "Election tests" begin
-    graph = BaseGraph(filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @testset "update_elections_detailed()" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         election = Election("Test Election", Array{AbstractString, 1}(["electionD", "electionR"]))
         update_elections!([election], graph, partition, DummyProposal(""), 1)
         @test vote_counts_by_district(election, "electionD") == [6, 6, 6, 6]
@@ -13,7 +13,7 @@
     end
 
     @testset "update_elections_Δ()" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         election = Election("Test Election", Array{AbstractString, 1}(["electionD", "electionR"]))
 
         # Seed step
@@ -31,7 +31,7 @@
     end
 
     @testset "Getting Election Results" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         election = Election("Test Election", Array{AbstractString, 1}(["electionD", "electionR"]))
 
         # Seed step

@@ -8,7 +8,7 @@
     push!(node_attrs, (name="pinks", key="pink"))
 
     @testset "get_scores() detailed" begin
-        partition = Partition(filepath, graph, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         election = Election("TestElection", Array{AbstractString, 1}(["electionD", "electionR"]))
         update_elections!([election], graph, partition, DummyProposal(""), 1)
 

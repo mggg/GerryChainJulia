@@ -46,9 +46,9 @@ include("./partition.jl")
 include("./proposals.jl")
 include("./constraints.jl")
 include("./scores.jl")
+include("./election.jl")
 include("./recom.jl")
 include("./flip.jl")
-include("./election.jl")
 include("./partisan_metrics.jl")
 
 end # module

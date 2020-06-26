@@ -15,4 +15,22 @@
         # neighboring nodes
         @test flip_prop.D₂ in neighbor_districts
     end
+
+    @testset "flip_chain()" begin
+        # this is a dummy constraint
+        pop_constraint = PopulationConstraint(graph, "population", 10.0)
+        cont_constraint = cont_constraint = ContiguityConstraint()
+        scores = ["electionD", "electionR", "purple", "pink"]
+        num_steps = 2 # test 2 steps for now
+
+        function run_chain()
+            try
+                flip_chain(graph, partition, pop_constraint, cont_constraint, num_steps, scores)
+            catch ex
+                return ex
+            end
+        end
+        # hacky way to run flip chain and test that it doesn't yield an exception
+        @test !isa(run_chain(), Exception)
+    end
 end

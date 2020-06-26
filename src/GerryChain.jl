@@ -33,7 +33,7 @@ flip_chain,
 get_scores, get_scores_at_step,
 
 # acceptance functions
-always_accept,
+always_accept, pass_acceptance_fn,
 
 # election
 AbstractElection, Election, update_elections!, seats_won, total_vote_counts,

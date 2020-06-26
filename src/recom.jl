@@ -182,17 +182,14 @@ function update_partition!(partition::Partition,
 end
 
 
-function
-
-
 function recom_chain(graph::BaseGraph,
                      partition::Partition,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
-                     score_keys::Array{String, 1},
+                     score_keys::Array{String, 1};
                      scores_save_dir::AbstractString="./scores.json",
                      num_tries::Int=3,
-                     acceptance_fn::Function=always_accept)
+                     acceptance_fn::F=always_accept) where {F<:Function}
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
         Arguments:
@@ -204,15 +201,19 @@ function recom_chain(graph::BaseGraph,
                             before giving up
             acceptance_fn:  A function generating a probability in [0, 1]
                             representing the likelihood of accepting the
-                            proposal
+                            proposal. Should accept a Partition as input.
     """
     steps_taken = 0
     all_scores = Array{Dict{String, Any}, 1}()
 
     while steps_taken < num_steps
-        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)            
-        update_partition!(partition, graph, proposal)
-
+        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
+        custom_acceptance = acceptance_fn !== always_accept
+        update_partition!(partition, graph, proposal, custom_acceptance)
+        if custom_acceptance && !pass_acceptance_fn(partition, acceptance_fn)
+            # go back to the previous partition
+            partition = partition.parent
+        end
         scores = get_scores(graph, partition, score_keys, steps_taken, proposal)
         push!(all_scores, scores)
         steps_taken += 1

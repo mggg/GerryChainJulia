@@ -15,4 +15,23 @@
         component = GerryChain.traverse_mst(mst, 1, 5, stack, component_container)
         @test component == BitSet([1])
     end
+
+    @testset "recom_chain()" begin
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        # this is a dummy constraint
+        pop_constraint = PopulationConstraint(graph, "population", 10.0)
+        scores = ["electionD", "electionR", "purple", "pink"]
+        num_steps = 2 # test 2 steps for now
+
+        function run_chain()
+            try
+                recom_chain(graph, partition, pop_constraint, num_steps, scores)
+            catch ex
+                return ex
+            end
+        end
+        recom_chain(graph, partition, pop_constraint, num_steps, scores)
+        # hacky way to run flip chain and test that it doesn't yield an exception
+        @test !isa(run_chain(), Exception)
+    end
 end

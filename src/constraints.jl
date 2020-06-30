@@ -59,6 +59,9 @@ function satisfy_constraint(constraint::ContiguityConstraint, graph::BaseGraph,
     # get node's neighbors who were in its old district
     neighbors = [n for n in graph.neighbors[flip.node]
                  if partition.assignments[n] == flip.D₁]
+    if isempty(neighbors) # this is the only node of this district left!
+        return false
+    end
     source_node = pop!(neighbors)
 
     # DFS search to verify contiguity is not broken

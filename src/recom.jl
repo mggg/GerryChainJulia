@@ -1,10 +1,12 @@
 
 
-function sample_subgraph(graph::BaseGraph, partition::Partition)
+function sample_subgraph(graph::BaseGraph,
+                         partition::Partition,
+                         rng::AbstractRNG)
     """ Randomly sample two adjacent districts and returns them and their
         induced edges and nodes.
     """
-    D₁, D₂ = sample_adjacent_districts_randomly(partition, graph.num_dists)
+    D₁, D₂ = sample_adjacent_districts_randomly(partition, graph.num_dists, rng)
 
     # take all their nodes
     nodes = union(partition.dist_nodes[D₁],
@@ -125,6 +127,7 @@ end
 function get_valid_proposal(graph::BaseGraph,
                             partition::Partition,
                             pop_constraint::PopulationConstraint,
+                            rng::AbstractRNG,
                             num_tries::Int=3)
     """ Returns a population balanced proposal.
 
@@ -136,7 +139,7 @@ function get_valid_proposal(graph::BaseGraph,
                             before giving up
     """
     while true
-        D₁, D₂, sg_edges, sg_nodes = sample_subgraph(graph, partition)
+        D₁, D₂, sg_edges, sg_nodes = sample_subgraph(graph, partition, rng)
 
         for _ in 1:num_tries
             weights = rand(rng, length(sg_edges))
@@ -189,7 +192,8 @@ function recom_chain(graph::BaseGraph,
                      score_keys::Array{String, 1};
                      scores_save_dir::AbstractString="./scores.json",
                      num_tries::Int=3,
-                     acceptance_fn::F=always_accept) where {F<:Function}
+                     acceptance_fn::F=always_accept,
+                     rng::AbstractRNG=Random.default_rng()) where {F<:Function}
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
         Arguments:
@@ -202,12 +206,14 @@ function recom_chain(graph::BaseGraph,
             acceptance_fn:  A function generating a probability in [0, 1]
                             representing the likelihood of accepting the
                             proposal. Should accept a Partition as input.
+            rng:            Random number generator. The user can pass in their
+                            own; otherwise, we use the default RNG from Random.
     """
     steps_taken = 0
     all_scores = Array{Dict{String, Any}, 1}()
 
     while steps_taken < num_steps
-        proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
+        proposal = get_valid_proposal(graph, partition, pop_constraint, rng, num_tries)
         custom_acceptance = acceptance_fn !== always_accept
         update_partition!(partition, graph, proposal, custom_acceptance)
         if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)

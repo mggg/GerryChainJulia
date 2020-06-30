@@ -102,7 +102,9 @@ function get_district_adj_and_cut_edges(graph::BaseGraph,
     return district_adj, cut_edges
 end
 
-function sample_adjacent_districts_randomly(partition::Partition, num_dists::Int)
+function sample_adjacent_districts_randomly(partition::Partition,
+                                            num_dists::Int,
+                                            rng::AbstractRNG)
     """ Randomly sample two adjacent districts and return them.
     """
     while true

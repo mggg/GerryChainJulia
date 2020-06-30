@@ -210,7 +210,7 @@ function recom_chain(graph::BaseGraph,
         proposal = get_valid_proposal(graph, partition, pop_constraint, num_tries)
         custom_acceptance = acceptance_fn !== always_accept
         update_partition!(partition, graph, proposal, custom_acceptance)
-        if custom_acceptance && !pass_acceptance_fn(partition, acceptance_fn)
+        if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
             # go back to the previous partition
             partition = partition.parent
         end

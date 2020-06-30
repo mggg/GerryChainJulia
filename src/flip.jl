@@ -129,7 +129,7 @@ function flip_chain(graph::BaseGraph,
                                       cont_constraint)
         custom_acceptance = acceptance_fn !== always_accept
         update_partition!(partition, graph, proposal, custom_acceptance)
-        if custom_acceptance && !pass_acceptance_fn(partition, acceptance_fn)
+        if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
             # go back to the previous partition
             partition = partition.parent
         end

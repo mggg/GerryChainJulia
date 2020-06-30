@@ -5,10 +5,11 @@ function always_accept(partition::Partition)
 end
 
 
-function pass_acceptance_fn(partition::Partition, acceptance_fn::Function)
+function satisfies_acceptance_fn(partition::Partition,
+                                 acceptance_fn::Function)::Bool
     """ Determines whether a partition should be accepted, according to the
         user-specified acceptance function. Acceptance function must
-        return a valid probability in [0, 1], and pass_acceptance_fn will
+        return a valid probability in [0, 1], and satisfies_acceptance_fn will
         use this probability to determine whether the partition should be
         accepted.
 

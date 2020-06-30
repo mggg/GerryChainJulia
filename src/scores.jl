@@ -1,3 +1,30 @@
+abstract type AbstractScore end
+
+struct DistrictAggregate <: AbstractScore
+    """ A DistrictAggregate score is a simple sum of a particular property
+        over all nodes in a given district. These scores are evaluated on every
+        district in a plan.
+    """
+    name::String
+    key::String
+end
+
+struct DistrictScore <: AbstractScore
+    """ A CustomDistrictScore takes a user-supplied function that returns some
+        quantity of interest given the nodes in a given district.
+    """
+    name::String
+    score_fn::Function
+end
+
+struct PlanScore <: AbstractScore
+    """ A CustomDistrictScore takes a user-supplied function that returns some
+        quantity of interest given all the nodes in an entire plan and the
+        corresonding Partition object.
+    """
+    name::String
+    score_fn::Function
+end
 
 function initialize_dist_scores(score_keys::Array{String, 1})
     """ Initializes a Dict of the form

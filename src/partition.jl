@@ -5,6 +5,7 @@ mutable struct Partition
     cut_edges::Array{Int, 1}                    # of length(num_edges)
     dist_adj::SparseMatrixCSC{Int, Int}
     dist_nodes::Array{BitSet}
+    parent::Union{Partition, Nothing}           # optional parent partition
 end
 
 function Partition(filepath::AbstractString,
@@ -40,8 +41,9 @@ function Partition(filepath::AbstractString,
     # get district_nodes
     dist_nodes = get_district_nodes(assignments, graph.num_nodes, graph.num_dists)
 
+    # return Partition with no parent by default
     return Partition(num_cut_edges, assignments, dist_populations, cut_edges,
-                     dist_adj, dist_nodes)
+                     dist_adj, dist_nodes, nothing)
 end
 
 function get_district_nodes(assignments::Array{Int, 1},

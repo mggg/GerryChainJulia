@@ -12,6 +12,7 @@ tests = [
     "flip",
     "recom",
     "scores",
+    "accept",
     "election",
     "partisan_metrics"
 ]

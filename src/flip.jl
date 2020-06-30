@@ -75,9 +75,16 @@ end
 
 function update_partition!(partition::Partition,
                            graph::BaseGraph,
-                           proposal::FlipProposal)
+                           proposal::FlipProposal,
+                           copy_parent::Bool=false)
     """ Updates the Partition with the FlipProposal
     """
+    if copy_parent
+        partition.parent = nothing
+        old_partition = deepcopy(partition)
+        partition.parent = old_partition
+    end
+
     # update district population counts
     partition.dist_populations[proposal.D₁] = proposal.D₁_pop
     partition.dist_populations[proposal.D₂] = proposal.D₂_pop
@@ -97,9 +104,9 @@ function flip_chain(graph::BaseGraph,
                     pop_constraint::PopulationConstraint,
                     cont_constraint::ContiguityConstraint,
                     num_steps::Int,
-                    score_keys::Array{String, 1},
+                    score_keys::Array{String, 1};
                     scores_save_dir::AbstractString="./scores.json",
-                    num_tries::Int=3)
+                    acceptance_fn::F=always_accept) where {F<:Function}
     """ Runs a Markov Chain for `num_steps` steps using Flip proposals.
 
         Arguments:
@@ -107,21 +114,27 @@ function flip_chain(graph::BaseGraph,
             partition:          Partition with the plan information
             pop_constraint:     PopulationConstraint
             cont_constraint:    ContiguityConstraint
+            num_steps:          Number of steps to run the chain for
             score_keys:         list of scores to evaluate plans with
             score_save_dir:     directory of where to store the scores
-            num_steps:          Number of steps to run the chain for
+            acceptance_fn:      A function generating a probability in [0, 1]
+                                representing the likelihood of accepting the
+                                proposal
     """
     steps_taken = 0
     all_scores = Array{Dict{String, Any}, 1}()
 
     while steps_taken < num_steps
-        steps_taken += 1
-
         proposal = get_valid_proposal(graph, partition, pop_constraint,
                                       cont_constraint)
-        update_partition!(partition, graph, proposal)
-
+        custom_acceptance = acceptance_fn !== always_accept
+        update_partition!(partition, graph, proposal, custom_acceptance)
+        if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
+            # go back to the previous partition
+            partition = partition.parent
+        end
         scores = get_scores(graph, partition, score_keys, steps_taken, proposal)
         push!(all_scores, scores)
+        steps_taken += 1
     end
 end

@@ -189,11 +189,12 @@ function recom_chain(graph::BaseGraph,
                      partition::Partition,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
-                     scores::Array{AbstractScore, 1};
+                     scores::Array{S, 1};
                      scores_save_dir::AbstractString="./scores.json",
                      num_tries::Int=3,
                      acceptance_fn::F=always_accept,
-                     rng::AbstractRNG=Random.default_rng()) where {F<:Function}
+                     rng::AbstractRNG=Random.default_rng()) where {F<:Function,
+                                                                   S<:AbstractScore}
     """ Runs a Markov Chain for `num_steps` steps using ReCom.
 
         Arguments:
@@ -212,7 +213,7 @@ function recom_chain(graph::BaseGraph,
     """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
-    all_scores = Array{Dict{String, Any}, 1}([first_scores])
+    chain_scores = Array{Dict{String, Any}, 1}([first_scores])
 
     while steps_taken < num_steps
         proposal = get_valid_proposal(graph, partition, pop_constraint, rng, num_tries)
@@ -222,8 +223,9 @@ function recom_chain(graph::BaseGraph,
             # go back to the previous partition
             partition = partition.parent
         end
-        scores = get_scores(graph, partition, scores, proposal)
-        push!(all_scores, scores)
+        score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+        push!(chain_scores, score_vals)
         steps_taken += 1
     end
+    return chain_scores
 end

@@ -30,6 +30,14 @@ struct PlanScore <: AbstractScore
 end
 
 
+function DistrictAggregate(key::String)
+    """ Initializes a DistrictAggregate score where the name and key are
+        the same.
+    """
+    return DistrictAggregate(key, key)
+end
+
+
 function eval_score_on_district(graph::BaseGraph,
                                 partition::Partition,
                                 score::DistrictAggregate,
@@ -67,7 +75,7 @@ end
 
 function eval_score_on_districts(graph::BaseGraph,
                                  partition::Partition,
-                                 score::DistrictScore,
+                                 score::Union{DistrictScore,DistrictAggregate},
                                  districts::Array{Int, 1})
     """ Evaluates a user-supplied DistrictScore function repeatedly on districts
         specified by the districts array.
@@ -108,7 +116,7 @@ end
 
 function score_initial_partition(graph::BaseGraph,
                                  partition::Partition,
-                                 scores::Array{AbstractScore, 1})
+                                 scores::Array{S, 1}) where {S<:AbstractScore}
     """ Returns a dictionary of scores for the initial partition. The dictionary
         has the following form (where n is the number of districts, u is the
         number of district-level scores, and v is the number of partition-level
@@ -124,17 +132,17 @@ function score_initial_partition(graph::BaseGraph,
             p_scoreᵥ.name :     d,
         }
     """
-    all_score_values = Dict{String, Any}()
+    score_values = Dict{String, Any}()
     for s in scores
-        all_score_values[s.name] = eval_score_on_partition(graph, partition, s)
+        score_values[s.name] = eval_score_on_partition(graph, partition, s)
     end
-    return all_score_values
+    return score_values
 end
 
 function score_partition_from_proposal(graph::BaseGraph,
                                        partition::Partition,
                                        proposal::AbstractProposal,
-                                       scores::Array{AbstractScore, 1})
+                                       scores::Array{S, 1}) where {S<:AbstractScore}
     """ Returns a Dictionary of (a) updated district-level scores for districts
         that were altered after `proposal` was accepted and (b) partition-level
         scores.
@@ -151,16 +159,17 @@ function score_partition_from_proposal(graph::BaseGraph,
             }
 
     """
-    Δ_scores = Dict{String, Any}()
-    changed = [proposal.D₁, proposal.D₂]
-    Δ_scores["dists"] = changed
+    score_values = Dict{String, Any}()
+    Δ_districts = [proposal.D₁, proposal.D₂]
+    score_values["dists"] = Δ_districts
     for s in scores
         if s isa PlanScore
-            Δ_scores[s.name] = eval_score_on_partition(graph, partition, s)
+            score_values[s.name] = eval_score_on_partition(graph, partition, s)
         else
-            Δ_scores[s.name] = eval_score_on_districts(graph, partition, s, changed)
+            score_values[s.name] = eval_score_on_districts(graph, partition, s, Δ_districts)
         end
-    return Δ_scores
+    end
+    return score_values
 end
 
 

@@ -104,9 +104,10 @@ function flip_chain(graph::BaseGraph,
                     pop_constraint::PopulationConstraint,
                     cont_constraint::ContiguityConstraint,
                     num_steps::Int,
-                    score_keys::Array{String, 1};
+                    scores::Array{S, 1};
                     scores_save_dir::AbstractString="./scores.json",
-                    acceptance_fn::F=always_accept) where {F<:Function}
+                    acceptance_fn::F=always_accept) where {F<:Function,
+                                                           S<:AbstractScore}
     """ Runs a Markov Chain for `num_steps` steps using Flip proposals.
 
         Arguments:
@@ -115,14 +116,15 @@ function flip_chain(graph::BaseGraph,
             pop_constraint:     PopulationConstraint
             cont_constraint:    ContiguityConstraint
             num_steps:          Number of steps to run the chain for
-            score_keys:         list of scores to evaluate plans with
+            scores:             Array of AbstractScores to capture at each step
             score_save_dir:     directory of where to store the scores
             acceptance_fn:      A function generating a probability in [0, 1]
                                 representing the likelihood of accepting the
                                 proposal
     """
     steps_taken = 0
-    all_scores = Array{Dict{String, Any}, 1}()
+    first_scores = score_initial_partition(graph, partition, scores)
+    chain_scores = Array{Dict{String, Any}, 1}([first_scores])
 
     while steps_taken < num_steps
         proposal = get_valid_proposal(graph, partition, pop_constraint,
@@ -133,8 +135,9 @@ function flip_chain(graph::BaseGraph,
             # go back to the previous partition
             partition = partition.parent
         end
-        scores = get_scores(graph, partition, score_keys, steps_taken, proposal)
-        push!(all_scores, scores)
+        score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+        push!(chain_scores, score_vals)
         steps_taken += 1
     end
+    return chain_scores
 end

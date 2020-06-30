@@ -21,7 +21,7 @@
         pop_constraint = PopulationConstraint(graph, "population", 10.0)
         cont_constraint = cont_constraint = ContiguityConstraint()
         scores = ["electionD", "electionR", "purple", "pink"]
-        num_steps = 2 # test 2 steps for now
+        num_steps = 1000
 
         function run_chain()
             try

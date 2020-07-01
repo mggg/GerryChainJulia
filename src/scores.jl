@@ -76,9 +76,13 @@ end
 function eval_score_on_districts(graph::BaseGraph,
                                  partition::Partition,
                                  score::Union{DistrictScore,DistrictAggregate},
-                                 districts::Array{Int, 1})
+                                 districts::Array{Int, 1})::Array
     """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
         score repeatedly on districts specified by the districts array.
+
+        Returns an array of the form [a₁, a₂, ..., aₙ], where aᵢ corresponds to
+        the value of the score for the district indexed by i in the `districts`
+        array and n is the length of `districts`.
     """
     return [eval_score_on_district(graph, partition, score, d) for d in districts]
 end
@@ -86,9 +90,12 @@ end
 
 function eval_score_on_partition(graph::BaseGraph,
                                  partition::Partition,
-                                 score::Union{DistrictScore,DistrictAggregate})
+                                 score::Union{DistrictScore,DistrictAggregate})::Array
     """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
         score on all districts in an entire plan.
+
+        Returns an array of the form [a₁, a₂, ..., aₘ], where m is the number
+        of districts in the plan.
     """
     all_districts = Array(1:graph.num_dists)
     return eval_score_on_districts(graph, partition, score, all_districts)
@@ -210,7 +217,7 @@ end
 
 function save_scores(filename::String,
                      scores::Array{Dict{String, Any}, 1})
-    """ Save the `scores` in a JSON file named `filename`. 
+    """ Save the `scores` in a JSON file named `filename`.
     """
     open(filename, "w") do f
         JSON.print(f, scores)

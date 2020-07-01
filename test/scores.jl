@@ -181,5 +181,12 @@
         for key in keys(parsed_scores)
             @test updated_score_vals[key] == parsed_scores[key]
         end
+
+        # passing in an empty array should yield all scores
+        parsed_scores = get_scores_at_step(all_scores, 2)
+        @test sort(collect(keys(parsed_scores))) == sort([s.name for s in scores])
+        for key in keys(parsed_scores)
+            @test updated_score_vals[key] == parsed_scores[key]
+        end
     end
 end

@@ -177,28 +177,35 @@ end
 
 function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
                             step::Int;
-                            scores::Array{S, 1}=[]) where {S<:AbstractScore}
-    """ Returns the detailed scores of the partition at step `step`.
+                            scores::Array{S,1}=AbstractScore[]) where {S <: AbstractScore}
+    """ Returns the detailed scores of the partition at step `step`. If no
+        scores are passed in, all scores are returned by default.
 
         Arguments:
             all_scores : List of scores of partitions at each step of
                          the Markov Chain
             step       : The step of the chain at which scores are desired
+            scores     : An optional array of AbstractScores for which the user
+                         is requesting the values
     """
     # we don't want to alter the data in all_scores
     score_vals = Dict{String, Any}()
-    foreach(s -> score_vals[s.name] = all_scores[1][s.name], scores)
+    score_names = [s.name for s in scores]
+    if isempty(score_names) # return all scores by default
+        score_names = collect(keys(all_scores[1]))
+    end
+    foreach(name -> score_vals[name] = all_scores[1][name], score_names)
 
     for i in 2:step
         curr_scores = all_scores[i]
         (D₁, D₂) = all_scores[i]["dists"]
 
-        for s in scores
-            if s isa PlanScore
-                score_vals[s.name] = curr_scores[s.name]
+        for key in score_names
+            if curr_scores[key] isa Array # district-level score
+                score_vals[key][D₁] = curr_scores[key][1]
+                score_vals[key][D₂] = curr_scores[key][2]
             else
-                score_vals[s.name][D₁] = curr_scores[s.name][1]
-                score_vals[s.name][D₂] = curr_scores[s.name][2]
+                score_vals[key] = curr_scores[key]
             end
         end
     end

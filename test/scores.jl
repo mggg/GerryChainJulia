@@ -3,7 +3,6 @@
 # modified in each testset
 @testset "Score tests" begin
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
-    partition = Partition(square_grid_filepath, graph, "population", "assignment")
 
     function calc_disparity(graph, nodes)
         diff = 0
@@ -65,6 +64,7 @@
     end
 
     @testset "eval_score_on_district()" begin
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         score_race = DistrictAggregate("purple")
         score_election_d = DistrictAggregate("electionD")
         @test eval_score_on_district(graph, partition, score_race, 1) == 28
@@ -79,6 +79,7 @@
     end
 
     @testset "eval_score_on_partition()" begin
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         score_race = DistrictAggregate("purple")
         purples_by_district = [28, 28, 13, 13]
         @test eval_score_on_partition(graph, partition, score_race) == purples_by_district
@@ -102,6 +103,7 @@
     end
 
     @testset "score_initial_partition()" begin
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
         scores = [
             DistrictAggregate("purple"),
             DistrictAggregate("pink"),
@@ -121,6 +123,8 @@
     end
 
     @testset "score_partition_from_proposal()" begin
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        # create RecomProposal
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
 
@@ -143,6 +147,8 @@
     end
 
     @testset "get_scores_at_step()" begin
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        # initialize scores
         all_scores = Array{Dict{String, Any}, 1}()
         scores = [
             DistrictAggregate("purple"),
@@ -152,21 +158,23 @@
             DistrictScore("race_gap", calc_disparity),
             PlanScore("cut_edges", cut_edges)
         ]
+        # get scores for initial plan
         init_score_vals = score_initial_partition(graph, partition, scores)
         push!(all_scores, init_score_vals)
 
+        # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
+        update_partition!(partition, graph, proposal)
         step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
         push!(all_scores, step_score_vals)
 
+        # fetch first two scores for step 1
         parsed_scores = get_scores_at_step(all_scores, 1, scores=scores[1:2])
         @test sort(collect(keys(parsed_scores))) == sort(["purple", "pink"])
         for key in keys(parsed_scores)
             @test init_score_vals[key] == parsed_scores[key]
         end
 
-        # actually update partition and then score it
-        update_partition!(partition, graph, proposal)
         updated_score_vals = score_initial_partition(graph, partition, scores)
         parsed_scores = get_scores_at_step(all_scores, 2, scores=scores[5:6])
         @test sort(collect(keys(parsed_scores))) == sort(["race_gap", "cut_edges"])

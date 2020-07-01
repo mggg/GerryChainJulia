@@ -3,8 +3,7 @@ abstract type AbstractScore end
 
 struct DistrictAggregate <: AbstractScore
     """ A DistrictAggregate score is a simple sum of a particular property
-        over all nodes in a given district. These scores are evaluated on every
-        district in a plan.
+        over all nodes in a given district.
     """
     name::String
     key::String
@@ -16,17 +15,16 @@ struct DistrictScore <: AbstractScore
         quantity of interest given the nodes in a given district.
     """
     name::String
-    score_fn::Function
+    score_fn::Function # signature: f(graph::BaseGraph, nodes::BitSet)
 end
 
 
 struct PlanScore <: AbstractScore
     """ A CustomDistrictScore takes a user-supplied function that returns some
-        quantity of interest given all the nodes in an entire plan and the
-        corresonding Partition object.
+        quantity of interest given a Graph and corresponding Partition object.
     """
     name::String
-    score_fn::Function
+    score_fn::Function # signature: f(graph::BaseGraph, partition::Partition)
 end
 
 
@@ -66,9 +64,8 @@ function eval_score_on_district(graph::BaseGraph,
         if isa(e, MethodError)
             error_msg = "DistrictScore function must accept graph and array of nodes."
             throw(MethodError(error_msg))
-        else
-            throw(e)
         end
+        throw(e)
     end
 end
 
@@ -113,9 +110,8 @@ function eval_score_on_partition(graph::BaseGraph,
         if isa(e, MethodError)
             error_msg = "PlanScore function must accept graph and partition."
             throw(MethodError(error_msg))
-        else
-            throw(e)
         end
+        throw(e)
     end
 end
 
@@ -171,7 +167,7 @@ function score_partition_from_proposal(graph::BaseGraph,
     for s in scores
         if s isa PlanScore
             score_values[s.name] = eval_score_on_partition(graph, partition, s)
-        else
+        else # efficiently calculate & store scores only on changed districts
             score_values[s.name] = eval_score_on_districts(graph, partition, s, Δ_districts)
         end
     end
@@ -198,11 +194,11 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
         (D₁, D₂) = all_scores[i]["dists"]
 
         for s in scores
-            if score_vals[s.name] isa Array
+            if s isa PlanScore
+                score_vals[s.name] = curr_scores[s.name]
+            else
                 score_vals[s.name][D₁] = curr_scores[s.name][1]
                 score_vals[s.name][D₂] = curr_scores[s.name][2]
-            else
-                score_vals[s.name] = curr_scores[s.name]
             end
         end
     end

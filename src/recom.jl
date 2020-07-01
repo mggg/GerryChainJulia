@@ -190,7 +190,6 @@ function recom_chain(graph::BaseGraph,
                      pop_constraint::PopulationConstraint,
                      num_steps::Int,
                      scores::Array{S, 1};
-                     scores_save_dir::AbstractString="./scores.json",
                      num_tries::Int=3,
                      acceptance_fn::F=always_accept,
                      rng::AbstractRNG=Random.default_rng()) where {F<:Function,

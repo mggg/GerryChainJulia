@@ -206,3 +206,13 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
 
     return score_vals
 end
+
+
+function save_scores(filename::String,
+                     scores::Array{Dict{String, Any}, 1})
+    """ Save the `scores` in a JSON file named `filename`. 
+    """
+    open(filename, "w") do f
+        JSON.print(f, scores)
+    end
+end

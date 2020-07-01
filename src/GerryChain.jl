@@ -33,8 +33,8 @@ flip_chain,
 DistrictAggregate,
 DistrictScore,
 PlanScore,
-score_initial_partition, score_partition_from_proposal, get_scores,
-get_scores_at_step,
+score_initial_partition, score_partition_from_proposal, eval_score_on_district,
+get_scores, get_scores_at_step, eval_score_on_partition, 
 
 # acceptance functions
 always_accept, satisfies_acceptance_fn,

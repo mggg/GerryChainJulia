@@ -77,8 +77,8 @@ function eval_score_on_districts(graph::BaseGraph,
                                  partition::Partition,
                                  score::Union{DistrictScore,DistrictAggregate},
                                  districts::Array{Int, 1})
-    """ Evaluates a user-supplied DistrictScore function repeatedly on districts
-        specified by the districts array.
+    """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
+        score repeatedly on districts specified by the districts array.
     """
     return [eval_score_on_district(graph, partition, score, d) for d in districts]
 end
@@ -87,8 +87,8 @@ end
 function eval_score_on_partition(graph::BaseGraph,
                                  partition::Partition,
                                  score::Union{DistrictScore,DistrictAggregate})
-    """ Evaluates a user-supplied DistrictScore function on the nodes in a
-     particular district.
+    """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
+        score on all districts in an entire plan.
     """
     all_districts = Array(1:graph.num_dists)
     return eval_score_on_districts(graph, partition, score, all_districts)
@@ -98,14 +98,13 @@ end
 function eval_score_on_partition(graph::BaseGraph,
                                  partition::Partition,
                                  score::PlanScore)
-    """ Evaluates a user-supplied PlanScore function on the entire
-        partition.
+    """ Evaluates a user-supplied PlanScore function on the entire partition.
     """
     try
         return score.score_fn(graph, partition)
     catch e # Check if the user-specified method was constructed incorrectly
         if isa(e, MethodError)
-            error_msg = "PlanScore function must accept graph and array of nodes."
+            error_msg = "PlanScore function must accept graph and partition."
             throw(MethodError(error_msg))
         else
             throw(e)
@@ -173,7 +172,9 @@ function score_partition_from_proposal(graph::BaseGraph,
 end
 
 
-function get_scores_at_step(all_scores::Array{}, step::Int)
+function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
+                            step::Int;
+                            scores::Array{S, 1}=[]) where {S<:AbstractScore}
     """ Returns the detailed scores of the partition at step `step`.
 
         Arguments:
@@ -181,27 +182,27 @@ function get_scores_at_step(all_scores::Array{}, step::Int)
                          the Markov Chain
             step       : The step of the chain at which scores are desired
     """
-    if step == 1
-        return all_scores[1]
-    end
-
     # we don't want to alter the data in all_scores
-    scores = deepcopy(all_scores[1])
+    score_vals = Dict{String, Any}()
+    foreach(s -> score_vals[s.name] = all_scores[1][s.name], scores)
+
+    if step == 1
+        return score_vals
+    end
 
     for i in 2:step
         curr_scores = all_scores[i]
         (D₁, D₂) = all_scores[i]["dists"]
 
-        for key in keys(scores)
-            # TODO: this handling for non-array singular values is poor
-            if key == "num_cut_edges"
-                scores[key] = curr_scores[key]
-                continue
+        for s in scores
+            if score_vals[s.name] isa Array
+                score_vals[s.name][D₁] = curr_scores[s.name][1]
+                score_vals[s.name][D₂] = curr_scores[s.name][2]
+            else
+                score_vals[s.name] = curr_scores[s.name]
             end
-            scores[key][D₁] = curr_scores[key][1]
-            scores[key][D₂] = curr_scores[key][2]
         end
     end
 
-    return scores
+    return score_vals
 end

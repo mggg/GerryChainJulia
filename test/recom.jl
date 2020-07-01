@@ -20,7 +20,12 @@
         partition = Partition(square_grid_filepath, graph, "population", "assignment")
         # this is a dummy constraint
         pop_constraint = PopulationConstraint(graph, "population", 10.0)
-        scores = ["electionD", "electionR", "purple", "pink"]
+        scores = [
+            DistrictAggregate("electionD"),
+            DistrictAggregate("electionR"),
+            DistrictAggregate("purple"),
+            DistrictAggregate("pink"),
+        ]
         num_steps = 2 # test 2 steps for now
 
         function run_chain()

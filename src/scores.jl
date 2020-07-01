@@ -193,10 +193,6 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
     score_vals = Dict{String, Any}()
     foreach(s -> score_vals[s.name] = all_scores[1][s.name], scores)
 
-    if step == 1
-        return score_vals
-    end
-
     for i in 2:step
         curr_scores = all_scores[i]
         (D₁, D₂) = all_scores[i]["dists"]

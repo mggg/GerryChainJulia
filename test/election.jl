@@ -110,6 +110,7 @@
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
+
         @test election.vote_counts[:, 1] == [8, 8, 8, 8] # votes for electionD
         @test election.vote_counts[:, 2] == [6, 6, 6, 6] # votes for electionD
 
@@ -118,6 +119,11 @@
         @test d_gap isa PlanScore
         d_gap_score = d_gap.score_fn(graph, partition)
         @test d_gap_score ≈ (4 - 24) / (14 * 4)
+
+        # efficiency gap should break when there are more than two elections
+        bad_election = Election("Test Election", ["A", "B", "C"], graph.num_dists)
+        a_gap = efficiency_gap("test", bad_election, "A")
+        @test_throws ArgumentError a_gap.score_fn(graph, partition)
     end
 
     @testset "ElectionTracker updates votes" begin

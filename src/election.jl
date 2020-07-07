@@ -38,8 +38,8 @@ function count_votes(name::String, election::Election)::DistrictScore
             end
         end
         # update vote shares
-        total_votes = sum(election.vote_counts[district, :])
-        vote_shares = election.vote_counts[district, :] ./ total_votes
+        vote_totals = sum(election.vote_counts[district, :])
+        vote_shares = election.vote_counts[district, :] ./ vote_totals
         election.vote_shares[district, :] = vote_shares
         # create Dict matching party to vote count & share
         vote_pairs = Dict{String, NamedTuple}()
@@ -57,15 +57,16 @@ end
 function seats_won(name::String,
                    election::Election,
                    party::String)::PlanScore
-    """ Returns a PlanScore function that returns the number of seats won by
-        a particular party across all districts in a given plan.
+    """ Returns a PlanScore with a custom scoring function specific to
+        `election` that returns the number of seats won by a particular party
+        across all districts in a given plan.
     """
-    function score_fn(graph::BaseGraph, partition::Partition)
+    function score_fn(args...)
         """ Calculates the number of seats won by a particular party across
             all districts in a given plan. In the case of a tie, neither party
             is considered to have won the district. Note that while the function
-            takes a graph and partition (as is required for a PlanScore), it
-            only uses information from the Election object.
+            will be passed a graph and partition (as is required for a
+            PlanScore), it only uses information from the Election object.
 
             In the case of a tie, no parties are considered winners.
         """
@@ -78,13 +79,11 @@ function seats_won(name::String,
         # district, then there was a tie. we eliminate ties from our vote
         # count data, as we count ties as having no winning district.
         one_winner_districts = sum(achieved_max_votes, dims=2)[:, 1] .== 1
-        no_tie_vote_counts = election.vote_counts[one_winner_districts, :]
-        if length(no_tie_vote_counts) == 0 # all districts are tied, no winners
-            return 0
-        end
-        most_votes = argmax(no_tie_vote_counts, dims=2)
-        winning_parties = getindex.(most_votes, [2])
-        seats_won = sum(party_index .== winning_parties)
+        districts_won = achieved_max_votes[one_winner_districts, :]
+        # if all districts were tied, then return 0, otherwise, return
+        # the number of districts in which there were no ties and the
+        # party achieved the maximum number of votes
+        seats_won = length(districts_won) == 0 ? 0 : sum(districts_won[:, party_index])
         return seats_won
     end
     return PlanScore(name, score_fn)
@@ -94,11 +93,14 @@ end
 function mean_median(name::String,
                      election::Election,
                      party::String)::PlanScore
-     """ Returns a PlanScore function that calculates the mean-median score
+     """ Returns a PlanScore with a custom scoring function specific to
+         `election` that calculates the mean-median score
          of a particular plan for a particular party.
      """
-    function score_fn(graph::BaseGraph, partition::Partition)
-        """ Computes the mean-median score for `party` in `election`.
+    function score_fn(args...)
+        """ Computes the mean-median score for `party` in `election`. Note that
+            while the function will be passed a graph and partition (as is required
+            for a PlanScore), it only uses information from the Election object.
         """
         party_index = findfirst(isequal(party), election.parties)
         vote_shares = election.vote_shares[:, party_index]
@@ -134,11 +136,14 @@ end
 function efficiency_gap(name::String,
                         election::Election,
                         party::String)::PlanScore
-    """ Returns a PlanScore function that calculates the efficiency gap.
-        of a particular plan for a particular party.
+    """ Returns a PlanScore with a custom scoring function specific to
+        `election` that calculates the efficiency gap of a particular plan for
+        a particular party.
     """
-    function score_fn(graph::BaseGraph, partition::Partition)
-        """ Computes the efficiency gap for both parties in `election`.
+    function score_fn(args...)
+        """ Computes the efficiency gap for both parties in `election`. Note
+            that while the function takes a graph and partition (as is required for
+            a PlanScore), it only uses information from the Election object.
         """
         if length(election.parties) != 2
             throw(ArgumentError("Efficiency gap is only valid for elections with 2 parties."))
@@ -147,8 +152,10 @@ function efficiency_gap(name::String,
         party_index = findfirst(isequal(party), election.parties)
         other_index = 3 - (party_index)
         p_wasted_total, o_wasted_total= 0, 0
+        num_dists = size(election.vote_counts)[1]
 
-        for district in 1:graph.num_dists
+        # iterate through all districts and count wasted votes
+        for district in 1:num_dists
             p_votes = election.vote_counts[district, party_index]
             o_votes = election.vote_counts[district, other_index]
             p_wasted, o_wasted = wasted_votes(p_votes, o_votes)

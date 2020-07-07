@@ -223,7 +223,7 @@ function score_partition_from_proposal(graph::BaseGraph,
             # ensure that district-level scores in the CompositeScore are only
             # evaluated on changed districts
             score_values[s.name] = score_partition_from_proposal(graph, partition, proposal, s.scores)
-            delete!(score_values[s.name], "dists")
+            delete!(score_values[s.name], "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
             score_values[s.name] = eval_score_on_districts(graph, partition, s, Δ_districts)
         end
@@ -236,9 +236,9 @@ function update_dictionary!(original::Dict{String, Any},
                             update::Dict{String, Any},
                             D₁::Int,
                             D₂::Int)
-    """ Modifies a Dict in-place by merging it with another Dictionary
-        that contains "updates" to the former Dict. Helper function for
-        `get_scores_at_step.`
+    """ Modifies a Dict in-place by merging it with another Dict
+        that contains "updates" to the former Dict. Runs recursively when there
+        are nested Dicts. Helper function for `get_scores_at_step.`
     """
     for key in keys(original)
         if update[key] isa Array # district-level score

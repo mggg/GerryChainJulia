@@ -179,7 +179,10 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
                             step::Int;
                             scores::Array{S,1}=AbstractScore[]) where {S <: AbstractScore}
     """ Returns the detailed scores of the partition at step `step`. If no
-        scores are passed in, all scores are returned by default.
+        scores are passed in, all scores are returned by default. Here, step=0
+        represents the score of the original (initial) partition, so step=t
+        will return the scores of the plan that was produced after taking
+        t steps of the Markov chain.
 
         Arguments:
             all_scores : List of scores of partitions at each step of
@@ -196,9 +199,10 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
     end
     foreach(name -> score_vals[name] = all_scores[1][name], score_names)
 
-    for i in 2:step
-        curr_scores = all_scores[i]
-        (D₁, D₂) = all_scores[i]["dists"]
+    for i in 1:step
+        # scores at index i+1 represent the scores for the plan after i steps
+        curr_scores = all_scores[i + 1]
+        (D₁, D₂) = all_scores[i + 1]["dists"]
 
         for key in score_names
             if curr_scores[key] isa Array # district-level score

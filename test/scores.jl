@@ -169,21 +169,21 @@
         push!(all_scores, step_score_vals)
 
         # fetch first two scores for step 1
-        parsed_scores = get_scores_at_step(all_scores, 1, scores=scores[1:2])
+        parsed_scores = get_scores_at_step(all_scores, 0, scores=scores[1:2])
         @test sort(collect(keys(parsed_scores))) == sort(["purple", "pink"])
         for key in keys(parsed_scores)
             @test init_score_vals[key] == parsed_scores[key]
         end
 
         updated_score_vals = score_initial_partition(graph, partition, scores)
-        parsed_scores = get_scores_at_step(all_scores, 2, scores=scores[5:6])
+        parsed_scores = get_scores_at_step(all_scores, 1, scores=scores[5:6])
         @test sort(collect(keys(parsed_scores))) == sort(["race_gap", "cut_edges"])
         for key in keys(parsed_scores)
             @test updated_score_vals[key] == parsed_scores[key]
         end
 
         # passing in an empty array should yield all scores
-        parsed_scores = get_scores_at_step(all_scores, 2)
+        parsed_scores = get_scores_at_step(all_scores, 1)
         @test sort(collect(keys(parsed_scores))) == sort([s.name for s in scores])
         for key in keys(parsed_scores)
             @test updated_score_vals[key] == parsed_scores[key]

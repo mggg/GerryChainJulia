@@ -1,138 +1,153 @@
+abstract type AbstractScore end
 
-function initialize_dist_scores(score_keys::Array{String, 1})
-    """ Initializes a Dict of the form
-            {
-              score_key₁ : 0,
+
+struct DistrictAggregate <: AbstractScore
+    """ A DistrictAggregate score is a simple sum of a particular property
+        over all nodes in a given district.
+    """
+    name::String
+    key::String
+end
+
+
+struct DistrictScore <: AbstractScore
+    """ A CustomDistrictScore takes a user-supplied function that returns some
+        quantity of interest given the nodes in a given district.
+    """
+    name::String
+    score_fn::Function # signature: f(graph::BaseGraph, nodes::BitSet)
+end
+
+
+struct PlanScore <: AbstractScore
+    """ A CustomDistrictScore takes a user-supplied function that returns some
+        quantity of interest given a Graph and corresponding Partition object.
+    """
+    name::String
+    score_fn::Function # signature: f(graph::BaseGraph, partition::Partition)
+end
+
+
+function DistrictAggregate(key::String)
+    """ Initializes a DistrictAggregate score where the name and key are
+        the same.
+    """
+    return DistrictAggregate(key, key)
+end
+
+
+function eval_score_on_district(graph::BaseGraph,
+                                partition::Partition,
+                                score::DistrictAggregate,
+                                district::Int)::Number
+    """ Evaluates a DistrictAggregate score on the nodes in a particular
+        district.
+    """
+    sum = 0
+    for node in partition.dist_nodes[district]
+        sum += graph.attributes[node][score.key]
+    end
+    return sum
+end
+
+
+function eval_score_on_district(graph::BaseGraph,
+                                partition::Partition,
+                                score::DistrictScore,
+                                district::Int)
+    """ Evaluates a user-supplied DistrictScore function on the nodes in a
+        particular district.
+    """
+    try
+        return score.score_fn(graph, partition.dist_nodes[district])
+    catch e # Check if the user-specified method was constructed incorrectly
+        if isa(e, MethodError)
+            error_msg = "DistrictScore function must accept graph and array of nodes."
+            throw(MethodError(error_msg))
+        end
+        throw(e)
+    end
+end
+
+
+function eval_score_on_districts(graph::BaseGraph,
+                                 partition::Partition,
+                                 score::Union{DistrictScore,DistrictAggregate},
+                                 districts::Array{Int, 1})::Array
+    """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
+        score repeatedly on districts specified by the districts array.
+
+        Returns an array of the form [a₁, a₂, ..., aₙ], where aᵢ corresponds to
+        the value of the score for the district indexed by i in the `districts`
+        array and n is the length of `districts`.
+    """
+    return [eval_score_on_district(graph, partition, score, d) for d in districts]
+end
+
+
+function eval_score_on_partition(graph::BaseGraph,
+                                 partition::Partition,
+                                 score::Union{DistrictScore,DistrictAggregate})::Array
+    """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
+        score on all districts in an entire plan.
+
+        Returns an array of the form [a₁, a₂, ..., aₘ], where m is the number
+        of districts in the plan.
+    """
+    all_districts = Array(1:graph.num_dists)
+    return eval_score_on_districts(graph, partition, score, all_districts)
+end
+
+
+function eval_score_on_partition(graph::BaseGraph,
+                                 partition::Partition,
+                                 score::PlanScore)
+    """ Evaluates a user-supplied PlanScore function on the entire partition.
+    """
+    try
+        return score.score_fn(graph, partition)
+    catch e # Check if the user-specified method was constructed incorrectly
+        if isa(e, MethodError)
+            error_msg = "PlanScore function must accept graph and partition."
+            throw(MethodError(error_msg))
+        end
+        throw(e)
+    end
+end
+
+
+function score_initial_partition(graph::BaseGraph,
+                                 partition::Partition,
+                                 scores::Array{S, 1}) where {S<:AbstractScore}
+    """ Returns a dictionary of scores for the initial partition. The dictionary
+        has the following form (where n is the number of districts, u is the
+        number of district-level scores, and v is the number of partition-level
+        scores):
+        {
+            # District-level scores
+            d_score₁.name :     [a₁, a₂, ..., aₙ]
                 ...
-              score_keyᵥ : 0
-            }
-        for each key in `score_keys`
-    """
-    dist_scores = Dict{String, Int}()
-    for key in score_keys
-        dist_scores[key] = 0
-    end
-    return dist_scores
-end
-
-function get_district_scores(graph::BaseGraph,
-                             partition::Partition,
-                             dist::Int,
-                             score_keys::Array{String, 1})
-    """ Return a Dict of the form
-        {
-            score_key₁ : x₁
-               ...
-            score_keyᵥ : xᵥ
+            d_scoreᵤ.name :     [b₁, b₂, ..., bₙ]
+            # Partition-level scores
+            p_score₁.name :     c,
+                ...
+            p_scoreᵥ.name :     d,
         }
-        for district `dist`
     """
-    dist_scores = initialize_dist_scores(score_keys)
-    for node in partition.dist_nodes[dist]
-        for key in score_keys
-            dist_scores[key] += graph.attributes[node][key]
-        end
+    score_values = Dict{String, Any}()
+    for s in scores
+        score_values[s.name] = eval_score_on_partition(graph, partition, s)
     end
-    return dist_scores
+    return score_values
 end
 
-function update_scores!(scores::Dict{String, Any},
-                        dist_scores::Dict{String, Int},
-                        score_keys::Array{String, 1})
-    """ Update the `scores` Dictionary with the district_scores in `dist_scores`.
-        The `scores` dictionary holds scores for the entire partition, and the
-        `dist_scores` dictionary only holds the scores for a single district.
-    """
-    for key in score_keys
-        push!(scores[key], dist_scores[key])
-    end
-end
-
-function initialize_scores(partition::Partition,
-                           score_keys::Array{String, 1})
-    """ Returns a Dict of the form
-            {
-              num_cut_edges  : partition.num_cut_edges
-              score_key₁     : Array{Int, 1}(),
-                 ...
-              score_keyᵥ     : Array{Int, 1}()
-            }
-        for each key in score_keys
-    """
-    scores = Dict{String, Any}()
-    scores["num_cut_edges"] = partition.num_cut_edges
-    for key in score_keys
-        scores[key] = Array{Int, 1}()
-    end
-    return scores
-end
-
-function update_scores!(scores::Dict{String, Any},
-                        nodes::BitSet,
-                        graph::BaseGraph,
-                        score_keys::Array{String, 1},
-                        dist::Int)
-    """ Update the `scores` Dict with scores from  'score_keys'
-        for district 'dist'. 'nodes' is the set of nodes in the district `dist`.
-    """
-    for node in nodes
-        for key in score_keys
-            scores[key][dist] += graph.attributes[node][key]
-        end
-    end
-end
-
-function initialize_Δ_scores(partition::Partition,
-                             score_keys::Array{String, 1},
-                             proposal::AbstractProposal)
-    """ Returns a Dict of the form
-        {
-            "num_cut_edges" : partition.num_cut_edges,
-            "dists"         : (D₁, D₂)
-            score_key₁      : [0, 0],
-              ...
-            score_keyᵥ      : [0, 0]
-        }
-        for each key in score_keys
-    """
-    Δ_scores = Dict{String, Any}()
-    Δ_scores["num_cut_edges"] = partition.num_cut_edges
-    Δ_scores["dists"] = (proposal.D₁, proposal.D₂)
-
-    for score_key in score_keys
-        Δ_scores[score_key] = [0, 0]
-    end
-
-    return Δ_scores
-end
-
-function get_detailed_scores(graph::BaseGraph,
-                             partition::Partition,
-                             score_keys::Array{String, 1})
-    """ Return all scores collected for `partition`
-        Eg. {
-              "num_cut_edges" : partition.num_cut_edges,
-              score_key₁  : [x₁, x₂, ..., xᵤ]
-                 ...
-              score_keyᵥ  : [y₁, y₂, ..., yᵤ]
-            }
-        where each value at index i of the arrays is the score at district i,
-        and u is the total number of districts.
-    """
-    scores = initialize_scores(partition, score_keys)
-    for dist in 1:graph.num_dists
-        dist_scores = get_district_scores(graph, partition, dist, score_keys)
-        update_scores!(scores, dist_scores, score_keys)
-    end
-    return scores
-end
-
-function get_Δ_scores(graph::BaseGraph,
-                      partition::Partition,
-                      score_keys::Array{String, 1},
-                      proposal::AbstractProposal)
-    """ Returns only the change in scores from the last partition after
-        `proposal` was accepted.
+function score_partition_from_proposal(graph::BaseGraph,
+                                       partition::Partition,
+                                       proposal::AbstractProposal,
+                                       scores::Array{S, 1}) where {S<:AbstractScore}
+    """ Returns a Dictionary of (a) updated district-level scores for districts
+        that were altered after `proposal` was accepted and (b) partition-level
+        scores.
 
         For example, suppose district 4's new White population is 43 and
         the new Sen2010_Dem population is 62, district 8's new White population
@@ -146,66 +161,68 @@ function get_Δ_scores(graph::BaseGraph,
             }
 
     """
-    Δ_scores = initialize_Δ_scores(partition, score_keys, proposal)
-    update_scores!(Δ_scores, proposal.D₁_nodes, graph, score_keys, 1)
-    update_scores!(Δ_scores, proposal.D₂_nodes, graph, score_keys, 2)
-    return Δ_scores
-end
-
-function get_scores(graph::BaseGraph,
-                    partition::Partition,
-                    score_keys::Array{String, 1},
-                    steps_taken::Int=1,
-                    proposal::AbstractProposal=DummyProposal("Optional argument used when you want Δ metrics."))
-    """ Return all the scores of `partition`.
-
-        steps_taken : Number of steps in the chain
-        score_keys  : Array of score names
-
-        Important:
-            The `proposal` is the step the chain just took. It is used to identify
-            only the districts just modified, so only the change in information
-            from those districts can be stored instead of all the scores.
-            If steps_taken == 1, then it returns the detailed scores instead
-            of just the Δ scores.
-    """
-    if steps_taken == 1
-        scores = get_detailed_scores(graph, partition, score_keys)
-    else
-        scores = get_Δ_scores(graph, partition, score_keys, proposal)
+    score_values = Dict{String, Any}()
+    Δ_districts = [proposal.D₁, proposal.D₂]
+    score_values["dists"] = Δ_districts
+    for s in scores
+        if s isa PlanScore
+            score_values[s.name] = eval_score_on_partition(graph, partition, s)
+        else # efficiently calculate & store scores only on changed districts
+            score_values[s.name] = eval_score_on_districts(graph, partition, s, Δ_districts)
+        end
     end
-    return scores
+    return score_values
 end
 
-function get_scores_at_step(all_scores::Array{}, step::Int)
-    """ Returns the detailed scores of the partition at step `step`.
+
+function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
+                            step::Int;
+                            scores::Array{S,1}=AbstractScore[]) where {S <: AbstractScore}
+    """ Returns the detailed scores of the partition at step `step`. If no
+        scores are passed in, all scores are returned by default. Here, step=0
+        represents the score of the original (initial) partition, so step=t
+        will return the scores of the plan that was produced after taking
+        t steps of the Markov chain.
 
         Arguments:
             all_scores : List of scores of partitions at each step of
                          the Markov Chain
             step       : The step of the chain at which scores are desired
+            scores     : An optional array of AbstractScores for which the user
+                         is requesting the values
     """
-    if step == 1
-        return all_scores[1]
-    end
-
     # we don't want to alter the data in all_scores
-    scores = deepcopy(all_scores[1])
+    score_vals = Dict{String, Any}()
+    score_names = [s.name for s in scores]
+    if isempty(score_names) # return all scores by default
+        score_names = collect(keys(all_scores[1]))
+    end
+    foreach(name -> score_vals[name] = all_scores[1][name], score_names)
 
-    for i in 2:step
-        curr_scores = all_scores[i]
-        (D₁, D₂) = all_scores[i]["dists"]
+    for i in 1:step
+        # scores at index i+1 represent the scores for the plan after i steps
+        curr_scores = all_scores[i + 1]
+        (D₁, D₂) = all_scores[i + 1]["dists"]
 
-        for key in keys(scores)
-            # TODO: this handling for non-array singular values is poor
-            if key == "num_cut_edges"
-                scores[key] = curr_scores[key]
-                continue
+        for key in score_names
+            if curr_scores[key] isa Array # district-level score
+                score_vals[key][D₁] = curr_scores[key][1]
+                score_vals[key][D₂] = curr_scores[key][2]
+            else
+                score_vals[key] = curr_scores[key]
             end
-            scores[key][D₁] = curr_scores[key][1]
-            scores[key][D₂] = curr_scores[key][2]
         end
     end
 
-    return scores
+    return score_vals
+end
+
+
+function save_scores(filename::String,
+                     scores::Array{Dict{String, Any}, 1})
+    """ Save the `scores` in a JSON file named `filename`.
+    """
+    open(filename, "w") do f
+        JSON.print(f, scores)
+    end
 end

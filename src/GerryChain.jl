@@ -30,7 +30,11 @@ update_partition!, recom_chain,
 flip_chain,
 
 # scores
-get_scores, get_scores_at_step,
+DistrictAggregate,
+DistrictScore,
+PlanScore,
+score_initial_partition, score_partition_from_proposal, eval_score_on_district,
+get_scores, get_scores_at_step, eval_score_on_partition, save_scores,
 
 # acceptance functions
 always_accept, satisfies_acceptance_fn,

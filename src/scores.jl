@@ -11,7 +11,7 @@ end
 
 
 struct DistrictScore <: AbstractScore
-    """ A CustomDistrictScore takes a user-supplied function that returns some
+    """ A DistrictScore takes a user-supplied function that returns some
         quantity of interest given the nodes in a given district. The signature
         of `score_fn` should be as follows:
             score_fn(graph::BaseGraph, district_nodes::BitSet, district::int)
@@ -22,7 +22,7 @@ end
 
 
 struct PlanScore <: AbstractScore
-    """ A CustomDistrictScore takes a user-supplied function that returns some
+    """ A PlanScore takes a user-supplied function that returns some
         quantity of interest given a Graph and corresponding Partition object.
         The signature of `score_fn` should be as follows:
             score_fn(graph::BaseGraph, partition::Partition)

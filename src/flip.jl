@@ -116,7 +116,6 @@ function flip_chain(graph::BaseGraph,
             cont_constraint:    ContiguityConstraint
             num_steps:          Number of steps to run the chain for
             scores:             Array of AbstractScores to capture at each step
-            score_save_dir:     directory of where to store the scores
             acceptance_fn:      A function generating a probability in [0, 1]
                                 representing the likelihood of accepting the
                                 proposal

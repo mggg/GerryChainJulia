@@ -33,6 +33,8 @@ flip_chain,
 DistrictAggregate,
 DistrictScore,
 PlanScore,
+CompositeScore,
+AbstractScore,
 score_initial_partition, score_partition_from_proposal, eval_score_on_district,
 get_scores, get_scores_at_step, eval_score_on_partition, save_scores,
 
@@ -40,11 +42,8 @@ get_scores, get_scores_at_step, eval_score_on_partition, save_scores,
 always_accept, satisfies_acceptance_fn,
 
 # election
-AbstractElection, Election, update_elections!, seats_won, total_vote_counts,
-vote_counts_by_district, vote_shares_by_district,
-
-# partisan metric
-mean_median, efficiency_gap
+AbstractElection, Election, ElectionTracker, seats_won, count_votes,
+mean_median, wasted_votes, efficiency_gap
 
 include("./graph.jl")
 include("./partition.jl")
@@ -55,6 +54,5 @@ include("./recom.jl")
 include("./flip.jl")
 include("./accept.jl")
 include("./election.jl")
-include("./partisan_metrics.jl")
 
 end # module

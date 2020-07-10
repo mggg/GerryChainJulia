@@ -11,20 +11,34 @@ end
 
 
 struct DistrictScore <: AbstractScore
-    """ A CustomDistrictScore takes a user-supplied function that returns some
-        quantity of interest given the nodes in a given district.
+    """ A DistrictScore takes a user-supplied function that returns some
+        quantity of interest given the nodes in a given district. The signature
+        of `score_fn` should be as follows:
+            score_fn(graph::BaseGraph, district_nodes::BitSet, district::int)
     """
     name::String
-    score_fn::Function # signature: f(graph::BaseGraph, nodes::BitSet)
+    score_fn::Function
 end
 
 
 struct PlanScore <: AbstractScore
-    """ A CustomDistrictScore takes a user-supplied function that returns some
+    """ A PlanScore takes a user-supplied function that returns some
         quantity of interest given a Graph and corresponding Partition object.
+        The signature of `score_fn` should be as follows:
+            score_fn(graph::BaseGraph, partition::Partition)
     """
     name::String
-    score_fn::Function # signature: f(graph::BaseGraph, partition::Partition)
+    score_fn::Function
+end
+
+
+struct CompositeScore <: AbstractScore
+    """ A CompositeScore is just a group of scores that are run in sequence.
+        CompositeScores are especially useful when the score functions depend
+        upon/modify some shared state.
+    """
+    name::String
+    scores::Array{S,1} where {S<:AbstractScore} # should be other AbstractScores
 end
 
 
@@ -59,10 +73,10 @@ function eval_score_on_district(graph::BaseGraph,
         particular district.
     """
     try
-        return score.score_fn(graph, partition.dist_nodes[district])
+        return score.score_fn(graph, partition.dist_nodes[district], district)
     catch e # Check if the user-specified method was constructed incorrectly
         if isa(e, MethodError)
-            error_msg = "DistrictScore function must accept graph and array of nodes."
+            error_msg = "DistrictScore function must accept graph, array of nodes, and district index."
             throw(MethodError(error_msg))
         end
         throw(e)
@@ -82,6 +96,32 @@ function eval_score_on_districts(graph::BaseGraph,
         array and n is the length of `districts`.
     """
     return [eval_score_on_district(graph, partition, score, d) for d in districts]
+end
+
+
+function eval_score_on_partition(graph::BaseGraph,
+                                 partition::Partition,
+                                 composite::CompositeScore)
+    """ Evaluates the user-supplied functions in the CompositeScore scores
+        array on each of the districts in the partition.
+
+        Returns an Dict of the form:
+        {
+            # District-level scores
+            d_score₁.name :     [a₁, a₂, ..., aₙ]
+                ...
+            d_scoreᵤ.name :     [b₁, b₂, ..., bₙ]
+            # Partition-level scores
+            p_score₁.name :     c,
+                ...
+            p_scoreᵥ.name :     d,
+        }
+    """
+    composite_results = Dict{String, Any}()
+    for s in composite.scores
+        composite_results[s.name] = eval_score_on_partition(graph, partition, s)
+    end
+    return composite_results
 end
 
 
@@ -121,8 +161,8 @@ function score_initial_partition(graph::BaseGraph,
                                  scores::Array{S, 1}) where {S<:AbstractScore}
     """ Returns a dictionary of scores for the initial partition. The dictionary
         has the following form (where n is the number of districts, u is the
-        number of district-level scores, and v is the number of partition-level
-        scores):
+        number of district-level scores, v is the number of partition-level
+        scores, and t is the number of composite scores):
         {
             # District-level scores
             d_score₁.name :     [a₁, a₂, ..., aₙ]
@@ -132,6 +172,17 @@ function score_initial_partition(graph::BaseGraph,
             p_score₁.name :     c,
                 ...
             p_scoreᵥ.name :     d,
+            # Composite scores
+            c_score₁.name :
+                {
+                    c_score₁.scores[1].name :     ...
+                        ...
+                }
+                ...
+            c_scoreₜ.name :
+                {
+                    ...
+                }
         }
     """
     score_values = Dict{String, Any}()
@@ -146,8 +197,9 @@ function score_partition_from_proposal(graph::BaseGraph,
                                        proposal::AbstractProposal,
                                        scores::Array{S, 1}) where {S<:AbstractScore}
     """ Returns a Dictionary of (a) updated district-level scores for districts
-        that were altered after `proposal` was accepted and (b) partition-level
-        scores.
+        that were altered after `proposal` was accepted, (b) partition-level
+        scores, and (c) composite scores, that may be comprised of scores from
+        (a) or (b).
 
         For example, suppose district 4's new White population is 43 and
         the new Sen2010_Dem population is 62, district 8's new White population
@@ -167,11 +219,37 @@ function score_partition_from_proposal(graph::BaseGraph,
     for s in scores
         if s isa PlanScore
             score_values[s.name] = eval_score_on_partition(graph, partition, s)
+        elseif s isa CompositeScore
+            # ensure that district-level scores in the CompositeScore are only
+            # evaluated on changed districts
+            score_values[s.name] = score_partition_from_proposal(graph, partition, proposal, s.scores)
+            delete!(score_values[s.name], "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
             score_values[s.name] = eval_score_on_districts(graph, partition, s, Δ_districts)
         end
     end
     return score_values
+end
+
+
+function update_dictionary!(original::Dict{String, Any},
+                            update::Dict{String, Any},
+                            D₁::Int,
+                            D₂::Int)
+    """ Modifies a Dict in-place by merging it with another Dict
+        that contains "updates" to the former Dict. Runs recursively when there
+        are nested Dicts. Helper function for `get_scores_at_step.`
+    """
+    for key in keys(original)
+        if update[key] isa Array # district-level score
+            original[key][D₁] = update[key][1]
+            original[key][D₂] = update[key][2]
+        elseif update[key] isa Dict # composite score
+            update_dictionary!(original[key], update[key], D₁, D₂)
+        else
+            original[key] = update[key]
+        end
+    end
 end
 
 
@@ -200,18 +278,9 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
     foreach(name -> score_vals[name] = all_scores[1][name], score_names)
 
     for i in 1:step
-        # scores at index i+1 represent the scores for the plan after i steps
         curr_scores = all_scores[i + 1]
         (D₁, D₂) = all_scores[i + 1]["dists"]
-
-        for key in score_names
-            if curr_scores[key] isa Array # district-level score
-                score_vals[key][D₁] = curr_scores[key][1]
-                score_vals[key][D₂] = curr_scores[key][2]
-            else
-                score_vals[key] = curr_scores[key]
-            end
-        end
+        update_dictionary!(score_vals, curr_scores, D₁, D₂)
     end
 
     return score_vals

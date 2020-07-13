@@ -290,12 +290,15 @@ end
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::Union{DistrictAggregate, DistrictScore};
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Returns the value of specified score at every step of the chain.
+    """ Returns the value of specified DistrictScore/DistrictAggregate score
+        at every step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
                          the Markov Chain
             score       : DistrictScore of interest
+            nested_key  : If the score is nested within a CompositeScore, this
+                          argument provides the CompositeScore's name
     """
     # check if score is nested inside a CompositeScore
     nested = nested_key == nothing
@@ -322,12 +325,14 @@ end
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::PlanScore;
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Returns the value of specified score at every step of the chain.
+    """ Returns the value of specified PlanScore at every step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
                          the Markov Chain
             score       : PlanScore of interest
+            nested_key  : If the score is nested within a CompositeScore, this
+                          argument provides the CompositeScore's name
     """
     num_states = length(all_scores)
     if nested_key == nothing

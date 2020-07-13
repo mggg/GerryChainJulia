@@ -150,8 +150,6 @@
         scores = [
             DistrictAggregate("purple"),
             DistrictAggregate("pink"),
-            DistrictAggregate("electionD"),
-            DistrictAggregate("electionR"),
             DistrictScore("race_gap", calc_disparity),
             PlanScore("cut_edges", cut_edges),
             CompositeScore("votes", [votes_d, votes_r])

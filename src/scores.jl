@@ -287,6 +287,70 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
 end
 
 
+function get_score_values(all_scores::Array{Dict{String, Any}, 1},
+                          score::Union{DistrictAggregate, DistrictScore};
+                          nested_key::Union{String,Nothing}=nothing)::Array
+    """ Returns the value of specified score at every step of the chain.
+
+        Arguments:
+            all_scores  : List of scores of partitions at each step of
+                         the Markov Chain
+            score       : DistrictScore of interest
+    """
+    # check if score is nested inside a CompositeScore
+    nested = nested_key == nothing
+    init_vals = nested ? all_scores[1][score.name] : all_scores[1][nested_key][score.name]
+    num_districts = length(init_vals)
+    # create a matrix that is (num states of chain, num districts) to record
+    # values of score
+    score_table = Array{typeof(init_vals[1]), 2}(undef, length(all_scores), num_districts)
+    # we don't want to alter the data in all_scores
+    score_table[1, :] = deepcopy(init_vals)
+
+    for i in 2:length(all_scores)
+        score_table[i, :] = deepcopy(score_table[i-1, :])
+        (D₁, D₂) = all_scores[i]["dists"]
+        curr_scores = nested ? all_scores[i] : all_scores[i][nested_key]
+        score_table[i, D₁] = curr_scores[score.name][D₁]
+        score_table[i, D₂] = curr_scores[score.name][D₂]
+    end
+
+    return score_table
+end
+
+
+function get_score_values(all_scores::Array{Dict{String, Any}, 1},
+                          score::PlanScore;
+                          nested_key::Union{String,Nothing}=nothing)::Array
+    """ Returns the value of specified score at every step of the chain.
+
+        Arguments:
+            all_scores  : List of scores of partitions at each step of
+                         the Markov Chain
+            score       : PlanScore of interest
+    """
+    num_states = length(all_scores)
+    if nested_key == nothing
+        return deepcopy([all_scores[i][score.name] for i in 1:num_states])
+    end
+    return deepcopy([all_scores[i][nested_key][score.name] for i in 1:num_states])
+end
+
+
+function get_score_values(all_scores::Array{Dict{String, Any}, 1},
+                          composite::CompositeScore)::Dict{String, Array}
+    """ Returns the value of specified score at every step of the chain.
+
+        Arguments:
+            all_scores  : List of scores of partitions at each step of
+                         the Markov Chain
+            composite   : CompositeScore of interest
+    """
+    fetch_vals = s -> get_score_values(all_scores, s, nested_key = composite.name)
+    return Dict(s.name => fetch_vals(s) for s in composite.scores)
+end
+
+
 function save_scores(filename::String,
                      scores::Array{Dict{String, Any}, 1})
     """ Save the `scores` in a JSON file named `filename`.

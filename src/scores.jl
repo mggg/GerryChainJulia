@@ -329,7 +329,7 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
-                         the Markov Chain
+                          the Markov Chain
             score       : PlanScore of interest
             nested_key  : If the score is nested within a CompositeScore, this
                           argument provides the CompositeScore's name
@@ -348,7 +348,7 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
-                         the Markov Chain
+                          the Markov Chain
             composite   : CompositeScore of interest
     """
     fetch_vals = s -> get_score_values(all_scores, s, nested_key = composite.name)

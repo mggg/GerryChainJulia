@@ -230,7 +230,7 @@
         step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
         push!(all_scores, step_score_vals)
 
-        # check
+        # check that return values look correct
         purple_vals = get_score_values(all_scores, scores[1])
         @test size(purple_vals) == (2, 4)
         @test purple_vals == [[28 28 13 13]; [34 22 13 13]]

@@ -344,7 +344,7 @@ end
 
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           composite::CompositeScore)::Dict{String, Array}
-    """ Returns the value of specified score at every step of the chain.
+    """ Returns the value of specified CompositeScore at every step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of

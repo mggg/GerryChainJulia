@@ -221,24 +221,25 @@
             PlanScore("cut_edges", cut_edges),
             CompositeScore("votes", [votes_d, votes_r])
         ]
+        chain_data = ChainScoreData(scores, [])
         # get scores for initial plan
         init_score_vals = score_initial_partition(graph, partition, scores)
-        push!(all_scores, init_score_vals)
+        push!(chain_data.step_values, init_score_vals)
 
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
         step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
-        push!(all_scores, step_score_vals)
+        push!(chain_data.step_values, step_score_vals)
 
         # check that return values look correct
-        purple_vals = get_score_values(all_scores, scores[1])
+        purple_vals = get_score_values(chain_data, "purple")
         @test size(purple_vals) == (2, 4)
         @test purple_vals == [[28 28 13 13]; [34 22 13 13]]
-        cut_edge_vals = get_score_values(all_scores, scores[2])
+        cut_edge_vals = get_score_values(chain_data, "cut_edges")
         @test size(cut_edge_vals) == (2,)
         @test cut_edge_vals == [8, 9]
-        vote_vals = get_score_values(all_scores, scores[3])
+        vote_vals = get_score_values(chain_data, "votes")
         @test vote_vals isa Dict
         @test vote_vals == Dict{}("electionD" => [[6 6 6 6]; [8 4 6 6]],
                                   "electionR" => [[6 6 6 6]; [6 6 6 6]])

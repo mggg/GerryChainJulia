@@ -272,7 +272,7 @@ function get_scores_at_step(chain_data::ChainScoreData,
         t steps of the Markov chain.
 
         Arguments:
-            chain_data   : ChainScoreData objec tcontaining scores of partitions
+            chain_data   : ChainScoreData object containing scores of partitions
                            at each step of the Markov Chain
             step         : The step of the chain at which scores are desired
             score_names  : An optional array of Strings representing the scores
@@ -298,8 +298,8 @@ end
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::Union{DistrictAggregate, DistrictScore};
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Returns the value of specified DistrictScore/DistrictAggregate score
-        at every step of the chain.
+    """ Helper function that returns the value of specified
+        DistrictScore/DistrictAggregate score at every step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
@@ -333,7 +333,8 @@ end
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::PlanScore;
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Returns the value of specified PlanScore at every step of the chain.
+    """ Helper function that returns the value of specified PlanScore at every
+        step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
@@ -352,7 +353,8 @@ end
 
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           composite::CompositeScore)::Dict{String, Array}
-    """ Returns the value of specified CompositeScore at every step of the chain.
+    """ Helper function that returns the value of specified CompositeScore at
+        every step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
@@ -364,11 +366,28 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
 end
 
 
+function get_score_values(chain_data::ChainScoreData,
+                          score_name::String)
+    """ Returns the value of specified score at every step of the chain.
+
+        Arguments:
+            chain_data   : ChainScoreData object containing scores of partitions
+                           at each step of the Markov Chain
+            score_name   : Name of the score of interest
+    """
+    index = findfirst(s -> s.name == score_name, chain_data.scores)
+    if index == 0
+        throw(ArgumentError("No score with requested name found."))
+    end
+    return get_score_values(chain_data.step_values, chain_data.scores[index])
+end
+
+
 function save_scores(filename::String,
-                     scores::Array{Dict{String, Any}, 1})
+                     chain_data::ChainScoreData)
     """ Save the `scores` in a JSON file named `filename`.
     """
     open(filename, "w") do f
-        JSON.print(f, scores)
+        JSON.print(f, chain_data.step_values)
     end
 end

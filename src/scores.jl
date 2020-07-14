@@ -42,6 +42,15 @@ struct CompositeScore <: AbstractScore
 end
 
 
+struct ChainScoreData
+    """ The ChainScoreData object stores the values returned by score functions
+        at every step of the chain.
+    """
+    scores::Array{S,1} where {S<:AbstractScore} # should be other AbstractScores
+    step_values::Array{Dict{String, Any}} # array of Dicts which map {score name: score value}
+end
+
+
 function DistrictAggregate(key::String)
     """ Initializes a DistrictAggregate score where the name and key are
         the same.

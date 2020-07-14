@@ -122,7 +122,7 @@ function flip_chain(graph::BaseGraph,
     """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
-    chain_scores = Array{Dict{String, Any}, 1}([first_scores])
+    chain_scores = ChainScoreData(scores, [first_scores])
 
     while steps_taken < num_steps
         proposal = get_valid_proposal(graph, partition, pop_constraint,
@@ -134,7 +134,7 @@ function flip_chain(graph::BaseGraph,
             partition = partition.parent
         end
         score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
-        push!(chain_scores, score_vals)
+        push!(chain_scores.step_values, score_vals)
         steps_taken += 1
     end
     return chain_scores

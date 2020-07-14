@@ -301,8 +301,8 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           argument provides the CompositeScore's name
     """
     # check if score is nested inside a CompositeScore
-    nested = nested_key == nothing
-    init_vals = nested ? all_scores[1][score.name] : all_scores[1][nested_key][score.name]
+    nested = nested_key != nothing
+    init_vals = nested ? all_scores[1][nested_key][score.name] : all_scores[1][score.name]
     num_districts = length(init_vals)
     # create a matrix that is (num states of chain, num districts) to record
     # values of score
@@ -313,7 +313,7 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
     for i in 2:length(all_scores)
         score_table[i, :] = deepcopy(score_table[i-1, :])
         (D₁, D₂) = all_scores[i]["dists"]
-        curr_scores = nested ? all_scores[i] : all_scores[i][nested_key]
+        curr_scores = nested ? all_scores[i][nested_key] : all_scores[i]
         score_table[i, D₁] = curr_scores[score.name][D₁]
         score_table[i, D₂] = curr_scores[score.name][D₂]
     end

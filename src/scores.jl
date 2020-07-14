@@ -262,9 +262,9 @@ function update_dictionary!(original::Dict{String, Any},
 end
 
 
-function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
+function get_scores_at_step(chain_data::ChainScoreData,
                             step::Int;
-                            scores::Array{S,1}=AbstractScore[]) where {S <: AbstractScore}
+                            score_names::Array{String,1}=String[])::Dict{String, Any}
     """ Returns the detailed scores of the partition at step `step`. If no
         scores are passed in, all scores are returned by default. Here, step=0
         represents the score of the original (initial) partition, so step=t
@@ -272,23 +272,22 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
         t steps of the Markov chain.
 
         Arguments:
-            all_scores : List of scores of partitions at each step of
-                         the Markov Chain
-            step       : The step of the chain at which scores are desired
-            scores     : An optional array of AbstractScores for which the user
-                         is requesting the values
+            chain_data   : ChainScoreData objec tcontaining scores of partitions
+                           at each step of the Markov Chain
+            step         : The step of the chain at which scores are desired
+            score_names  : An optional array of Strings representing the scores
+                           for which the user is requesting the values
     """
     # we don't want to alter the data in all_scores
     score_vals = Dict{String, Any}()
-    score_names = [s.name for s in scores]
     if isempty(score_names) # return all scores by default
-        score_names = collect(keys(all_scores[1]))
+        score_names = collect(keys(chain_data.step_values[1]))
     end
-    foreach(name -> score_vals[name] = all_scores[1][name], score_names)
+    foreach(name -> score_vals[name] = chain_data.step_values[1][name], score_names)
 
     for i in 1:step
-        curr_scores = all_scores[i + 1]
-        (D₁, D₂) = all_scores[i + 1]["dists"]
+        curr_scores = chain_data.step_values[i + 1]
+        (D₁, D₂) = chain_data.step_values[i + 1]["dists"]
         update_dictionary!(score_vals, curr_scores, D₁, D₂)
     end
 

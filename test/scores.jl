@@ -167,7 +167,6 @@
     @testset "get_scores_at_step()" begin
         partition = Partition(square_grid_filepath, graph, "population", "assignment")
         # initialize scores
-        all_scores = Array{Dict{String, Any}, 1}()
         votes_d = DistrictAggregate("electionD")
         votes_r = DistrictAggregate("electionR")
         scores = [
@@ -177,33 +176,35 @@
             PlanScore("cut_edges", cut_edges),
             CompositeScore("votes", [votes_d, votes_r])
         ]
+        chain_data = ChainScoreData(scores, [])
         # get scores for initial plan
         init_score_vals = score_initial_partition(graph, partition, scores)
-        push!(all_scores, init_score_vals)
+        push!(chain_data.step_values, init_score_vals)
 
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
         step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
-        push!(all_scores, step_score_vals)
+        push!(chain_data.step_values, step_score_vals)
 
         # fetch first two scores for step 1
-        parsed_scores = get_scores_at_step(all_scores, 0, scores=scores[1:2])
-        @test sort(collect(keys(parsed_scores))) == sort(["purple", "pink"])
+        all_score_names = ["purple", "pink", "race_gap", "cut_edges", "votes"]
+        parsed_scores = get_scores_at_step(chain_data, 0, score_names=all_score_names[1:2])
+        @test sort(collect(keys(parsed_scores))) == sort(all_score_names[1:2])
         for key in keys(parsed_scores)
             @test init_score_vals[key] == parsed_scores[key]
         end
 
         updated_score_vals = score_initial_partition(graph, partition, scores)
-        parsed_scores = get_scores_at_step(all_scores, 1, scores=scores[3:5])
-        @test sort(collect(keys(parsed_scores))) == sort(["race_gap", "cut_edges", "votes"])
+        parsed_scores = get_scores_at_step(chain_data, 1, score_names=all_score_names[3:5])
+        @test sort(collect(keys(parsed_scores))) == sort(all_score_names[3:5])
         for key in keys(parsed_scores)
             @test updated_score_vals[key] == parsed_scores[key]
         end
 
         # passing in an empty array should yield all scores
-        parsed_scores = get_scores_at_step(all_scores, 1)
-        @test sort(collect(keys(parsed_scores))) == sort([s.name for s in scores])
+        parsed_scores = get_scores_at_step(chain_data, 1)
+        @test sort(collect(keys(parsed_scores))) == sort(all_score_names)
         for key in keys(parsed_scores)
             @test updated_score_vals[key] == parsed_scores[key]
         end

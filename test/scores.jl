@@ -150,8 +150,6 @@
         scores = [
             DistrictAggregate("purple"),
             DistrictAggregate("pink"),
-            DistrictAggregate("electionD"),
-            DistrictAggregate("electionR"),
             DistrictScore("race_gap", calc_disparity),
             PlanScore("cut_edges", cut_edges),
             CompositeScore("votes", [votes_d, votes_r])
@@ -162,6 +160,8 @@
         @test score_vals["pink"] == [17, 9]
         @test score_vals["votes"] == Dict{}("electionD" => [8, 4], "electionR" => [6, 6])
         @test score_vals["race_gap"] == [17, 13]
+        @test score_vals["cut_edges"] == 9
+        @test score_vals["dists"] == [1, 2]
     end
 
     @testset "get_scores_at_step()" begin

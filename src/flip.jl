@@ -107,7 +107,9 @@ function flip_chain(graph::BaseGraph,
                     scores::Array{S, 1};
                     acceptance_fn::F=always_accept)::ChainScoreData where
                     {F<:Function, S<:AbstractScore}
-    """ Runs a Markov Chain for `num_steps` steps using Flip proposals.
+    """ Runs a Markov Chain for `num_steps` steps using Flip proposals. Returns
+        a ChainScoreData object which can be queried to retrieve the values of 
+        every score at each step of the chain.
 
         Arguments:
             graph:              BaseGraph

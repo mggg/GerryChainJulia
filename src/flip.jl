@@ -105,8 +105,8 @@ function flip_chain(graph::BaseGraph,
                     cont_constraint::ContiguityConstraint,
                     num_steps::Int,
                     scores::Array{S, 1};
-                    acceptance_fn::F=always_accept) where {F<:Function,
-                                                           S<:AbstractScore}
+                    acceptance_fn::F=always_accept)::ChainScoreData where
+                    {F<:Function, S<:AbstractScore}
     """ Runs a Markov Chain for `num_steps` steps using Flip proposals.
 
         Arguments:

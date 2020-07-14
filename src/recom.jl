@@ -192,9 +192,11 @@ function recom_chain(graph::BaseGraph,
                      scores::Array{S, 1};
                      num_tries::Int=3,
                      acceptance_fn::F=always_accept,
-                     rng::AbstractRNG=Random.default_rng()) where {F<:Function,
-                                                                   S<:AbstractScore}
-    """ Runs a Markov Chain for `num_steps` steps using ReCom.
+                     rng::AbstractRNG=Random.default_rng())::ChainScoreData where
+                     {F<:Function, S<:AbstractScore}
+    """ Runs a Markov Chain for `num_steps` steps using ReCom. Returns
+        a ChainScoreData object which can be queried to retrieve the values of
+        every score at each step of the chain.
 
         Arguments:
             graph:          BaseGraph

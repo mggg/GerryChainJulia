@@ -44,9 +44,9 @@ end
 
 struct ChainScoreData
     """ The ChainScoreData object stores the values returned by score functions
-        at every step of the chain.
+        at every step of the chain as well as the scores themselves.
     """
-    scores::Array{S,1} where {S<:AbstractScore} # should be other AbstractScores
+    scores::Array{S,1} where {S<:AbstractScore} # scores that were measured on a particular chain
     step_values::Array{Dict{String, Any}} # array of Dicts which map {score name: score value}
 end
 

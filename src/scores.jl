@@ -314,8 +314,8 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
         score_table[i, :] = deepcopy(score_table[i-1, :])
         (D₁, D₂) = all_scores[i]["dists"]
         curr_scores = nested ? all_scores[i][nested_key] : all_scores[i]
-        score_table[i, D₁] = curr_scores[score.name][D₁]
-        score_table[i, D₂] = curr_scores[score.name][D₂]
+        score_table[i, D₁] = curr_scores[score.name][1]
+        score_table[i, D₂] = curr_scores[score.name][2]
     end
 
     return score_table

@@ -243,5 +243,9 @@
         @test vote_vals isa Dict
         @test vote_vals == Dict{}("electionD" => [[6 6 6 6]; [8 4 6 6]],
                                   "electionR" => [[6 6 6 6]; [6 6 6 6]])
+        d_vote_vals = get_score_values(chain_data, "electionD")
+        @test size(d_vote_vals) == (2, 4)
+        @test d_vote_vals == [[6 6 6 6]; [8 4 6 6]]
+        @test_throws ArgumentError get_score_values(chain_data, "nonexistent")
     end
 end

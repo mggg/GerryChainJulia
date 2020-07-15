@@ -376,7 +376,15 @@ function get_score_values(chain_data::ChainScoreData,
             score_name   : Name of the score of interest
     """
     index = findfirst(s -> s.name == score_name, chain_data.scores)
-    if index == 0
+    if index == nothing
+        # Check if score is nested inside a CompositeScore
+        composite_scores = filter(s -> s isa CompositeScore, chain_data.scores)
+        for c in composite_scores
+            index = findfirst(s -> s.name == score_name, c.scores)
+            if index != nothing
+                return get_score_values(chain_data.step_values, c.scores[index], nested_key=c.name)
+            end
+        end
         throw(ArgumentError("No score with requested name found."))
     end
     return get_score_values(chain_data.step_values, chain_data.scores[index])

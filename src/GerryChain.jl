@@ -55,5 +55,6 @@ include("./recom.jl")
 include("./flip.jl")
 include("./accept.jl")
 include("./election.jl")
+include("./plot.jl")
 
 end # module

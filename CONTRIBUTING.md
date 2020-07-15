@@ -57,6 +57,5 @@ docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in
 * Separate positional arguments from keyword arguments using a semicolon (;).
 * Explicitly state `return` in your functions eg. `return x` instead of just `x`, which would also work.
 
-This contributing document has been partially been derived from its Python sibling, and the Style Guide has been adopted from [the official Style Guide]([GitHub
-docs](https://help.github.com/articles/creating-a-pull-request/)) and [jrevel's style guide.](https://docs.julialang.org/en/v1/manual/style-guide/index.html)
+This contributing document has been partially been derived from [its Python sibling](https://github.com/mggg/GerryChain/blob/master/CONTRIBUTING.md), and the Style Guide has been adopted from [the official Style Guide](https://help.github.com/articles/creating-a-pull-request/) and [jrevel's style guide.](https://docs.julialang.org/en/v1/manual/style-guide/index.html)
 

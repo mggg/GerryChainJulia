@@ -5,7 +5,10 @@ function score_boxplot(score_values::Array{S, 2};
     """ DistrictScore. Expects data with dimensions (# of steps, districts)
     """
     if sort_by_score
-        # sort columns of score data by median
+        # within every step of the chain (i.e., within each row),
+        # sort districts by value of the score
+        score_values = sort(score_values, dims=2)
+        # sort columns by median value of score
         score_values = sortslices(score_values, dims=2, lt=(x,y) -> isless(median(x), median(y)))
     end
     plt.boxplot(score_values, showcaps=true, showbox=true, showfliers=false)

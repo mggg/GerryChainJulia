@@ -24,6 +24,7 @@ docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in
 **When making a PR:**
 
 - If the PR you are going to submit is a ~large change with say > 80 lines of code, open an Issue and talk to the maintainers to get feedback before working on it. 
+- We recommend [these guidelines](https://chris.beams.io/posts/git-commit/) for commit messages.
 - Fix one issue at a time. If you are fixing more than one issue, then it should probably be multiple PRs.
 - Be sure to follow the style guide.
 - The title of the PR should be clear, and there should be an accompanying description. 
@@ -31,6 +32,10 @@ docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in
 - If you are adding new code, it should be unit tested.
 - Respond to every comment. (to the best of your judgement! For example if the reviewer has simply complimented a smart line of code, it is ok to simply resolve it.)
 - Comment on individual lines of the PR yourself if you want to bring special attention to it for feedback.
+- If you are a core contributor and wish to push a large feature that would require multiple PRs, the recommended workflow is to first create a "feature" branch off of `main`. Then, make a PR that commits the architecture of this feature. This could simply be a function that has function stubs like 
+	`do_x()`
+	`do_y()` 
+	without implementing the functions themselves. Then, make PRs that would handle `do_x()` and `do_y()` seperately. Request a review for each PR, and when the entire feature is complete it is easier to merge that into the `main` branch.
 
 **When reviewing a PR:**
 

@@ -117,11 +117,7 @@ function eval_score_on_partition(graph::BaseGraph,
             p_scoreᵥ.name :     d,
         }
     """
-    composite_results = Dict{String, Any}()
-    for s in composite.scores
-        composite_results[s.name] = eval_score_on_partition(graph, partition, s)
-    end
-    return composite_results
+    return score_initial_partition(graph, partition, composite.scores)
 end
 
 
@@ -187,7 +183,12 @@ function score_initial_partition(graph::BaseGraph,
     """
     score_values = Dict{String, Any}()
     for s in scores
-        score_values[s.name] = eval_score_on_partition(graph, partition, s)
+         value = eval_score_on_partition(graph, partition, s)
+         # check if value returned by score was empty
+         val_empty = value == nothing
+         # check if array of values returned by score was empty
+         val_empty |= (value isa Array && count(x -> x == nothing, value) == length(value))
+         val_empty ? continue : score_values[s.name] = value
     end
     return score_values
 end
@@ -217,15 +218,22 @@ function score_partition_from_proposal(graph::BaseGraph,
     Δ_districts = [proposal.D₁, proposal.D₂]
     score_values["dists"] = Δ_districts
     for s in scores
+        value = nothing # placeholder for output of score
+        empty_return = false # whether the score returned nothing
         if s isa PlanScore
-            score_values[s.name] = eval_score_on_partition(graph, partition, s)
+            value = eval_score_on_partition(graph, partition, s)
+            empty_return = value == nothing
         elseif s isa CompositeScore
             # ensure that district-level scores in the CompositeScore are only
             # evaluated on changed districts
-            score_values[s.name] = score_partition_from_proposal(graph, partition, proposal, s.scores)
-            delete!(score_values[s.name], "dists") # remove redundant dists key
+            value = score_partition_from_proposal(graph, partition, proposal, s.scores)
+            delete!(value, "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
-            score_values[s.name] = eval_score_on_districts(graph, partition, s, Δ_districts)
+            value = eval_score_on_districts(graph, partition, s, Δ_districts)
+            empty_return = value[1] == nothing || value[2] == nothing
+        end
+        if !empty_return
+            score_values[s.name] = value
         end
     end
     return score_values

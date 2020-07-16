@@ -100,12 +100,10 @@ function score_boxplot(chain_data::ChainScoreData, score_name::String; kwargs...
                           and sort_by_score (the latter should only be passed
                           for district-level scores).
     """
-    index = findfirst(s -> s.name == score_name, chain_data.scores)
-    if chain_data.scores[index] isa CompositeScore
-        throw(ArgumentError("Cannot make a boxplot of a CompositeScore."))
-    elseif index == 0
-        throw(ArgumentError("Cannot find score in ChainScoreData object."))
+    score_vals = get_score_values(chain_data, score_name)
+    if score_vals[1] isa Dict # this means the score was a CompositeScore
+        throw(ArgumentError("Cannot make a boxplot of a CompositeScore"))
     end
-    score_boxplot(get_score_values(chain_data, score_name); kwargs...)
+    score_boxplot(score_vals; kwargs...)
     plt.ylabel(score_name)
 end

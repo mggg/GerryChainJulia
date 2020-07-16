@@ -6,3 +6,6 @@ os:
   - osx
   - linux
   - windows
+
+before_script:
+  - export PYTHON="" # ensure that PyPlot installs matplotlib using Conda.jl

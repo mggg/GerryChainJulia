@@ -1,153 +1,188 @@
-
-abstract type AbstractElection end
-
-mutable struct Election <: AbstractElection
-    name::AbstractString
-    party::Array{AbstractString, 1}
-    vote_counts::Array{Int64}
-    vote_shares::Array{Float64}
+mutable struct Election
+    name::String
+    parties::Array{String, 1}
+    vote_counts::Array{Int64, 2} # row: district, col: votes by party
+    vote_shares::Array{Float64, 2} # row: district, col: vote share by party
 end
 
-function Election(name::AbstractString,
-                  party_names::Array{AbstractString, 1})::Election
-    return Election(name, party_names, Array{Int64}[], Array{Float64}[])
-end
 
-function update_elections!(elections::Array{Election, 1},
-                           graph::BaseGraph,
-                           partition::Partition,
-                           proposal::AbstractProposal,
-                           steps_taken::Int)
-    """ Updates each Election in `elections` with the step in `proposal`.
-        If steps_taken == 1, then modifies all the party vote counts and
-        party vote shares in the Elections.
-
-        Otherwise, will only update the party vote counts and party vote shares
-        of the districts changed by the `proposal`.
+function Election(name::String, parties::Array{String, 1}, num_districts::Int)
+    """ Initializes an Election for a given number of parties and districts,
+        initializing the vote counts & shares to zero.
     """
-    if steps_taken < 1
-        throw(ArgumentError("steps_taken should be atleast 1, received "
-                             + string(steps_taken)))
-    end
-
-    for election in elections
-        if steps_taken == 1
-            update_election!(election, graph, partition)
-        else
-            update_election!(election, graph, partition, proposal)
-        end
-    end
+    vote_counts = zeros((num_districts, length(parties)))
+    vote_shares = zeros((num_districts, length(parties)))
+    return Election(name, parties, vote_counts, vote_shares)
 end
 
-function update_election!(election::Election,
-                          graph::BaseGraph,
-                          partition::Partition)
-    """ Computes all the values for each Election in `elections` for the
-        districts in `partition`.
+function count_votes(name::String, election::Election)::DistrictScore
+    """ Returns a DistrictScore function that returns the vote count
+        and share for all parties in a given district. Importantly, this
+        DistrictScore function also has the side effect of updating the
+        vote counts and shares of the passed `election`, which can then be
+        used by other functions (such as seats_won, mean_median, etc.)
     """
-    num_parties = length(election.party)
-    election.vote_counts = zeros(Int64, graph.num_dists, num_parties)
-    election.vote_shares = zeros(Float64, graph.num_dists, num_parties)
-
-    for dist in 1:graph.num_dists
-        for node in partition.dist_nodes[dist]
-            for i in 1:num_parties
-                election.vote_counts[dist, i] += graph.attributes[node][election.party[i]]
+    party_names = election.parties
+    function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
+        """ Updates the Election object to reflect the new election results
+            in the district. Returns a NamedTuple where party name is matched to
+            election results for that party in the specified district.
+        """
+        election.vote_counts[district, :] = zeros(length(election.parties))
+        # update vote counts
+        for node in nodes
+            for i in 1:length(election.parties)
+                party = election.parties[i]
+                party_votes = graph.attributes[node][party]
+                election.vote_counts[district, i] += party_votes
             end
         end
-
-        total_votes = sum(election.vote_counts[dist, :])
-        election.vote_shares[dist, :] = map(x -> x / total_votes, election.vote_counts[dist,:])
-    end
-
-end
-
-function update_election!(election::Election,
-                          graph::BaseGraph,
-                          partition::Partition,
-                          proposal::AbstractProposal)
-    """ Updates only the vote counts and vote shares of the districts changed
-        in `proposal` for each Election in `elections`.
-
-        The vote counts districts not modified by `proposal` are left untouched.
-    """
-    update_election_for_dist!(election, graph, partition, proposal.D₁)
-    update_election_for_dist!(election, graph, partition, proposal.D₂)
-end
-
-function update_election_for_dist!(election::Election,
-                                   graph::BaseGraph,
-                                   partition::Partition,
-                                   dist::Int)
-    """ Updates the vote counts and vote shares of the district `dist` for
-        each Election in `elections`.
-    """
-    num_parties = length(election.party)
-    vote_counts = zeros(Int64, num_parties)
-
-    for node in partition.dist_nodes[dist]
-        for i in 1:num_parties
-            vote_counts[i] += graph.attributes[node][election.party[i]]
+        # update vote shares
+        vote_totals = sum(election.vote_counts[district, :])
+        vote_shares = election.vote_counts[district, :] ./ vote_totals
+        election.vote_shares[district, :] = vote_shares
+        # create Dict matching party to vote count & share
+        vote_pairs = Dict{String, NamedTuple}()
+        for i in 1:length(party_names)
+            party_votes = election.vote_counts[district, i]
+            party_share = election.vote_shares[district, i]
+            vote_pairs[party_names[i]] = (vote_count=party_votes, vote_share=party_share)
         end
+        return vote_pairs
     end
-
-    total_votes = sum(vote_counts)
-    election.vote_counts[dist, :] = vote_counts
-    election.vote_shares[dist, :] = map(x -> x / total_votes, vote_counts)
+    return DistrictScore(name, score_fn)
 end
 
-function seats_won(election::Election,
-                   party::AbstractString)::Int
-    """ Returns the number of seats won by `party` in the `election`
+
+function seats_won(name::String,
+                   election::Election,
+                   party::String)::PlanScore
+    """ Returns a PlanScore with a custom scoring function specific to
+        `election` that returns the number of seats won by a particular party
+        across all districts in a given plan.
     """
-    validate_party(party, election)
+    function score_fn(args...)
+        """ Calculates the number of seats won by a particular party across
+            all districts in a given plan. In the case of a tie, neither party
+            is considered to have won the district. Note that while the function
+            will be passed a graph and partition (as is required for a
+            PlanScore), it only uses information from the Election object.
 
-    wins = 0
-    party_idx  = findfirst(x -> x == party, election.party)
+            In the case of a tie, no parties are considered winners.
+        """
+        party_index = findfirst(isequal(party), election.parties)
+        # find the maximum vote count in each district
+        max_vote_counts = findmax(election.vote_counts, dims=2)[1]
+        # which parties achieved the maximum vote count in each district?
+        achieved_max_votes = max_vote_counts .== election.vote_counts
+        # if multiple parties achieved the maximum vote count in the same
+        # district, then there was a tie. we eliminate ties from our vote
+        # count data, as we count ties as having no winning district.
+        one_winner_districts = sum(achieved_max_votes, dims=2)[:, 1] .== 1
+        districts_won = achieved_max_votes[one_winner_districts, :]
+        # if all districts were tied, then return 0, otherwise, return
+        # the number of districts in which there were no ties and the
+        # party achieved the maximum number of votes
+        seats_won = length(districts_won) == 0 ? 0 : sum(districts_won[:, party_index])
+        return seats_won
+    end
+    return PlanScore(name, score_fn)
+end
 
-    for dist in 1:size(election.vote_counts)[1]
-        if argmax(election.vote_counts[dist, :]) == party_idx
-            wins += 1
+
+function mean_median(name::String,
+                     election::Election,
+                     party::String)::PlanScore
+     """ Returns a PlanScore with a custom scoring function specific to
+         `election` that calculates the mean-median score
+         of a particular plan for a particular party.
+     """
+    function score_fn(args...)
+        """ Computes the mean-median score for `party` in `election`. Note that
+            while the function will be passed a graph and partition (as is required
+            for a PlanScore), it only uses information from the Election object.
+        """
+        party_index = findfirst(isequal(party), election.parties)
+        vote_shares = election.vote_shares[:, party_index]
+        score = median(vote_shares) - mean(vote_shares)
+        return score
+    end
+    return PlanScore(name, score_fn)
+end
+
+
+function wasted_votes(party₁_votes::Int, party₂_votes::Int)
+    """ Computes the number of votes "wasted" by each party. Wasted votes are
+        votes that are either more than necessary than the party needed to win
+        a seat or votes in a race that party lost. In a tie, all votes are
+        considered to have been wasted.
+    """
+    total = party₁_votes + party₂_votes
+
+    if party₁_votes > party₂_votes
+        party₁_waste = party₁_votes - total / 2
+        party₂_waste = party₂_votes
+    elseif party₂_votes > party₁_votes
+        party₂_waste = party₂_votes - total / 2
+        party₁_waste = party₁_votes
+    else party₁_votes == party₂_votes
+        party₁_waste, party₂_waste = party₁_votes, party₂_votes
+    end
+
+    return party₁_waste, party₂_waste
+end
+
+
+function efficiency_gap(name::String,
+                        election::Election,
+                        party::String)::PlanScore
+    """ Returns a PlanScore with a custom scoring function specific to
+        `election` that calculates the efficiency gap of a particular plan for
+        a particular party.
+    """
+    function score_fn(args...)
+        """ Computes the efficiency gap for both parties in `election`. Note
+            that while the function takes a graph and partition (as is required for
+            a PlanScore), it only uses information from the Election object.
+        """
+        if length(election.parties) != 2
+            throw(ArgumentError("Efficiency gap is only valid for elections with 2 parties."))
         end
+
+        party_index = findfirst(isequal(party), election.parties)
+        other_index = 3 - (party_index)
+        p_wasted_total, o_wasted_total= 0, 0
+        num_dists = size(election.vote_counts)[1]
+
+        # iterate through all districts and count wasted votes
+        for district in 1:num_dists
+            p_votes = election.vote_counts[district, party_index]
+            o_votes = election.vote_counts[district, other_index]
+            p_wasted, o_wasted = wasted_votes(p_votes, o_votes)
+            p_wasted_total += p_wasted
+            o_wasted_total += o_wasted
+        end
+
+        total_votes = sum(election.vote_counts)
+        p_gap = (p_wasted_total - o_wasted_total) / total_votes
+        return p_gap
     end
-
-    return wins
+    return PlanScore(name, score_fn)
 end
 
-function total_vote_counts(election::Election,
-                           party::AbstractString)::Int
-    """ Returns the total vote counts of `party` in `election`.
-    """
-    validate_party(party, election)
-    party_idx  = findfirst(x -> x == party, election.party)
-    return sum(election.vote_counts[:, party_idx])
-end
 
-function vote_counts_by_district(election::Election,
-                                 party::AbstractString)::Array{Int, 1}
-    """ Returns an array of vote counts by district for
-        `party` in `election`.
+function ElectionTracker(election::Election,
+                         partisan_metrics::Array{S, 1}=AbstractScore[])::CompositeScore where {S <: AbstractScore}
+    """ The ElectionTracker method returns a CompositeScore that first updates
+        the vote count / share for changed districts and then proceeds to
+        calculate other partisan metrics, as desired by the user.
+        Re-calculating vote counts only for changed districts means that the
+        CompositeScore does not perform redundant computations for all of the
+        partisan metrics. Furthermore, packaging all partisan metrics within
+        the CompositeScore ensures that the vote update occurs first, followed
+        by the partisan metrics scoring functions.
     """
-    validate_party(party, election)
-    party_idx  = findfirst(x -> x == party, election.party)
-    return election.vote_counts[:, party_idx]
-end
-
-function vote_shares_by_district(election::Election,
-                                 party::AbstractString)::Array{Float64, 1}
-    """ Returns an array of vote shares by district for
-        `party` in `election`.
-    """
-    validate_party(party, election)
-    party_idx  = findfirst(x -> x == party, election.party)
-    return election.vote_shares[:, party_idx]
-end
-
-function validate_party(party::AbstractString,
-                        election::Election)
-    """ Throws an ArgumentError if `party` is not in `election`.
-    """
-    if party ∉ election.party
-        throw(ArgumentError(string("Party ", party,  " not contesting in election ", election, ".")))
-    end
+    vote_tracker = [count_votes("votes", election)]
+    scores = Array{AbstractScore, 1}([vote_tracker; partisan_metrics])
+    return CompositeScore(election.name, scores)
 end

@@ -198,16 +198,15 @@ function ElectionTracker(election::Election,
                          scores::Array{S, 1}=AbstractScore[])::CompositeScore where {S <: AbstractScore}
     """ The ElectionTracker method returns a CompositeScore that first updates
         the vote count / share for changed districts and then proceeds to
-        calculate other partisan metrics, as desired by the user.
+        run other scores (such as vote count for a particular party, partisan
+        metrics, etc.), as desired by the user.
         Re-calculating vote counts only for changed districts means that the
         CompositeScore does not perform redundant computations for all of the
-        partisan metrics. Furthermore, packaging all partisan metrics within
-        the CompositeScore ensures that the vote update occurs first, followed
-        by the partisan metrics scoring functions.
-
-        TODO(matthew): write description of arguments
+        partisan metrics. Furthermore, packaging all election-related scores
+        within the CompositeScore ensures that the vote update occurs first,
+        followed by the partisan metrics scoring functions.
     """
     count_votes = vote_updater("votes", election) # name does not matter
-    scores = Array{AbstractScore, 1}([count_votes; partisan_metrics])
+    scores = Array{AbstractScore, 1}([count_votes; scores])
     return CompositeScore(election.name, scores)
 end

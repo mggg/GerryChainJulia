@@ -15,8 +15,8 @@ function Election(name::String, parties::Array{String, 1}, num_districts::Int)
     return Election(name, parties, vote_counts, vote_shares)
 end
 
-function count_votes(name::String, election::Election)::DistrictScore
-    """ Returns a DistrictScore function that returns the vote count
+function vote_updater(name::String, election::Election)::DistrictScore
+    """ TODO(matthew): update description Returns a DistrictScore function that returns the vote count
         and share for all parties in a given district. Importantly, this
         DistrictScore function also has the side effect of updating the
         vote counts and shares of the passed `election`, which can then be
@@ -41,14 +41,27 @@ function count_votes(name::String, election::Election)::DistrictScore
         vote_totals = sum(election.vote_counts[district, :])
         vote_shares = election.vote_counts[district, :] ./ vote_totals
         election.vote_shares[district, :] = vote_shares
-        # create Dict matching party to vote count & share
-        vote_pairs = Dict{String, NamedTuple}()
-        for i in 1:length(party_names)
-            party_votes = election.vote_counts[district, i]
-            party_share = election.vote_shares[district, i]
-            vote_pairs[party_names[i]] = (vote_count=party_votes, vote_share=party_share)
-        end
-        return vote_pairs
+        return nothing
+    end
+    return DistrictScore(name, score_fn)
+end
+
+
+function vote_count(name::String,
+                   election::Election,
+                   party::String)::DistrictScore
+    """ TODO: write description"""
+    function score_fn(args...)
+    end
+    return DistrictScore(name, score_fn)
+end
+
+
+function vote_share(name::String,
+                    election::Election,
+                    party::String)::DistrictScore
+    """ TODO: write description"""
+    function score_fn(args...)
     end
     return DistrictScore(name, score_fn)
 end
@@ -172,7 +185,7 @@ end
 
 
 function ElectionTracker(election::Election,
-                         partisan_metrics::Array{S, 1}=AbstractScore[])::CompositeScore where {S <: AbstractScore}
+                         scores::Array{S, 1}=AbstractScore[])::CompositeScore where {S <: AbstractScore}
     """ The ElectionTracker method returns a CompositeScore that first updates
         the vote count / share for changed districts and then proceeds to
         calculate other partisan metrics, as desired by the user.
@@ -181,8 +194,9 @@ function ElectionTracker(election::Election,
         partisan metrics. Furthermore, packaging all partisan metrics within
         the CompositeScore ensures that the vote update occurs first, followed
         by the partisan metrics scoring functions.
+
+        TODO(matthew): write description of arguments
     """
-    vote_tracker = [count_votes("votes", election)]
-    scores = Array{AbstractScore, 1}([vote_tracker; partisan_metrics])
+    scores = Array{AbstractScore, 1}([vote_updater; partisan_metrics])
     return CompositeScore(election.name, scores)
 end

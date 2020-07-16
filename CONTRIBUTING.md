@@ -30,7 +30,7 @@ docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in
 - The title of the PR should be clear, and there should be an accompanying description. 
 - If the PR changes something user-facing, the description should give an example of intended usage. The PR should also change the user guide to reflect the change.
 - If you are adding new code, it should be unit tested.
-- Respond to every comment. (to the best of your judgement! For example if the reviewer has simply complimented a smart line of code, it is ok to simply resolve it.)
+- Respond to every comment (to the best of your judgment! For example, if the reviewer has simply complimented a smart line of code, it is ok to simply resolve it.)
 - Comment on individual lines of the PR yourself if you want to bring special attention to it for feedback.
 - If you are a core contributor and wish to push a large feature that would require multiple PRs, the recommended workflow is to first create a "feature" branch off of `main`. Then, make a PR that commits the architecture of this feature. This could simply be a function that has function stubs like 
 	`do_x()`
@@ -47,7 +47,7 @@ docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in
 - If the person submitting the PR **is** a core contributor, do not merge the PR yourself, just approve it. The person submitting the PR should merge it.
 - If the person submitting the PR **is not** a core contributor, the reviewer should merge the PR. 
 - In the case that a PR is "good enough for now" but it is known that it will induce future changes, document that foreseen problem as an **Issue** immediately.
-- Be judicious with any comments in the code that you don't understand.
+- If you see code that you don't understand, make liberal use of comments to clarify the author's intent.
 
 #### Guidelines for both the PR submitter and PR reviewer:
 

@@ -21,7 +21,7 @@ If you have ideas for additional features, consider creating a [GitHub issue](ht
 The main way to contribute code to the project is via GitHub pull requests (PRs). To create a pull request, see the [GitHub
 docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in the description of your pull request. Explain what your proposed changes do, and reference any relevant issues.
 
-**When making a PR:**
+#### When making a PR:
 
 - If the PR you are going to submit is a ~large change with say > 80 lines of code, open an Issue and talk to the maintainers to get feedback before working on it. 
 - We recommend [these guidelines](https://chris.beams.io/posts/git-commit/) for commit messages.
@@ -37,7 +37,7 @@ docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in
 	`do_y()` 
 	without implementing the functions themselves. Then, make PRs that would handle `do_x()` and `do_y()` seperately. Request a review for each PR, and when the entire feature is complete it is easier to merge that into the `main` branch.
 
-**When reviewing a PR:**
+#### When reviewing a PR:
 
 - Don't accept code that doesn't pass all tests.
 - Don't accept commented out code.
@@ -49,7 +49,7 @@ docs](https://help.github.com/articles/creating-a-pull-request/). Be detailed in
 - In the case that a PR is "good enough for now" but it is known that it will induce future changes, document that foreseen problem as an **Issue** immediately.
 - Be judicious with any comments in the code that you don't understand.
 
-**Guidelines for both the PR submitter and PR reviewer:**
+#### Guidelines for both the PR submitter and PR reviewer:
 
 - Emoji usage is encouraged, especially if you think it conveys tone 🙂
 

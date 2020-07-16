@@ -16,11 +16,11 @@ function Election(name::String, parties::Array{String, 1}, num_districts::Int)
 end
 
 function vote_updater(name::String, election::Election)::DistrictScore
-    """ TODO(matthew): update description Returns a DistrictScore function that returns the vote count
-        and share for all parties in a given district. Importantly, this
-        DistrictScore function also has the side effect of updating the
-        vote counts and shares of the passed `election`, which can then be
-        used by other functions (such as seats_won, mean_median, etc.)
+    """ Returns a DistrictScore function that updates the vote counts and
+        shares of the passed `election`, which can then be used by other
+        functions (such as seats_won, mean_median, etc.) This score function
+        explicitly returns `nothing` and is meant only for internal use
+        by the ElectionTracker object.
     """
     party_names = election.parties
     function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
@@ -47,11 +47,14 @@ function vote_updater(name::String, election::Election)::DistrictScore
 end
 
 
-function vote_count(name::String,
-                   election::Election,
-                   party::String)::DistrictScore
-    """ TODO: write description"""
+function vote_count(name::String, election::Election, party::String)::DistrictScore
+    """ Returns a DistrictScore that will return the number of votes won by
+        the specified party.
+    """
     function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
+        """ Extracts the number of votes for the specified party in the 
+            specified district from the Election object.
+        """
         party_index = findfirst(isequal(party), election.parties)
         return election.vote_counts[district, party_index]
     end
@@ -59,11 +62,14 @@ function vote_count(name::String,
 end
 
 
-function vote_share(name::String,
-                    election::Election,
-                    party::String)::DistrictScore
-    """ TODO: write description"""
+function vote_share(name::String, election::Election, party::String)::DistrictScore
+    """ Returns a DistrictScore that will return the percentage of votes won by
+        the specified party.
+    """
     function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
+        """ Extracts the share of votes for the specified party in the
+            specified district from the Election object.
+        """
         party_index = findfirst(isequal(party), election.parties)
         return election.vote_shares[district, party_index]
     end
@@ -201,6 +207,7 @@ function ElectionTracker(election::Election,
 
         TODO(matthew): write description of arguments
     """
-    scores = Array{AbstractScore, 1}([vote_updater; partisan_metrics])
+    count_votes = vote_updater("votes", election) # name does not matter
+    scores = Array{AbstractScore, 1}([count_votes; partisan_metrics])
     return CompositeScore(election.name, scores)
 end

@@ -51,7 +51,9 @@ function vote_count(name::String,
                    election::Election,
                    party::String)::DistrictScore
     """ TODO: write description"""
-    function score_fn(args...)
+    function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
+        party_index = findfirst(isequal(party), election.parties)
+        return election.vote_counts[district, party_index]
     end
     return DistrictScore(name, score_fn)
 end
@@ -61,7 +63,9 @@ function vote_share(name::String,
                     election::Election,
                     party::String)::DistrictScore
     """ TODO: write description"""
-    function score_fn(args...)
+    function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
+        party_index = findfirst(isequal(party), election.parties)
+        return election.vote_shares[district, party_index]
     end
     return DistrictScore(name, score_fn)
 end

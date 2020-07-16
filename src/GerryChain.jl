@@ -42,7 +42,7 @@ get_scores_at_step, eval_score_on_partition, save_scores, get_score_values,
 always_accept, satisfies_acceptance_fn,
 
 # election
-AbstractElection, Election, ElectionTracker, seats_won, count_votes,
+AbstractElection, Election, ElectionTracker, vote_count, vote_share, seats_won,
 mean_median, wasted_votes, efficiency_gap
 
 include("./graph.jl")

@@ -295,6 +295,28 @@ function get_scores_at_step(chain_data::ChainScoreData,
 end
 
 
+function get_score_by_name(chain_data::ChainScoreData, score_name::String)
+    """ Private helper function to extract the AbstractScore object whose name
+        matches `score_name` from the ChainScoreData object. Returns two values:
+        first, the AbstractScore object itself, and second, the name of the
+        CompositeScore it is nested within (if it is nested within one at all.)
+    """
+    index = findfirst(s -> s.name == score_name, chain_data.scores)
+    if index == nothing
+        # Check if score is nested inside a CompositeScore
+        composite_scores = filter(s -> s isa CompositeScore, chain_data.scores)
+        for c in composite_scores
+            index = findfirst(s -> s.name == score_name, c.scores)
+            if index != nothing
+                return c.scores[index], c.name # return score and nested key
+            end
+        end
+        return nothing, nothing # no score, no nested key
+    end
+    return chain_data.scores[index], nothing # no nested key
+end
+
+
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::Union{DistrictAggregate, DistrictScore};
                           nested_key::Union{String,Nothing}=nothing)::Array
@@ -366,8 +388,7 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
 end
 
 
-function get_score_values(chain_data::ChainScoreData,
-                          score_name::String)
+function get_score_values(chain_data::ChainScoreData, score_name::String)
     """ Returns the value of specified score at every step of the chain.
 
         Arguments:
@@ -375,19 +396,13 @@ function get_score_values(chain_data::ChainScoreData,
                            at each step of the Markov Chain
             score_name   : Name of the score of interest
     """
-    index = findfirst(s -> s.name == score_name, chain_data.scores)
-    if index == nothing
-        # Check if score is nested inside a CompositeScore
-        composite_scores = filter(s -> s isa CompositeScore, chain_data.scores)
-        for c in composite_scores
-            index = findfirst(s -> s.name == score_name, c.scores)
-            if index != nothing
-                return get_score_values(chain_data.step_values, c.scores[index], nested_key=c.name)
-            end
-        end
+    score, nested_key = get_score_by_name(chain_data, score_name)
+    if score == nothing
         throw(ArgumentError("No score with requested name found."))
+    elseif score isa CompositeScore
+        return get_score_values(chain_data.step_values, score)
     end
-    return get_score_values(chain_data.step_values, chain_data.scores[index])
+    return get_score_values(chain_data.step_values, score, nested_key=nested_key)
 end
 
 

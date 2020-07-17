@@ -124,3 +124,27 @@ function score_boxplot(chain_data::ChainScoreData, score_name::String; kwargs...
     score_boxplot(score_vals; kwargs...)
     plt.ylabel(score_name)
 end
+
+
+function score_histogram(chain_data::ChainScoreData, score_name::String; kwargs...)
+    """ Creates a graph with histogram of the values of a score throughout
+        the chain. Only applicable for scores of type PlanScore.
+
+        Arguments:
+            chain_data  : ChainScoreData object that contains the values of
+                          scores at every step of the chain
+            score_name  : name of the score (i.e., the `name` field of an
+                          AbstractScore)
+            kwargs      : Optional arguments, including label, comparison_scores,
+                          and sort_by_score (the latter should only be passed
+                          for district-level scores).
+    """
+    score, nested_key = get_score_by_name(chain_data, score_name)
+    # throw argument error if score passed was not a PlanScore
+    if score !isa PlanScore
+        throw(ArgumentError("Can only create histogram plot of a PlanScore"))
+    end
+    score_vals = get_score_values(chain_data.step_values, score, nested_key=nested_key)
+    score_histogram(score_vals; kwargs...)
+    plt.ylabel(score_name)
+end

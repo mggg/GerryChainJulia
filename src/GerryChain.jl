@@ -48,7 +48,7 @@ AbstractElection, Election, ElectionTracker, vote_count, vote_share, seats_won,
 mean_median, wasted_votes, efficiency_gap,
 
 # plot
-score_boxplot
+score_boxplot, score_histogram
 
 include("./graph.jl")
 include("./partition.jl")

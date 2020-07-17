@@ -1,7 +1,7 @@
 function score_boxplot(score_values::Array{S, 2};
                        sort_by_score::Bool=true,
                        label::String="GerryChain",
-                       comparison_scores::Array{Tuple{String, Array{S, 1}},1}=[]) where {S<:Number}
+                       comparison_scores::Array=[]) where {S<:Number}
     """ Produces a graph with multiple matplotlib box plots for the values of
         scores throughout the chain. Intended for use with district-level scores
         (DistrictAggregate, DistrictScore).
@@ -23,7 +23,15 @@ function score_boxplot(score_values::Array{S, 2};
                                   have the structure [(l₁, scores₁), ... , (lᵤ, scoresᵤ)],
                                   where lᵢ is a label that will appear on the
                                   legend and scoresᵢ is an array of length d,
-                                  where d is the number of districts.
+                                  where d is the number of districts. Each
+                                  element of the tuple should be of type
+                                  Tuple{String, Array{S, 1}}. Example:
+                                  [
+                                    (name₁, [v₁, v₂, ... , vᵤ]),
+                                    ...
+                                    (nameₓ, [w₁, w₂, ... , wᵤ])
+                                  ], where there are x comparison plans and u
+                                  districts.
 
     """
     if sort_by_score
@@ -34,7 +42,8 @@ function score_boxplot(score_values::Array{S, 2};
         score_values = sortslices(score_values, dims=2, lt=(x,y) -> isless(median(x), median(y)))
     end
     # plot GerryChain boxplots
-    plt.boxplot(score_values, showcaps=true, showbox=true, showfliers=false)
+    medianprops=Dict("color" => "black") # make sure median line is black
+    plt.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
     plt.xlabel("Indexed districts")
     if length(comparison_scores) > 0
         # inserts a legend entry that shows the "GerryChain" label next to a
@@ -42,6 +51,9 @@ function score_boxplot(score_values::Array{S, 2};
         plt.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
         # iterate through the comparison scores and plot them one by one
         for p in comparison_scores
+            if !(p isa Tuple) || length(p) != 2 || !(p[1] isa String) || !(typeof(p[2]) <: AbstractArray)
+                throw(ArgumentError("Scores of comparison plans must be passed as tuples with structure (name of plan, [scores for each district])."))
+            end
             plan_score_vals = sort_by_score ? sort(p[2]) : p[2]
             plt.scatter(1:length(p[2]), plan_score_vals, label=p[1])
         end
@@ -52,7 +64,7 @@ end
 
 function score_boxplot(score_values::Array{S, 1};
                        label::String="GerryChain",
-                       comparison_scores::Array{Tuple{String, S},1}=[]) where {S<:Number}
+                       comparison_scores::Array=[]) where {S<:Number}
     """ Produces a single matplotlib box plot for the values of scores
         throughout the chain. Intended for use with plan-level scores.
 
@@ -73,13 +85,17 @@ function score_boxplot(score_values::Array{S, 1};
                                   for the comparison plan.
     """
     # plot GerryChain boxplot
-    plt.boxplot(score_values, showcaps=true, showbox=true, showfliers=false)
+    medianprops=Dict("color" => "black") # make sure median line is black
+    plt.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
     if length(comparison_scores) > 0
         # inserts a legend entry that shows the "GerryChain" label next to a
         # marker that looks like a boxplot
         plt.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
         # iterate through the comparison scores and plot them one by one
         for p in comparison_scores
+            if !(p isa Tuple) || length(p) != 2 || !(p[1] isa String) || !(typeof(p[2]) <: Number)
+                throw(ArgumentError("Scores of comparison plans must be passed as tuples with structure (name of plan, score of plan)."))
+            end
             plt.scatter(1, p[2], label=p[1])
         end
         plt.legend()

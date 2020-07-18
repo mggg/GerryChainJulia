@@ -230,7 +230,7 @@ function score_partition_from_proposal(graph::BaseGraph,
             delete!(value, "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
             value = eval_score_on_districts(graph, partition, s, Δ_districts)
-            empty_return = value[1] == nothing || value[2] == nothing
+            empty_return = any(x -> x==nothing, value)
         end
         if !empty_return
             score_values[s.name] = value

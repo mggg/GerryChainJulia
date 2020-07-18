@@ -214,7 +214,7 @@ function recom_chain(graph::BaseGraph,
     """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
-    chain_scores = ChainScoreData(scores, [first_scores])
+    chain_scores = ChainScoreData(deepcopy(scores), [first_scores])
 
     while steps_taken < num_steps
         proposal = get_valid_proposal(graph, partition, pop_constraint, rng, num_tries)

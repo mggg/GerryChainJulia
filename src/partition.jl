@@ -11,25 +11,23 @@ end
 function Partition(filepath::AbstractString,
                    graph::BaseGraph,
                    pop_col::AbstractString,
-                   assignment_col::AbstractString,
-                   nodes_str::AbstractString = "nodes")::Partition
+                   assignment_col::AbstractString)::Partition
 
     """
         Partition represents a partition of the nodes of the graph.
         It contains plan-specific information that will change each time we change
-        our plan.
+        our plan. We assume that the JSON file contains a key "nodes" that
+        refers to an array of nodes.
 
         Arguments:
             filepath:  Filepath to the .json graph file
             graph:     Graph object that has the underlying network structure of the plan.
             pop_col:   the key denoting the population attribute at the node level
             assignment_col: the key denoting the district assignment at the node level
-            nodes_str: the key that has denotes the nodes
     """
     raw_graph = JSON.parsefile(filepath)
 
-    populations, assignments = get_populations_and_assignments(raw_graph, pop_col, assignment_col,
-                                                               graph.num_nodes, nodes_str)
+    populations, assignments = get_populations_and_assignments(raw_graph["nodes"], pop_col, assignment_col)
 
     # get cut_edges, district_adjacencies
     dist_adj, cut_edges = get_district_adj_and_cut_edges(graph, assignments, graph.num_dists)
@@ -116,22 +114,21 @@ function sample_adjacent_districts_randomly(partition::Partition,
     end
 end
 
-function get_populations_and_assignments(graph::Dict{String, Any},
+function get_populations_and_assignments(nodes::Array{Any, 1},
                                          pop_col::AbstractString,
-                                         assignment_col::AbstractString,
-                                         num_nodes::Int,
-                                         nodes_str::AbstractString = "nodes")
+                                         assignment_col::AbstractString)
     """ Returns the arrays of populations and assignments of the graph, where
         i'th node's population is populations[i] and assignment is assignments[i].
     """
+    num_nodes = length(nodes)
     populations = zeros(Int, num_nodes)
     assignments = zeros(Int, num_nodes)
     for i in 1:num_nodes
-        populations[i] = graph[nodes_str][i][pop_col]
-        if graph[nodes_str][i][assignment_col] isa String
-            assignments[i] = parse(Int, graph[nodes_str][i][assignment_col])
-        elseif graph[nodes_str][i][assignment_col] isa Int
-            assignments[i] = graph[nodes_str][i][assignment_col]
+        populations[i] = nodes[i][pop_col]
+        if nodes[i][assignment_col] isa String
+            assignments[i] = parse(Int, nodes[i][assignment_col])
+        elseif nodes[i][assignment_col] isa Int
+            assignments[i] = nodes[i][assignment_col]
         end
     end
     return populations, assignments

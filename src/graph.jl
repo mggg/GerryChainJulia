@@ -42,7 +42,7 @@ function graph_from_json(filepath::AbstractString,
         pop_col:        the node attribute key whose accompanying value is the
                         population of that node
         assignment_col: the node attribute key whose accompanying value is the
-                        population of that node
+                        assignment of that node (i.e., to a district)
 
     [1]: https://github.com/mggg/GerryChain/blob/c87da7e69967880abc99b781cd37468b8cb18815/gerrychain/graph/graph.py#L38
     """
@@ -107,7 +107,7 @@ function BaseGraph(filepath::AbstractString,
         pop_col:        the node attribute key whose accompanying value is the
                         population of that node
         assignment_col: the node attribute key whose accompanying value is the
-                        population of that node
+                        assignment of that node (i.e., to a district)
     """
     extension = splitext(filepath)[2]
     if extension == ".json"

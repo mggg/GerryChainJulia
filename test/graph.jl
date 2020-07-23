@@ -40,6 +40,19 @@ using DataStructures
         @test_throws ArgumentError BaseGraph("nonexistent.txt", "population", "assignment")
     end
 
+    @testset "Reading in shapefile" begin
+        # file should have a .json or .shp extension
+        # TODO(matthew): change test once return type changes
+        node_attributes = BaseGraph("./maps/simple_squares.shp", "population", "assignment")
+        correct_attributes = [ # refer to maps/make_simple_shp.py
+            Dict("assignment" => 1, "population" => 2),
+            Dict("assignment" => 2, "population" => 4),
+            Dict("assignment" => 3, "population" => 6),
+            Dict("assignment" => 4, "population" => 8),
+        ]
+        @test node_attributes == correct_attributes
+    end
+
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16

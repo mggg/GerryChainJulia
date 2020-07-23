@@ -167,7 +167,6 @@
     @testset "get_scores_at_step()" begin
         partition = Partition(square_grid_filepath, graph, "population", "assignment")
         # initialize scores
-        all_scores = Array{Dict{String, Any}, 1}()
         votes_d = DistrictAggregate("electionD")
         votes_r = DistrictAggregate("electionR")
         scores = [
@@ -177,33 +176,35 @@
             PlanScore("cut_edges", cut_edges),
             CompositeScore("votes", [votes_d, votes_r])
         ]
+        chain_data = ChainScoreData(scores, [])
         # get scores for initial plan
         init_score_vals = score_initial_partition(graph, partition, scores)
-        push!(all_scores, init_score_vals)
+        push!(chain_data.step_values, init_score_vals)
 
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
         step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
-        push!(all_scores, step_score_vals)
+        push!(chain_data.step_values, step_score_vals)
 
         # fetch first two scores for step 1
-        parsed_scores = get_scores_at_step(all_scores, 0, scores=scores[1:2])
-        @test sort(collect(keys(parsed_scores))) == sort(["purple", "pink"])
+        all_score_names = ["purple", "pink", "race_gap", "cut_edges", "votes"]
+        parsed_scores = get_scores_at_step(chain_data, 0, score_names=all_score_names[1:2])
+        @test sort(collect(keys(parsed_scores))) == sort(all_score_names[1:2])
         for key in keys(parsed_scores)
             @test init_score_vals[key] == parsed_scores[key]
         end
 
         updated_score_vals = score_initial_partition(graph, partition, scores)
-        parsed_scores = get_scores_at_step(all_scores, 1, scores=scores[3:5])
-        @test sort(collect(keys(parsed_scores))) == sort(["race_gap", "cut_edges", "votes"])
+        parsed_scores = get_scores_at_step(chain_data, 1, score_names=all_score_names[3:5])
+        @test sort(collect(keys(parsed_scores))) == sort(all_score_names[3:5])
         for key in keys(parsed_scores)
             @test updated_score_vals[key] == parsed_scores[key]
         end
 
         # passing in an empty array should yield all scores
-        parsed_scores = get_scores_at_step(all_scores, 1)
-        @test sort(collect(keys(parsed_scores))) == sort([s.name for s in scores])
+        parsed_scores = get_scores_at_step(chain_data, 1)
+        @test sort(collect(keys(parsed_scores))) == sort(all_score_names)
         for key in keys(parsed_scores)
             @test updated_score_vals[key] == parsed_scores[key]
         end
@@ -220,26 +221,31 @@
             PlanScore("cut_edges", cut_edges),
             CompositeScore("votes", [votes_d, votes_r])
         ]
+        chain_data = ChainScoreData(scores, [])
         # get scores for initial plan
         init_score_vals = score_initial_partition(graph, partition, scores)
-        push!(all_scores, init_score_vals)
+        push!(chain_data.step_values, init_score_vals)
 
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
         step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
-        push!(all_scores, step_score_vals)
+        push!(chain_data.step_values, step_score_vals)
 
         # check that return values look correct
-        purple_vals = get_score_values(all_scores, scores[1])
+        purple_vals = get_score_values(chain_data, "purple")
         @test size(purple_vals) == (2, 4)
         @test purple_vals == [[28 28 13 13]; [34 22 13 13]]
-        cut_edge_vals = get_score_values(all_scores, scores[2])
+        cut_edge_vals = get_score_values(chain_data, "cut_edges")
         @test size(cut_edge_vals) == (2,)
         @test cut_edge_vals == [8, 9]
-        vote_vals = get_score_values(all_scores, scores[3])
+        vote_vals = get_score_values(chain_data, "votes")
         @test vote_vals isa Dict
         @test vote_vals == Dict{}("electionD" => [[6 6 6 6]; [8 4 6 6]],
                                   "electionR" => [[6 6 6 6]; [6 6 6 6]])
+        d_vote_vals = get_score_values(chain_data, "electionD")
+        @test size(d_vote_vals) == (2, 4)
+        @test d_vote_vals == [[6 6 6 6]; [8 4 6 6]]
+        @test_throws ArgumentError get_score_values(chain_data, "nonexistent")
     end
 end

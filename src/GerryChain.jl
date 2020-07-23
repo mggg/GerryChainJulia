@@ -35,6 +35,7 @@ DistrictScore,
 PlanScore,
 CompositeScore,
 AbstractScore,
+ChainScoreData,
 score_initial_partition, score_partition_from_proposal, eval_score_on_district,
 get_scores_at_step, eval_score_on_partition, save_scores, get_score_values,
 

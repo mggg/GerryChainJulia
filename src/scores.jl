@@ -42,6 +42,15 @@ struct CompositeScore <: AbstractScore
 end
 
 
+struct ChainScoreData
+    """ The ChainScoreData object stores the values returned by score functions
+        at every step of the chain as well as the scores themselves.
+    """
+    scores::Array{S,1} where {S<:AbstractScore} # scores that were measured on a particular chain
+    step_values::Array{Dict{String, Any}} # array of Dicts which map {score name: score value}
+end
+
+
 function DistrictAggregate(key::String)
     """ Initializes a DistrictAggregate score where the name and key are
         the same.
@@ -253,9 +262,9 @@ function update_dictionary!(original::Dict{String, Any},
 end
 
 
-function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
+function get_scores_at_step(chain_data::ChainScoreData,
                             step::Int;
-                            scores::Array{S,1}=AbstractScore[]) where {S <: AbstractScore}
+                            score_names::Array{String,1}=String[])::Dict{String, Any}
     """ Returns the detailed scores of the partition at step `step`. If no
         scores are passed in, all scores are returned by default. Here, step=0
         represents the score of the original (initial) partition, so step=t
@@ -263,23 +272,22 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
         t steps of the Markov chain.
 
         Arguments:
-            all_scores : List of scores of partitions at each step of
-                         the Markov Chain
-            step       : The step of the chain at which scores are desired
-            scores     : An optional array of AbstractScores for which the user
-                         is requesting the values
+            chain_data   : ChainScoreData object containing scores of partitions
+                           at each step of the Markov Chain
+            step         : The step of the chain at which scores are desired
+            score_names  : An optional array of Strings representing the scores
+                           for which the user is requesting the values
     """
     # we don't want to alter the data in all_scores
     score_vals = Dict{String, Any}()
-    score_names = [s.name for s in scores]
     if isempty(score_names) # return all scores by default
-        score_names = collect(keys(all_scores[1]))
+        score_names = collect(keys(chain_data.step_values[1]))
     end
-    foreach(name -> score_vals[name] = all_scores[1][name], score_names)
+    foreach(name -> score_vals[name] = chain_data.step_values[1][name], score_names)
 
     for i in 1:step
-        curr_scores = all_scores[i + 1]
-        (D₁, D₂) = all_scores[i + 1]["dists"]
+        curr_scores = chain_data.step_values[i + 1]
+        (D₁, D₂) = chain_data.step_values[i + 1]["dists"]
         update_dictionary!(score_vals, curr_scores, D₁, D₂)
     end
 
@@ -287,11 +295,33 @@ function get_scores_at_step(all_scores::Array{Dict{String, Any}, 1},
 end
 
 
+function get_score_by_name(chain_data::ChainScoreData, score_name::String)
+    """ Private helper function to extract the AbstractScore object whose name
+        matches `score_name` from the ChainScoreData object. Returns two values:
+        first, the AbstractScore object itself, and second, the name of the
+        CompositeScore it is nested within (if it is nested within one at all.)
+    """
+    index = findfirst(s -> s.name == score_name, chain_data.scores)
+    if index == nothing
+        # Check if score is nested inside a CompositeScore
+        composite_scores = filter(s -> s isa CompositeScore, chain_data.scores)
+        for c in composite_scores
+            index = findfirst(s -> s.name == score_name, c.scores)
+            if index != nothing
+                return c.scores[index], c.name # return score and nested key
+            end
+        end
+        return nothing, nothing # no score, no nested key
+    end
+    return chain_data.scores[index], nothing # no nested key
+end
+
+
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::Union{DistrictAggregate, DistrictScore};
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Returns the value of specified DistrictScore/DistrictAggregate score
-        at every step of the chain.
+    """ Helper function that returns the value of specified
+        DistrictScore/DistrictAggregate score at every step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
@@ -325,7 +355,8 @@ end
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::PlanScore;
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Returns the value of specified PlanScore at every step of the chain.
+    """ Helper function that returns the value of specified PlanScore at every
+        step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
@@ -344,7 +375,8 @@ end
 
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           composite::CompositeScore)::Dict{String, Array}
-    """ Returns the value of specified CompositeScore at every step of the chain.
+    """ Helper function that returns the value of specified CompositeScore at
+        every step of the chain.
 
         Arguments:
             all_scores  : List of scores of partitions at each step of
@@ -356,11 +388,29 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
 end
 
 
+function get_score_values(chain_data::ChainScoreData, score_name::String)
+    """ Returns the value of specified score at every step of the chain.
+
+        Arguments:
+            chain_data   : ChainScoreData object containing scores of partitions
+                           at each step of the Markov Chain
+            score_name   : Name of the score of interest
+    """
+    score, nested_key = get_score_by_name(chain_data, score_name)
+    if score == nothing
+        throw(ArgumentError("No score with requested name found."))
+    elseif score isa CompositeScore
+        return get_score_values(chain_data.step_values, score)
+    end
+    return get_score_values(chain_data.step_values, score, nested_key=nested_key)
+end
+
+
 function save_scores(filename::String,
-                     scores::Array{Dict{String, Any}, 1})
+                     chain_data::ChainScoreData)
     """ Save the `scores` in a JSON file named `filename`.
     """
     open(filename, "w") do f
-        JSON.print(f, scores)
+        JSON.print(f, chain_data.step_values)
     end
 end

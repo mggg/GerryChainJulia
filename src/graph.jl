@@ -15,25 +15,55 @@ struct BaseGraph<:AbstractGraph
 end
 
 
+function polygon_array(coords::Vector{Vector{Vector{Float64}}})::Array{LibGEOS.Polygon}
+    # Takes a complex vector object and returns an array of Polygons
+    # TODO(matthew): implement this
+    return nothing
+end
+
+
+function construct_mbr(coords::Vector{Vector{Vector{Float64}}})::Array{LibGEOS.Polygon}
+    # Takes a complex vector object and returns an (axis-aligned) minimum
+    # bounding rectangle
+    # TODO(matthew): implement this
+    return nothing
+end
+
+
 function graph_from_shp(filepath::AbstractString,
                         pop_col::AbstractString,
-                        assignment_col::AbstractString)::BaseGraph
+                        assignment_col::AbstractString)
     """ Constructs BaseGraph from .shp file.
     """
-    # TODO(matthew): implement
+    # TODO(matthew): change return type to BaseGraph
     prefix = splitext(filepath)[1]
     if !isfile(prefix + ".shp") || !isfile(prefix + ".dbf")
         throw(ArgumentError("To read a graph from a shapefile, we require a .shp and .dbf file of the same name in the same folder."))
     end
     table = Shapefile.Table(prefix)
-    rows = collect(table)
-    coords = [LibGEOS.GeoInterface.coordinates(getfield(r, :geometry)) for r in rows]
-    poly = [construct_shape(c) for c in coords]
-    mbrs = [construct_mbr(c) for c in coords]
-    adj = adj_matrix_rtree(rows, poly, mbrs, parsed_args["adjacency"], verbose = !parsed_args["quiet"])
+    num_nodes = length(table)
+
+    attributes = Array{Dict{String, Any}}(undef, num_nodes)
+
+    # these will be used in the adjacency method
+    node_polys = Array{Dict{String, Any}, 1}(undef, num_nodes)
+    node_mbrs = Array{Tuple, 1}(undef, num_nodes)
+
+    properties = propertynames(table) # returns array of symbols
+    string_keys = [String(p) for p in propertynames]
+    for (idx, row) in enumerate(table)
+        # fetch attributes of node and append to array
+        values = [getproperty(row, p) for p in propertynames(table)]
+        attributes[idx] = Dict(string_keys .=> values)
+
+        # work with geometry
+        coords = LibGEOS.GeoInterface.coordinates(getfield(r, :geometry))
+        polygons[idx] = polygon_array(coords)
+        mgrs[idx] = construct_mbr(coords)
     end
-    ids = [getproperty(getfield(r, :record), Symbol(parsed_args["id_key"])) for r in rows]
-    data_dump = Dict("order" => ids, "adj" => adj)
+
+    # TODO(matthew): change return type to a Graph once we are done testing
+    return attributes, polygons, mgrs
 end
 
 

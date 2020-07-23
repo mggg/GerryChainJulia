@@ -21,7 +21,19 @@ function graph_from_shp(filepath::AbstractString,
     """ Constructs BaseGraph from .shp file.
     """
     # TODO(matthew): implement
-    return graph_from_json(filepath, pop_col, assignment_col)
+    prefix = splitext(filepath)[1]
+    if !isfile(prefix + ".shp") || !isfile(prefix + ".dbf")
+        throw(ArgumentError("To read a graph from a shapefile, we require a .shp and .dbf file of the same name in the same folder."))
+    end
+    table = Shapefile.Table(prefix)
+    rows = collect(table)
+    coords = [LibGEOS.GeoInterface.coordinates(getfield(r, :geometry)) for r in rows]
+    poly = [construct_shape(c) for c in coords]
+    mbrs = [construct_mbr(c) for c in coords]
+    adj = adj_matrix_rtree(rows, poly, mbrs, parsed_args["adjacency"], verbose = !parsed_args["quiet"])
+    end
+    ids = [getproperty(getfield(r, :record), Symbol(parsed_args["id_key"])) for r in rows]
+    data_dump = Dict("order" => ids, "adj" => adj)
 end
 
 

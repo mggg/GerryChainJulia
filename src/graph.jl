@@ -15,11 +15,8 @@ struct BaseGraph<:AbstractGraph
 end
 
 function BaseGraph(filepath::AbstractString,
-               pop_col::AbstractString,
-               assignment_col::AbstractString,
-               nodes_str::AbstractString = "nodes",
-               adjacency_str::AbstractString = "adjacency",
-               edge_id_str::AbstractString = "id")::BaseGraph
+                   pop_col::AbstractString,
+                   assignment_col::AbstractString)::BaseGraph
 
     """ Builds the base Graph object. This is the underlying network of our
         districts, and its properties are immutable i.e they will not change

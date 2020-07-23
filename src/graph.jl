@@ -22,6 +22,7 @@ function graph_from_shp(filepath::AbstractString,
     return graph_from_json(filepath, pop_col, assignment_col)
 end
 
+
 function graph_from_json(filepath::AbstractString,
                          pop_col::AbstractString,
                          assignment_col::AbstractString)::BaseGraph

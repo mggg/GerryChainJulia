@@ -12,17 +12,55 @@
         end
     end
 
-    @testset "count_votes()" begin
+    @testset "vote_updater()" begin
         graph = BaseGraph(square_grid_filepath, "population", "assignment")
         partition = Partition(square_grid_filepath, graph, "population", "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
-        vote_score = count_votes("votes", election) # returns DistrictScore
-        @test vote_score isa DistrictScore
+        election_tracker = ElectionTracker(election)
 
-        # count votes for district 1
-        vote_score.score_fn(graph, partition.dist_nodes[1], 1)
+        update_vote_counts(graph, partition, election_tracker)
+
+        # just test vote counts / shares on district 1
         @test election.vote_counts[1, 1] == 6 # votes for electionD
         @test election.vote_shares[1, 2] == 0.5 # votes for electionR
+    end
+
+    @testset "vote_count()" begin
+        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+
+        d_count = vote_count("votes_d", election, "electionD")
+        r_count = vote_count("votes_r", election, "electionR")
+        @test d_count isa DistrictScore
+        @test r_count isa DistrictScore
+
+        election_tracker = ElectionTracker(election, [d_count, r_count])
+        update_vote_counts(graph, partition, election_tracker)
+
+        num_d_votes = d_count.score_fn(graph, partition.dist_nodes[1], 1)
+        @test num_d_votes == 6
+        num_r_votes = r_count.score_fn(graph, partition.dist_nodes[1], 1)
+        @test num_r_votes == 6
+    end
+
+    @testset "vote_share()" begin
+        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+
+        d_share = vote_share("share_d", election, "electionD")
+        r_share = vote_share("share_r", election, "electionR")
+        @test d_share isa DistrictScore
+        @test r_share isa DistrictScore
+
+        election_tracker = ElectionTracker(election, [d_share, r_share])
+        update_vote_counts(graph, partition, election_tracker)
+
+        perc_d = d_share.score_fn(graph, partition.dist_nodes[1], 1)
+        @test perc_d == 0.5
+        perc_r = r_share.score_fn(graph, partition.dist_nodes[1], 1)
+        @test perc_r == 0.5
     end
 
     @testset "seats_won()" begin

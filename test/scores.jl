@@ -17,6 +17,14 @@
         return partition.num_cut_edges
     end
 
+    function district_void(graph, nodes, district)
+        return nothing
+    end
+
+    function plan_void(graph, partition)
+        return nothing
+    end
+
     @testset "constructors" begin
         @test_throws MethodError DistrictAggregate("abc", 1)
         # district scores and plan scores must take function
@@ -128,7 +136,9 @@
             DistrictAggregate("pink"),
             DistrictScore("race_gap", calc_disparity),
             PlanScore("cut_edges", cut_edges),
-            CompositeScore("votes", [votes_d, votes_r])
+            CompositeScore("votes", [votes_d, votes_r]),
+            DistrictScore("d_void", district_void),
+            PlanScore("p_void", plan_void)
         ]
 
         score_vals = score_initial_partition(graph, partition, scores)
@@ -137,6 +147,8 @@
         @test score_vals["pink"] == [13, 13, 28, 28]
         @test score_vals["votes"] == Dict{}("electionD" => [6, 6, 6, 6], "electionR" => [6, 6, 6, 6])
         @test score_vals["race_gap"] == [15, 15, -15, -15]
+        @test ("d_void" in keys(score_vals)) == false
+        @test ("p_void" in keys(score_vals)) == false
     end
 
     @testset "score_partition_from_proposal()" begin

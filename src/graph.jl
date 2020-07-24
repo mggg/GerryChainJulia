@@ -65,19 +65,20 @@ function get_node_coordinates(row::Shapefile.Row)::Vector{Vector{Vector{Vector{F
         outermost array represents one polygon. (One node can be made up of
         multiple polygons).
         [
-          [                       # one array = one polygon
-              [                   # points corresponding to outer ring
-                  [1.0, 2.0],     # single x,y coordinate of a point
-                  ...
-              ],
-              [                   # points corresponding to a hole in polygon
-                  [1.5, 1.7],
-                  ...
-              ],
-              ...                 # any other subsequent arrays would correspond
-                                  # to other holes
-          ],
-          ...
+            [                       # one array = one polygon
+                [                   # points corresponding to outer ring
+                    [1.0, 2.0],     # single x,y coordinate of a point
+                    ...
+                ],
+                [                   # points corresponding to a hole in polygon
+                    [1.5, 1.7],
+                    ...
+                ],
+                ...                 # any other subsequent arrays would
+                                    # correspond to other holes
+            ],
+            ...                     #  subsequent arrays correspond to other
+                                    #  polygons
         ]
     """
     return LibGEOS.GeoInterface.coordinates(getfield(row, :geometry))

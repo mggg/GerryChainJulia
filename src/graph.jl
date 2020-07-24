@@ -137,7 +137,8 @@ function simple_graph_from_shapes(polygons::Array{Array{LibGEOS.Polygon, 1}, 1},
         upper_right = minimum_bounding_rects[i][2]
         candidate_idxs = LibSpatialIndex.intersects(rtree, lower_left, upper_right)
         for c_idx in candidate_idxs
-            if adjacency_exists(p, polygons[c_idx], adjacency_fn)
+            # no self loops
+            if c_idx != i && !has_edge(graph, i, c_idx) && adjacency_exists(p, polygons[c_idx], adjacency_fn)
                 add_edge!(graph, i, c_idx)
             end
         end

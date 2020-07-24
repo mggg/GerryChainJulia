@@ -30,40 +30,76 @@ function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tup
 end
 
 
+function read_table(filepath::AbstractString)::Shapefile.Table
+    """ Read table from shapefile. If a .shp and a .dbf file of the same name
+        are not found, then we throw an error.
+    """
+    prefix = splitext(filepath)[1]
+    if !isfile(prefix * ".shp") || !isfile(prefix * ".dbf")
+        throw(ArgumentError("To read a graph from a shapefile, we require a .shp and .dbf file of the same name in the same folder."))
+    end
+    return Shapefile.Table(prefix)
+end
+
+
+function all_node_properties(table::Shapefile.Table)::Array{Dict{String, Any}}
+    """ Returns an Array of Dictionaries. Each dictionary corresponds to one
+        node in the graph.
+    """
+    properties = propertynames(table) # returns array of symbols
+    string_keys = String.(properties) # convert by broadcasting
+
+    # internal function because we want to use both properties and values
+    function get_node_properties(row::Shapefile.Row)
+        values = map(p -> getproperty(row, p), properties)
+        return Dict(string_keys .=> values)
+    end
+
+    return get_node_properties.(table)
+end
+
+
+function get_node_coordinates(row::Shapefile.Row)::Vector{Vector{Vector{Vector{Float64}}}}
+    """ Construct an array of LibGEOS.Polygons from the given coordinates. The
+        coordinates are structured in the following way. Each element in the
+        outermost array represents one polygon. (One node can be made up of
+        multiple polygons).
+        [
+          [                       # one array = one polygon
+              [                   # points corresponding to outer ring
+                  [1.0, 2.0],     # single x,y coordinate of a point
+                  ...
+              ],
+              [                   # points corresponding to a hole in polygon
+                  [1.5, 1.7],
+                  ...
+              ],
+              ...                 # any other subsequent arrays would correspond
+                                  # to other holes
+          ],
+          ...
+        ]
+    """
+    return LibGEOS.GeoInterface.coordinates(getfield(row, :geometry))
+end
+
+
 function graph_from_shp(filepath::AbstractString,
                         pop_col::AbstractString,
                         assignment_col::AbstractString)
     """ Constructs BaseGraph from .shp file.
     """
     # TODO(matthew): change return type to BaseGraph
-    prefix = splitext(filepath)[1]
-    if !isfile(prefix * ".shp") || !isfile(prefix * ".dbf")
-        throw(ArgumentError("To read a graph from a shapefile, we require a .shp and .dbf file of the same name in the same folder."))
-    end
-    table = Shapefile.Table(prefix)
-    num_nodes = length(table)
+    table = read_table(filepath)
 
-    attributes = Array{Dict{String, Any}}(undef, num_nodes)
-
+    attributes = all_node_properties(table)
+    coords = get_node_coordinates.(table)
     # these will be used in the adjacency method
-    node_polys = Array{Array, 1}(undef, num_nodes)
-    node_mbrs = Array{Tuple, 1}(undef, num_nodes)
-
-    properties = propertynames(table) # returns array of symbols
-    string_keys = [String(p) for p in properties]
-    for (idx, row) in enumerate(table)
-        # fetch attributes of node and append to array
-        values = [getproperty(row, p) for p in properties]
-        attributes[idx] = Dict(string_keys .=> values)
-
-        # work with geometry
-        coords = LibGEOS.GeoInterface.coordinates(getfield(row, :geometry))
-        node_polys[idx] = polygon_array(coords)
-        node_mbrs[idx] = min_bounding_rect(coords)
-    end
+    node_polys = polygon_array.(coords)
+    node_mbrs = min_bounding_rect.(coords)
 
     # TODO(matthew): change return type to a Graph once we are done testing
-    return attributes
+    return nothing
 end
 
 
@@ -138,8 +174,7 @@ end
 
 function BaseGraph(filepath::AbstractString,
                    pop_col::AbstractString,
-                   assignment_col::AbstractString)
-    # TODO(matthew): change return type to BaseGraph
+                   assignment_col::AbstractString)::BaseGraph
     """ Builds the base Graph object. This is the underlying network of our
         districts, and its properties are immutable i.e they will not change
         from step to step in our Markov Chains.

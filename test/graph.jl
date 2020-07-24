@@ -40,10 +40,10 @@ using DataStructures
         @test_throws ArgumentError BaseGraph("nonexistent.txt", "population", "assignment")
     end
 
-    @testset "Reading in shapefile" begin
+    @testset "Reading node attributes from shapefile" begin
         # file should have a .json or .shp extension
-        # TODO(matthew): change test once return type changes
-        node_attributes = BaseGraph("./maps/simple_squares.shp", "population", "assignment")
+        table = GerryChain.read_table(square_shp_filepath)
+        node_attributes = GerryChain.all_node_properties(table)
         correct_attributes = [ # refer to maps/make_simple_shp.py
             Dict("assignment" => 1, "population" => 2),
             Dict("assignment" => 2, "population" => 4),

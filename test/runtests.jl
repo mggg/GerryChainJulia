@@ -4,6 +4,7 @@ using Test
 const testdir = dirname(@__FILE__)
 square_grid_filepath = "./maps/test_grid_4x4.json"
 cols_grid_filepath = "./maps/cols_grid_4x4.json"
+square_shp_filepath = "./maps/simple_squares.shp"
 
 tests = [
     "graph",

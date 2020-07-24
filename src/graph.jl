@@ -205,10 +205,9 @@ end
 function graph_from_shp(filepath::AbstractString,
                         pop_col::AbstractString,
                         assignment_col::AbstractString,
-                        adjacency::String="rook")
+                        adjacency::String="rook")::BaseGraph
     """ Constructs BaseGraph from .shp file.
     """
-    # TODO(matthew): change return type to BaseGraph
     table = read_table(filepath)
 
     attributes = all_node_properties(table)
@@ -217,7 +216,7 @@ function graph_from_shp(filepath::AbstractString,
     node_polys = polygon_array.(coords)
     node_mbrs = min_bounding_rect.(coords)
 
-    graph = simple_graph_from_shapes(node_polys, node_brs, adjacency)
+    graph = simple_graph_from_shapes(node_polys, node_mbrs, adjacency)
 
     # edge `i` would connect nodes edge_src[i] and edge_dst[i]
     edge_src, edge_dst = edges_from_graph(graph)
@@ -229,9 +228,9 @@ function graph_from_shp(filepath::AbstractString,
     num_districts = length(Set(assignments))
     total_pop = sum(populations)
 
-    return BaseGraph(nv(graph), ne(edges), num_districts, total_pop,
+    return BaseGraph(nv(graph), ne(graph), num_districts, total_pop,
                      populations, adj_matrix, edge_src, edge_dst, neighbors,
-                     graog, attributes)
+                     graph, attributes)
 end
 
 

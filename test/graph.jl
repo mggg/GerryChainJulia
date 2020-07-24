@@ -145,6 +145,14 @@ using DataStructures
         @test !has_edge(simple_graph, 2, 3)
     end
 
+    @testset "BaseGraph from shp()" begin
+        graph = BaseGraph(square_shp_filepath, "population", "assignment")
+        @test graph.num_nodes == 4
+        @test graph.num_edges == 4
+        @test graph.total_pop == 20
+        @test graph.num_dists == 4
+    end
+
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16

@@ -241,6 +241,20 @@ function edges_from_graph(graph::SimpleGraph)
 end
 
 
+function adjacency_matrix_from_graph(graph::SimpleGraph)
+    """ Extract sparse adjacency matrix from graph.
+    """
+    # each entry in adj_matrix is the edge id that connects the two nodes.
+    num_nodes = nv(graph)
+    adj_matrix = spzeros(Int, num_nodes, num_nodes)
+    for (index, edge) in enumerate(edges(graph))
+        adj_matrix[src(edge), dst(edge)] = index
+        adj_matrix[dst(edge), src(edge)] = index
+    end
+    return adj_matrix
+end
+
+
 function graph_from_json(filepath::AbstractString,
                          pop_col::AbstractString,
                          assignment_col::AbstractString)::BaseGraph
@@ -284,19 +298,12 @@ function graph_from_json(filepath::AbstractString,
     num_edges = ne(simple_graph)
 
     # edge `i` would connect nodes edge_src[i] and edge_dst[i]
-    edge_src = zeros(Int, num_edges)
-    edge_dst = zeros(Int, num_edges)
+    edge_src, edge_dst = edges_from_graph(simple_graph)
+    # each entry in adj_matrix is the edge id that connects the two nodes
+    adj_matrix = adjacency_matrix_from_graph(simple_graph)
     neighbors = [Int[] for i in 1:num_nodes, j=1]
-
-    # each entry in adj_matrix is the edge id that connects the two nodes.
-    adj_matrix = spzeros(Int, num_nodes, num_nodes)
+.
     for (index, edge) in enumerate(edges(simple_graph))
-        adj_matrix[src(edge), dst(edge)] = index
-        adj_matrix[dst(edge), src(edge)] = index
-
-        edge_src[index] = src(edge)
-        edge_dst[index] = dst(edge)
-
         push!(neighbors[src(edge)], dst(edge))
         push!(neighbors[dst(edge)], src(edge))
     end

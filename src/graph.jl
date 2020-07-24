@@ -16,17 +16,25 @@ end
 
 
 function polygon_array(coords::Vector{Vector{Vector{Vector{Float64}}}})::Array{LibGEOS.Polygon}
-    # Takes a complex vector object and returns an array of Polygons
-    # TODO(matthew): implement this, and add return type to signature
-    return []
+    """ Returns an array of Polygons for every entry in the `coords` array.
+    """
+    return LibGEOS.Polygon.(coords)
 end
 
 
 function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tuple
-    # Takes a complex vector object and returns an (axis-aligned) minimum
-    # bounding rectangle
-    # TODO(matthew): implement this, and add return type to signature
-    return ()
+    """ Takes a complex vector object and returns an (axis-aligned) minimum
+        bounding rectangle.
+    """
+    xmin, ymin , xmax, ymax = Inf, Inf, -Inf, -Inf
+    for c in coordinates # for each polygon in the array
+      points = reduce(hcat, c[1]) # we only care about the exterior ring, not holes
+      xmin = minimum([xmin, minimum(points[1, :])])
+      ymin = minimum([ymin, minimum(points[2, :])])
+      xmax = maximum([xmax, maximum(points[1, :])])
+      ymax = maximum([ymax, maximum(points[2, :])])
+    end
+    return ([xmin, ymin], [xmax, ymax])
 end
 
 

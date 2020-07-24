@@ -109,6 +109,42 @@ using DataStructures
         @test candidates == [1, 2]
     end
 
+    @testset "Test for adjacency between arrays of polygons" begin
+        coords = [
+                    [[[0., 0.], [0., 1.], [1., 1.], [1., 0.], [0., 0.]]],
+                    [[[1., 0.], [1., 1.], [2., 1.], [2., 0.], [1., 0.]]],
+                    [[[1., 1.], [1., 2.], [2., 2.], [2., 1.], [1., 1.]]],
+                    [[[3., 3.], [3., 4.], [4., 4.], [4., 3.], [3., 3.]]]
+        ]
+
+        polys = LibGEOS.Polygon.(coords)
+        # polygon 1 shares a border with polygon 2 and an edge with polygon 3
+        # polygon 2 and polygon 3 share a border
+        # polygon 4 does not touch any other polygons
+
+        @test GerryChain.adjacency_exists([polys[1]], polys[3:4], GerryChain.queen_intersection)
+        @test !GerryChain.adjacency_exists([polys[1]], polys[3:4], GerryChain.rook_intersection)
+        @test GerryChain.adjacency_exists(polys[1:2], polys[3:4], GerryChain.queen_intersection)
+        @test GerryChain.adjacency_exists(polys[1:2], polys[3:4], GerryChain.rook_intersection)
+        @test !GerryChain.adjacency_exists(polys[1:3], [polys[4]], GerryChain.queen_intersection)
+    end
+
+    @testset "simple_graph_from_shapes()" begin
+        table = GerryChain.read_table(square_shp_filepath)
+        coords = GerryChain.get_node_coordinates.(table)
+        node_polys = GerryChain.polygon_array.(coords)
+        node_mbrs = GerryChain.min_bounding_rect.(coords)
+
+        simple_graph = GerryChain.simple_graph_from_shapes(node_polys, node_mbrs)
+        # there should be edges between 1 & 2, 1 & 3, 2 & 4, 3 & 4
+
+        @test has_edge(simple_graph, 1, 2)
+        @test has_edge(simple_graph, 1, 3)
+        @test has_edge(simple_graph, 2, 4)
+        @test !has_edge(simple_graph, 1, 4)
+        @test !has_edge(simple_graph, 2, 3)
+    end
+
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16

@@ -204,7 +204,8 @@ end
 
 function graph_from_shp(filepath::AbstractString,
                         pop_col::AbstractString,
-                        assignment_col::AbstractString)
+                        assignment_col::AbstractString,
+                        adjacency::String="rook")
     """ Constructs BaseGraph from .shp file.
     """
     # TODO(matthew): change return type to BaseGraph
@@ -216,8 +217,27 @@ function graph_from_shp(filepath::AbstractString,
     node_polys = polygon_array.(coords)
     node_mbrs = min_bounding_rect.(coords)
 
-    # TODO(matthew): change return type to a Graph once we are done testing
+    graph = simple_graph_from_shapes(node_polys, node_brs, adjacency)
     return nothing
+end
+
+
+function edges_from_graph(graph::SimpleGraph)
+    """ Extract edges from graph. Returns two arrays; the first contains the
+        indices of the source nodes and the second contains the indices
+        of the destination nodes.
+    """
+    num_edges = ne(graph)
+
+    # edge `i` would connect nodes edge_src[i] and edge_dst[i]
+    edge_src = zeros(Int, num_edges)
+    edge_dst = zeros(Int, num_edges)
+
+    for (index, edge) in enumerate(edges(graph))
+        edge_src[index] = src(edge)
+        edge_dst[index] = dst(edge)
+    end
+    return edge_src, edge_dst
 end
 
 

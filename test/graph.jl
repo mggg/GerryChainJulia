@@ -151,6 +151,11 @@ using DataStructures
         @test graph.num_edges == 4
         @test graph.total_pop == 20
         @test graph.num_dists == 4
+
+        @test graph.populations == [2, 4, 6, 8]
+        @test graph.adj_matrix[1,2] != 0
+        @test graph.adj_matrix[1,3] != 0
+        @test graph.adj_matrix[1,4] == 0
     end
 
     graph = BaseGraph(square_grid_filepath, "population", "assignment")

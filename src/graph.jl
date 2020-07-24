@@ -255,6 +255,19 @@ function adjacency_matrix_from_graph(graph::SimpleGraph)
 end
 
 
+function neighbors_from_graph(graph::SimpleGraph)
+    """ Extract each node's neighbors from graph.
+    """
+    # each entry in adj_matrix is the edge id that connects the two nodes.
+    neighbors = [ Int[] for n in 1:nv(graph) ]
+    for (index, edge) in enumerate(edges(graph))
+        push!(neighbors[src(edge)], dst(edge))
+        push!(neighbors[dst(edge)], src(edge))
+    end
+    return neighbors
+end
+
+
 function graph_from_json(filepath::AbstractString,
                          pop_col::AbstractString,
                          assignment_col::AbstractString)::BaseGraph
@@ -301,12 +314,7 @@ function graph_from_json(filepath::AbstractString,
     edge_src, edge_dst = edges_from_graph(simple_graph)
     # each entry in adj_matrix is the edge id that connects the two nodes
     adj_matrix = adjacency_matrix_from_graph(simple_graph)
-    neighbors = [Int[] for i in 1:num_nodes, j=1]
-.
-    for (index, edge) in enumerate(edges(simple_graph))
-        push!(neighbors[src(edge)], dst(edge))
-        push!(neighbors[dst(edge)], src(edge))
-    end
+    neighbors = neighbors_from_graph(simple_graph)
 
     # get attributes
     attributes = get_attributes(nodes)

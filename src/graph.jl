@@ -42,6 +42,19 @@ function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tup
 end
 
 
+function create_rtree(minimum_bounding_rects::Array{Tuple, 1})::LibSpatialIndex.RTree
+    """ Given an array of minimum bounding rectangles, constructs an R-Tree
+        that will make it easier to identify candidates for intersecting nodes.
+    """
+    rtree = LibSpatialIndex.RTree(2)
+    # insert an MBR for each polygon in the RTree
+    for (i, mbr) in enumerate(minimum_bounding_rects)
+        LibSpatialIndex.insert!(rtree, i, mbr[1], mbr[2])
+    end
+    return rtree
+end
+
+
 function read_table(filepath::AbstractString)::Shapefile.Table
     """ Read table from shapefile. If a .shp and a .dbf file of the same name
         are not found, then we throw an error.

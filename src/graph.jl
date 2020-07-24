@@ -87,7 +87,7 @@ function adjacency_exists(node₁_polygons::Array{LibGEOS.Polygon, 1},
     """ Returns true if there exists an adjacency between any of the polygons
         in node 1 and any of the polygons in node 2. The user provides
         an adjacency_fn (such as queen_intersection or rook_intersection) to
-        evaluate the LibGEOS.GEOSIntersection_r object.
+        evaluate the output of the LibGEOS.intersection() function.
     """
     for p₁ in node₁_polygons
         for p₂ in node₂_polygons

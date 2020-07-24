@@ -80,6 +80,23 @@ using DataStructures
         @test_throws ArgumentError GerryChain.min_bounding_rect.([empty_coords])
     end
 
+    @testset "Queen and rook intersection" begin
+        coords₁ = [[[0., 0.], [0., 1.], [1., 1.], [1., 0.], [0., 0.]]]
+        coords₂ = [[[1., 0.], [1., 1.], [2., 1.], [2., 0.], [1., 0.]]]
+        coords₃ = [[[1., 1.], [1., 2.], [2., 2.], [2., 1.], [1., 1.]]]
+
+        p₁ = LibGEOS.Polygon(coords₁)
+        p₂ = LibGEOS.Polygon(coords₂)
+        p₃ = LibGEOS.Polygon(coords₃)
+
+        # p₁ and p₂ share a border, while p₁ and p₃ only share a single point
+        @test GerryChain.queen_intersection(LibGEOS.intersection(p₁, p₂))
+        @test GerryChain.queen_intersection(LibGEOS.intersection(p₁, p₃))
+
+        @test GerryChain.rook_intersection(LibGEOS.intersection(p₁, p₂))
+        @test !GerryChain.rook_intersection(LibGEOS.intersection(p₁, p₃))
+    end
+
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16

@@ -1,4 +1,5 @@
 using GerryChain
+using LibGEOS
 using Test
 
 const testdir = dirname(@__FILE__)

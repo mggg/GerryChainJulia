@@ -55,6 +55,22 @@ function create_rtree(minimum_bounding_rects::Array{Tuple, 1})::LibSpatialIndex.
 end
 
 
+function queen_intersection(intersection)::Bool
+  """ Returns true if the LibGEOS.GEOSGeom is non-empty.
+  """
+  return !LibGEOS.isEmpty(intersection)
+end
+
+
+function rook_intersection(intersection)::Bool
+  """ Returns true if the LibGEOS.GEOSGeom is non-empty and there
+      a shaed perimeter in the intersection (i.e., the intersection is not
+      just a point or a set of points.)
+  """
+  return queen_intersection(intersection) && !(intersection isa LibGEOS.Point || intersection isa LibGEOS.MultiPoint)
+end
+
+
 function read_table(filepath::AbstractString)::Shapefile.Table
     """ Read table from shapefile. If a .shp and a .dbf file of the same name
         are not found, then we throw an error.

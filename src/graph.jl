@@ -24,7 +24,8 @@ end
 
 function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tuple
     """ Takes a complex vector object and returns an (axis-aligned) minimum
-        bounding rectangle.
+        bounding rectangle. A rectangle is represented by
+        ([lower_left_x, lower_left_y], [upper_right_x, upper_right_y]).
     """
     xmin, ymin , xmax, ymax = Inf, Inf, -Inf, -Inf
     for c in coords # for each polygon in the array

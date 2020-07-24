@@ -218,7 +218,20 @@ function graph_from_shp(filepath::AbstractString,
     node_mbrs = min_bounding_rect.(coords)
 
     graph = simple_graph_from_shapes(node_polys, node_brs, adjacency)
-    return nothing
+
+    # edge `i` would connect nodes edge_src[i] and edge_dst[i]
+    edge_src, edge_dst = edges_from_graph(graph)
+    # each entry in adj_matrix is the edge id that connects the two nodes
+    adj_matrix = adjacency_matrix_from_graph(graph)
+    neighbors = neighbors_from_graph(graph)
+
+    populations, assignments = get_populations_and_assignments(attributes, pop_col, assignment_col)
+    num_districts = length(Set(assignments))
+    total_pop = sum(populations)
+
+    return BaseGraph(nv(graph), ne(edges), num_districts, total_pop,
+                     populations, adj_matrix, edge_src, edge_dst, neighbors,
+                     graog, attributes)
 end
 
 

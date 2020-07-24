@@ -68,10 +68,10 @@ using DataStructures
 
         # create minimum bounding rectangles
         correct_mbrs = [
-            ([0.0, 0.0], [1.0, 1.0]),
-            ([0.0, 1.0], [1.0, 2.0]),
-            ([1.0, 0.0], [2.0, 1.0]),
-            ([1.0, 1.0], [2.0, 2.0])
+            ([0., 0.], [1., 1.]),
+            ([0., 1.], [1., 2.]),
+            ([1., 0.], [2., 1.]),
+            ([1., 1.], [2., 2.])
         ]
         node_mbrs = GerryChain.min_bounding_rect.(coords)
         @test correct_mbrs == node_mbrs
@@ -95,6 +95,18 @@ using DataStructures
 
         @test GerryChain.rook_intersection(LibGEOS.intersection(p₁, p₂))
         @test !GerryChain.rook_intersection(LibGEOS.intersection(p₁, p₃))
+    end
+
+    @testset "R-tree tests" begin
+        mbrs = [
+            ([0., 0.], [1., 1.]),
+            ([0.5, 0.5], [1.5, 1.5]),
+            ([2., 2.], [3., 3.])
+        ]
+        rtree = GerryChain.create_rtree(mbrs)
+        # first square should intersect with itself and second, but not third
+        candidates = LibSpatialIndex.intersects(rtree, mbrs[1][1], mbrs[1][2])
+        @test candidates == [1, 2]
     end
 
     graph = BaseGraph(square_grid_filepath, "population", "assignment")

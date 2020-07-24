@@ -1,5 +1,6 @@
 using GerryChain
-using LibGEOS
+import LibGEOS
+import LibSpatialIndex
 using Test
 
 const testdir = dirname(@__FILE__)

@@ -7,6 +7,7 @@ using DataStructures
 using Statistics
 import Shapefile
 import LibGEOS
+import LibSpatialIndex
 
 export
 

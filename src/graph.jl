@@ -42,7 +42,7 @@ function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tup
 end
 
 
-function create_rtree(minimum_bounding_rects::Array{Tuple, 1})::LibSpatialIndex.RTree
+function create_rtree(minimum_bounding_rects::Array{Tuple{Array{Float64,1},Array{Float64,1}},1})::LibSpatialIndex.RTree
     """ Given an array of minimum bounding rectangles, constructs an R-Tree
         that will make it easier to identify candidates for intersecting nodes.
     """

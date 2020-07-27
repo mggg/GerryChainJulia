@@ -9,3 +9,4 @@ os:
 matrix:
   allow_failures:
     - julia: nightly
+codecov: true

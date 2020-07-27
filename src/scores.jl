@@ -74,16 +74,21 @@ function Base.iterate(query::ChainScoreQuery)
         return nothing
     end
     # check that all requested scores are in the ChainScoreData object
-    for score_name in query.requested_scores
+    score_vals = Dict{String, Any}()
+    nested_keys = Dict{String, String}() # maps scores to the name of parent CompositeScore, if any
+    score_names = isempty(query.requested_scores) ? collect(keys(chain_data.step_values[1])) : query.requested_scores
+    for score_name in score_names
         score, nested_key = get_score_by_name(chain_data, score_name)
         if score == nothing
             throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
         end
+        # write value to initial dictionary
+        if nested_key == nothing
+            score_vals[score_name] = chain_data.step_values[1][score_name]
+        else
+            chain_data.step_values[1][nested_key][score_name]
+        end
     end
-
-    score_vals = Dict{String, Any}()
-    score_names = isempty(query.requested_scores) ? collect(keys(chain_data.step_values[1])) : query.requested_scores
-    foreach(name -> score_vals[name] = chain_data.step_values[1][name], score_names)
     return deepcopy(score_vals), (2, score_vals) # keep track of next index and current dictionary
 end
 
@@ -456,10 +461,52 @@ end
 
 
 function save_scores(filename::String,
-                     chain_data::ChainScoreData)
-    """ Save the `scores` in a JSON file named `filename`.
+                     chain_data::ChainScoreData,
+                     score_names::Array{String,1}=String[])
+    """ Save the `scores` in a CSV file named `filename`.
     """
     open(filename, "w") do f
-        JSON.print(f, chain_data.step_values)
+        # write column names
+        if isempty(score_names)
+            score_names = collect(keys(chain_data.step_values[1]))
+        end
+
+        column_names = String[]
+        nested_keys = Dict{String, String}() # map score name to nested key, if any
+        for score_name in score_names
+            score, nested_key = get_score_by_name(chain_data, score_name)
+            if score == nothing
+                throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
+            elseif score isa DistrictScore || score isa DistrictAggregate
+                num_districts = length(chain_data.step_values[1][score_name])
+                # add new column for each district
+                column_names.append.(["$(score_name)_$(i)" for i in 1:num_districts])
+            elseif score isa CompositeScore
+                # automatically replace with score names of
+                throw(ArgumentError("Cannot save CompositeScore to CSV."))
+            else # must be PlanScore
+                column_names.append(score_name)
+            end
+            if nested_key != nothing
+                nested_keys[score_name] = nested_key
+            end
+        end
+        colname_row = hcat(column_names...) # turn into 1xn array
+        writedlm(f, colname_row, ',') # write intial row of column names
+
+        # iterate through all steps of chain
+        query = ChainScoreQuery(score_names, chain_data)
+        for step_values in query
+            row_values = []
+            for score_name in score_names
+                if haskey(score_keys, score_name)
+                    nested_key = score_keys[score_name]
+                    append!(row_values, hcat(step_values[nested_key][score_name]...))
+                else
+                    append!(row_values, hcat(step_values[score_name]...))
+                end
+            end
+            writedlm(f, hcat(row_values...), ',')
+        end
     end
 end

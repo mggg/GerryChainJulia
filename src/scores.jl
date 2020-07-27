@@ -351,8 +351,8 @@ function get_scores_at_step(chain_data::ChainScoreData,
 
     score_vals = Dict{String, Any}()
     for (i, step_scores) in enumerate(query)
-        score_vals = step_scores
         if i > step
+            score_vals = step_scores
             break
         end
     end

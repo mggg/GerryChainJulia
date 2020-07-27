@@ -68,7 +68,12 @@ end
 
 
 function Base.iterate(query::ChainScoreQuery)
-    # TODO(matthew): write docstring
+    """ This is 1/2 of the functions needed to make a ChainScoreQuery iterable.
+        This is the function that calls when the iterable is first run. It checks
+        that the query is valid (i.e., the user is asking for sensible scores)
+        and then returns the values of the relevant scores for the first state
+        in the chain.
+    """
     chain_data = query.chain_data
     if isempty(chain_data.step_values) # check that some data exists
         return nothing
@@ -89,22 +94,28 @@ function Base.iterate(query::ChainScoreQuery)
             chain_data.step_values[1][nested_key][score_name]
         end
     end
-    return deepcopy(score_vals), (2, score_vals) # keep track of next index and current dictionary
+    # keep track of next index and current dictionary
+    return score_vals, (2, deepcopy(score_vals))
 end
 
 
 function Base.iterate(query::ChainScoreQuery, state::Tuple)
-    # TODO(matthew): write docstring
+    """ This is 2/2 of the functions needed to make a ChainScoreQuery iterable.
+        This is the function that calls after the first time the iterable runs.
+        The "state" of the iterable is always captured in the step that we are on
+        and the current dictionary.
+    """
     step, score_vals = state
     chain_data = query.chain_data
     if step > length(chain_data.step_values) # end iteration
         return nothing
     end
-
+    # update the dictionary of values to reflect districts changed in
+    # the next state
     curr_scores = chain_data.step_values[step]
     (D₁, D₂) = chain_data.step_values[step]["dists"]
     update_dictionary!(score_vals, curr_scores, D₁, D₂)
-    return deepcopy(score_vals), (step + 1, score_vals)
+    return score_vals, (step + 1, deepcopy(score_vals))
 end
 
 
@@ -461,52 +472,10 @@ end
 
 
 function save_scores(filename::String,
-                     chain_data::ChainScoreData,
-                     score_names::Array{String,1}=String[])
-    """ Save the `scores` in a CSV file named `filename`.
+                     chain_data::ChainScoreData)
+    """ Save the `scores` in a JSON file named `filename`.
     """
     open(filename, "w") do f
-        # write column names
-        if isempty(score_names)
-            score_names = collect(keys(chain_data.step_values[1]))
-        end
-
-        column_names = String[]
-        nested_keys = Dict{String, String}() # map score name to nested key, if any
-        for score_name in score_names
-            score, nested_key = get_score_by_name(chain_data, score_name)
-            if score == nothing
-                throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
-            elseif score isa DistrictScore || score isa DistrictAggregate
-                num_districts = length(chain_data.step_values[1][score_name])
-                # add new column for each district
-                column_names.append.(["$(score_name)_$(i)" for i in 1:num_districts])
-            elseif score isa CompositeScore
-                # automatically replace with score names of
-                throw(ArgumentError("Cannot save CompositeScore to CSV."))
-            else # must be PlanScore
-                column_names.append(score_name)
-            end
-            if nested_key != nothing
-                nested_keys[score_name] = nested_key
-            end
-        end
-        colname_row = hcat(column_names...) # turn into 1xn array
-        writedlm(f, colname_row, ',') # write intial row of column names
-
-        # iterate through all steps of chain
-        query = ChainScoreQuery(score_names, chain_data)
-        for step_values in query
-            row_values = []
-            for score_name in score_names
-                if haskey(score_keys, score_name)
-                    nested_key = score_keys[score_name]
-                    append!(row_values, hcat(step_values[nested_key][score_name]...))
-                else
-                    append!(row_values, hcat(step_values[score_name]...))
-                end
-            end
-            writedlm(f, hcat(row_values...), ',')
-        end
+        JSON.print(f, chain_data.step_values)
     end
 end

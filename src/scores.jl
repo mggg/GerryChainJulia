@@ -51,6 +51,14 @@ struct ChainScoreData
 end
 
 
+struct ChainScoreQuery
+    """ Can be used to extract scores from a ChainScoreData object via an iterator
+    """
+    requested_scores::Array{S,1} where {S<:AbstractScore} # scores that were measured on a particular chain
+    chain_data::ChainScoreData
+end
+
+
 function DistrictAggregate(key::String)
     """ Initializes a DistrictAggregate score where the name and key are
         the same.

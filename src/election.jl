@@ -206,7 +206,7 @@ function ElectionTracker(election::Election,
         within the CompositeScore ensures that the vote update occurs first,
         followed by the partisan metrics scoring functions.
     """
-    count_votes = vote_updater(election) # name does not matter
+    count_votes = vote_updater(election)
     scores = Array{AbstractScore, 1}([count_votes; scores])
     return CompositeScore(election.name, scores)
 end

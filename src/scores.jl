@@ -54,7 +54,7 @@ end
 struct ChainScoreQuery
     """ Can be used to extract scores from a ChainScoreData object via an iterator
     """
-    requested_scores::Array{S,1} where {S<:AbstractScore} # scores that were measured on a particular chain
+    requested_scores::Array{String,1} # scores that were measured on a particular chain
     chain_data::ChainScoreData
 end
 
@@ -64,6 +64,28 @@ function DistrictAggregate(key::String)
         the same.
     """
     return DistrictAggregate(key, key)
+end
+
+
+function iterate(query::ChainScoreQuery)
+    # TODO(matthew): write docstring
+    if length(query.chain_data.step_values) == 0 # check that some data exists
+        return nothing
+    end
+    # check that all requested scores are in the ChainScoreData object
+    for score_name in query.requested_scores
+        score, nested_key = get_score_by_name(query.chain_data, score_name)
+        if score == nothing
+            throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
+        end
+    end
+
+    score_vals = Dict{String, Any}()
+    if isempty(query.requested_scores) # return all scores by default
+        score_names = collect(keys(query.chain_data.step_values[1]))
+    end
+    foreach(name -> score_vals[name] = chain_data.step_values[1][name], score_names)
+    return score_vals, (2, score_vals) # keep track of next index and current dictionary
 end
 
 

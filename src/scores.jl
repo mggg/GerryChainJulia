@@ -308,12 +308,12 @@ function get_score_by_name(chain_data::ChainScoreData, score_name::String)
         first, the AbstractScore object itself, and second, the name of the
         CompositeScore it is nested within (if it is nested within one at all.)
     """
-    index = findfirst(s -> s.name == score_name, chain_data.scores)
+    index = findfirst(s -> isdefined(s, :name) && s.name == score_name, chain_data.scores)
     if index == nothing
         # Check if score is nested inside a CompositeScore
         composite_scores = filter(s -> s isa CompositeScore, chain_data.scores)
         for c in composite_scores
-            index = findfirst(s -> s.name == score_name, c.scores)
+            index = findfirst(s -> isdefined(s, :name) && s.name == score_name, c.scores)
             if index != nothing
                 return c.scores[index], c.name # return score and nested key
             end

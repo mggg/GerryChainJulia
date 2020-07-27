@@ -6,3 +6,6 @@ os:
   - osx
   - linux
   - windows
+matrix:
+  allow_failures:
+    - julia: nightly

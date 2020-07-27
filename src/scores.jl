@@ -67,10 +67,10 @@ function DistrictAggregate(key::String)
 end
 
 
-function iterate(query::ChainScoreQuery)
+function Base.iterate(query::ChainScoreQuery)
     # TODO(matthew): write docstring
     chain_data = query.chain_data
-    if length(chain_data.step_values) == 0 # check that some data exists
+    if isempty(chain_data.step_values) # check that some data exists
         return nothing
     end
     # check that all requested scores are in the ChainScoreData object
@@ -82,26 +82,24 @@ function iterate(query::ChainScoreQuery)
     end
 
     score_vals = Dict{String, Any}()
-    if isempty(query.requested_scores) # return all scores by default
-        score_names = collect(keys(chain_data.step_values[1]))
-    end
+    score_names = isempty(query.requested_scores) ? collect(keys(chain_data.step_values[1])) : query.requested_scores
     foreach(name -> score_vals[name] = chain_data.step_values[1][name], score_names)
-    return score_vals, (2, deepcopy(score_vals)) # keep track of next index and current dictionary
+    return deepcopy(score_vals), (2, score_vals) # keep track of next index and current dictionary
 end
 
 
-function iterate(query::ChainScoreQuery, state::Tuple)
+function Base.iterate(query::ChainScoreQuery, state::Tuple)
     # TODO(matthew): write docstring
     step, score_vals = state
-    if step > length(query.chain_data.step_values) # end iteration
+    chain_data = query.chain_data
+    if step > length(chain_data.step_values) # end iteration
         return nothing
     end
 
-    chain_data = query.chain_data
     curr_scores = chain_data.step_values[step]
     (D₁, D₂) = chain_data.step_values[step]["dists"]
     update_dictionary!(score_vals, curr_scores, D₁, D₂)
-    return score_vals, (step + 1, deepcopy(score_vals))
+    return deepcopy(score_vals), (step + 1, score_vals)
 end
 
 
@@ -301,7 +299,7 @@ function update_dictionary!(original::Dict{String, Any},
                             D₂::Int)
     """ Modifies a Dict in-place by merging it with another Dict
         that contains "updates" to the former Dict. Runs recursively when there
-        are nested Dicts. Helper function for `get_scores_at_step.`
+        are nested Dicts. Helper function for ChainScoreQuery iterator.
     """
     for key in keys(original)
         if update[key] isa Array # district-level score
@@ -333,18 +331,15 @@ function get_scores_at_step(chain_data::ChainScoreData,
                            for which the user is requesting the values
     """
     # we don't want to alter the data in all_scores
+    query = ChainScoreQuery(score_names, chain_data)
+
     score_vals = Dict{String, Any}()
-    if isempty(score_names) # return all scores by default
-        score_names = collect(keys(chain_data.step_values[1]))
+    for (i, step_scores) in enumerate(query)
+        score_vals = step_scores
+        if i > step
+            break
+        end
     end
-    foreach(name -> score_vals[name] = chain_data.step_values[1][name], score_names)
-
-    for i in 1:step
-        curr_scores = chain_data.step_values[i + 1]
-        (D₁, D₂) = chain_data.step_values[i + 1]["dists"]
-        update_dictionary!(score_vals, curr_scores, D₁, D₂)
-    end
-
     return score_vals
 end
 

@@ -1,7 +1,7 @@
 abstract type AbstractScore end
 
 
-struct DistrictAggregate <: AbstractScore
+mutable struct DistrictAggregate <: AbstractScore
     """ A DistrictAggregate score is a simple sum of a particular property
         over all nodes in a given district.
     """
@@ -10,7 +10,7 @@ struct DistrictAggregate <: AbstractScore
 end
 
 
-struct DistrictScore <: AbstractScore
+mutable struct DistrictScore <: AbstractScore
     """ A DistrictScore takes a user-supplied function that returns some
         quantity of interest given the nodes in a given district. The signature
         of `score_fn` should be as follows:
@@ -18,10 +18,12 @@ struct DistrictScore <: AbstractScore
     """
     name::String
     score_fn::Function
+    DistrictScore(score_fn::Function) = (s = new(); s.score_fn = score_fn; s)
+    DistrictScore(name::String, score_fn::Function) = new(name, score_fn)
 end
 
 
-struct PlanScore <: AbstractScore
+mutable struct PlanScore <: AbstractScore
     """ A PlanScore takes a user-supplied function that returns some
         quantity of interest given a Graph and corresponding Partition object.
         The signature of `score_fn` should be as follows:
@@ -29,10 +31,12 @@ struct PlanScore <: AbstractScore
     """
     name::String
     score_fn::Function
+    PlanScore(score_fn::Function) = (s = new(); s.score_fn = score_fn; s)
+    PlanScore(name::String, score_fn::Function) = new(name, score_fn)
 end
 
 
-struct CompositeScore <: AbstractScore
+mutable struct CompositeScore <: AbstractScore
     """ A CompositeScore is just a group of scores that are run in sequence.
         CompositeScores are especially useful when the score functions depend
         upon/modify some shared state.
@@ -149,7 +153,7 @@ function eval_score_on_district(graph::BaseGraph,
     catch e # Check if the user-specified method was constructed incorrectly
         if isa(e, MethodError)
             error_msg = "DistrictScore function must accept graph, array of nodes, and district index."
-            throw(MethodError(error_msg))
+            throw(ArgumentError(error_msg))
         end
         throw(e)
     end
@@ -217,7 +221,7 @@ function eval_score_on_partition(graph::BaseGraph,
     catch e # Check if the user-specified method was constructed incorrectly
         if isa(e, MethodError)
             error_msg = "PlanScore function must accept graph and partition."
-            throw(MethodError(error_msg))
+            throw(ArgumentError(error_msg))
         end
         throw(e)
     end
@@ -255,12 +259,10 @@ function score_initial_partition(graph::BaseGraph,
     """
     score_values = Dict{String, Any}()
     for s in scores
-         value = eval_score_on_partition(graph, partition, s)
-         # check if value returned by score was empty
-         val_empty = value == nothing
-         # check if array of values returned by score was empty
-         val_empty |= (value isa Array && count(x -> x == nothing, value) == length(value))
-         val_empty ? continue : score_values[s.name] = value
+        value = eval_score_on_partition(graph, partition, s)
+        if isdefined(s, :name) # nameless scores should not be stored
+            score_values[s.name] = value
+        end
     end
     return score_values
 end
@@ -291,10 +293,8 @@ function score_partition_from_proposal(graph::BaseGraph,
     score_values["dists"] = Δ_districts
     for s in scores
         value = nothing # placeholder for output of score
-        empty_return = false # whether the score returned nothing
         if s isa PlanScore
             value = eval_score_on_partition(graph, partition, s)
-            empty_return = value == nothing
         elseif s isa CompositeScore
             # ensure that district-level scores in the CompositeScore are only
             # evaluated on changed districts
@@ -302,9 +302,8 @@ function score_partition_from_proposal(graph::BaseGraph,
             delete!(value, "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
             value = eval_score_on_districts(graph, partition, s, Δ_districts)
-            empty_return = any(x -> x==nothing, value)
         end
-        if !empty_return
+        if isdefined(s, :name)
             score_values[s.name] = value
         end
     end

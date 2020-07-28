@@ -23,7 +23,7 @@ function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
             assignment_col: the key denoting the district assignment at the node level
     """
     populations =  graph.populations
-    assignments = extract_attribute(graph.attributes, assignment_col, process_assignment)
+    assignments = get_assignments(graph.attributes, assignment_col)
 
     # get cut_edges, district_adjacencies
     dist_adj, cut_edges = get_district_adj_and_cut_edges(graph, assignments, graph.num_dists)

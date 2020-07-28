@@ -176,9 +176,9 @@ function all_node_properties(table::Shapefile.Table)::Array{Dict{String, Any}}
 end
 
 
-function extract_attribute(node_attributes::Array,
-                           column_name::String,
-                           value_transform::Function=identity)::Array
+function get_attribute_by_key(node_attributes::Array,
+                              column_name::String,
+                              process_value::Function=identity)::Array
     """ Returns an array whose values correspond to the value of an attribute
         for each node.
 
@@ -189,21 +189,42 @@ function extract_attribute(node_attributes::Array,
                             for a particular node.
         column_name     :   The name of the attribute (i.e., the key of the
                             attribute in the dictionaries)
-        value_transform :   An optional argument that processes the raw value
+        process_value   :   An optional argument that processes the raw value
     """
-    return [value_transform(n[column_name]) for n in node_attributes]
+    return [process_value(n[column_name]) for n in node_attributes]
 end
 
 
-function process_assignment(raw_assignment::Union{String, Int})::Int
-    """ Helper function that converts the raw value of an assignment from
-        a shapefile/JSON to an Int.
+function population_to_int(raw_value::Number)::Int
+    return raw_value isa Int ? raw_value : convert(Int, round(raw_value))
+end
+
+
+function get_assignments(node_attributes::Array,
+                         assignment_col::AbstractString)::Array{Int, 1}
+    """ Extracts the assignments for each node in a graph. First attempts
+        to parse the values of the assignments column as an Int; if it fails,
+        it assumes every unique string assignment corresponds to to a unique
+        district.
     """
-    if raw_assignment isa Int
-        return raw_assignment
-    elseif raw_assignment isa String
-        return parse(Int, raw_assignment)
+    assignment_to_num = Dict{String, Int}() # map unique strings to integers
+    raw_assignments = get_attribute_by_key(node_attributes, assignment_col)
+    processed_assignments = zeros(length(raw_assignments))
+    for (i, raw_value) in enumerate(raw_assignments)
+        if raw_value isa Int
+            processed_assignments[i] = raw_value
+        elseif raw_value isa String
+            try
+                processed_assignments[i] = parse(Int, raw_assignment)
+            catch exception # if the String could not be read as an int
+                if !haskey(assignment_to_num, raw_value)
+                    assignment_to_num[raw_value] = length(assignment_to_num) + 1
+                end
+                processed_assignments[i] = assignment_to_num[raw_value]
+            end
+        end
     end
+    return processed_assignments
 end
 
 
@@ -255,8 +276,8 @@ function graph_from_shp(filepath::AbstractString,
     adj_matrix = adjacency_matrix_from_graph(graph)
     neighbors = neighbors_from_graph(graph)
 
-    populations =  extract_attribute(attributes, pop_col)
-    assignments = extract_attribute(attributes, assignment_col, process_assignment)
+    populations =  get_attribute_by_key(attributes, pop_col, population_to_int)
+    assignments = get_assignments(attributes, assignment_col)
     num_districts = length(Set(assignments))
     total_pop = sum(populations)
 
@@ -338,8 +359,8 @@ function graph_from_json(filepath::AbstractString,
     num_nodes = length(nodes)
 
     # get populations, assignments and num_districts
-    populations =  extract_attribute(nodes, pop_col)
-    assignments = extract_attribute(nodes, assignment_col, process_assignment)
+    populations =  get_attribute_by_key(nodes, pop_col, population_to_int)
+    assignments = get_assignments(nodes, assignment_col)
     num_districts = length(Set(assignments))
     total_pop = sum(populations)
 

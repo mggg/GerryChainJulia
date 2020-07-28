@@ -339,7 +339,8 @@ end
 
 function BaseGraph(filepath::AbstractString,
                    pop_col::AbstractString,
-                   assignment_col::AbstractString)::BaseGraph
+                   assignment_col::AbstractString;
+                   adjacency::String="rook")::BaseGraph
     """ Builds the base Graph object. This is the underlying network of our
         districts, and its properties are immutable i.e they will not change
         from step to step in our Markov Chains.
@@ -351,13 +352,16 @@ function BaseGraph(filepath::AbstractString,
                         population of that node
         assignment_col: the node attribute key whose accompanying value is the
                         assignment of that node (i.e., to a district)
+        adjacency:      (Only used if the user specifies a filepath to a .shp
+                        file.) Should be either "queen" or "rook"; "rook" by
+                        default.
     """
     extension = splitext(filepath)[2]
     try
         try
             return graph_from_json(filepath, pop_col, assignment_col)
         catch e
-            return graph_from_shp(filepath, pop_col, assignment_col)
+            return graph_from_shp(filepath, pop_col, assignment_col, adjacency)
         end
     catch
         throw(ArgumentError("Shapefile could not be processed. Please ensure the file is a valid JSON or .shp/.dbf."))

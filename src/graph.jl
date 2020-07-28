@@ -63,8 +63,8 @@ end
 
 
 function rook_intersection(intersection)::Bool
-  """ Returns true if the LibGEOS.GEOSGeom is non-empty and there
-      a shaed perimeter in the intersection (i.e., the intersection is not
+  """ Returns true if the LibGEOS.GEOSGeom is non-empty and there exists
+      a shared perimeter in the intersection (i.e., the intersection is not
       just a point or a set of points.)
   """
   return queen_intersection(intersection) && !(intersection isa LibGEOS.Point || intersection isa LibGEOS.MultiPoint)

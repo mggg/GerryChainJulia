@@ -94,7 +94,7 @@ function Base.iterate(query::ChainScoreQuery)
             if !(haskey(score_vals, nested_key))
                 score_vals[nested_key] = Dict{String, Any}()
             end
-            score_vals[nesetd_key][score_name] = chain_data.step_values[1][nested_key][score_name]
+            score_vals[nested_key][score_name] = chain_data.step_values[1][nested_key][score_name]
         end
     end
     # keep track of next index and current dictionary

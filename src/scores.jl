@@ -84,14 +84,17 @@ function Base.iterate(query::ChainScoreQuery)
     score_names = isempty(query.requested_scores) ? collect(keys(chain_data.step_values[1])) : query.requested_scores
     for score_name in score_names
         score, nested_key = get_score_by_name(chain_data, score_name)
-        if score == nothing
+        if isnothing(score)
             throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
         end
         # write value to initial dictionary
-        if nested_key == nothing
+        if isnothing(nested_key)
             score_vals[score_name] = chain_data.step_values[1][score_name]
         else
-            chain_data.step_values[1][nested_key][score_name]
+            if !(haskey(score_vals, nested_key))
+                score_vals[nested_key] = Dict{String, Any}()
+            end
+            score_vals[nesetd_key][score_name] = chain_data.step_values[1][nested_key][score_name]
         end
     end
     # keep track of next index and current dictionary

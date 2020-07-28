@@ -8,10 +8,7 @@ mutable struct Partition
     parent::Union{Partition, Nothing}           # optional parent partition
 end
 
-function Partition(filepath::AbstractString,
-                   graph::BaseGraph,
-                   pop_col::AbstractString,
-                   assignment_col::AbstractString)::Partition
+function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
 
     """
         Partition represents a partition of the nodes of the graph.
@@ -25,9 +22,8 @@ function Partition(filepath::AbstractString,
             pop_col:   the key denoting the population attribute at the node level
             assignment_col: the key denoting the district assignment at the node level
     """
-    raw_graph = JSON.parsefile(filepath)
-
-    populations, assignments = get_populations_and_assignments(raw_graph["nodes"], pop_col, assignment_col)
+    populations =  graph.populations
+    assignments = extract_attribute(graph.attributes, assignment_col, process_assignment)
 
     # get cut_edges, district_adjacencies
     dist_adj, cut_edges = get_district_adj_and_cut_edges(graph, assignments, graph.num_dists)
@@ -112,26 +108,6 @@ function sample_adjacent_districts_randomly(partition::Partition,
             return D₁, D₂
         end
     end
-end
-
-function get_populations_and_assignments(nodes::Array,
-                                         pop_col::AbstractString,
-                                         assignment_col::AbstractString)
-    """ Returns the arrays of populations and assignments of the graph, where
-        i'th node's population is populations[i] and assignment is assignments[i].
-    """
-    num_nodes = length(nodes)
-    populations = zeros(Int, num_nodes)
-    assignments = zeros(Int, num_nodes)
-    for i in 1:num_nodes
-        populations[i] = nodes[i][pop_col]
-        if nodes[i][assignment_col] isa String
-            assignments[i] = parse(Int, nodes[i][assignment_col])
-        elseif nodes[i][assignment_col] isa Int
-            assignments[i] = nodes[i][assignment_col]
-        end
-    end
-    return populations, assignments
 end
 
 

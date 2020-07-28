@@ -14,7 +14,7 @@
 
     @testset "vote_updater()" begin
         graph = BaseGraph(square_grid_filepath, "population", "assignment")
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
         election_tracker = ElectionTracker(election)
 
@@ -27,7 +27,7 @@
 
     @testset "vote_count()" begin
         graph = BaseGraph(square_grid_filepath, "population", "assignment")
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
 
         d_count = vote_count("votes_d", election, "electionD")
@@ -46,7 +46,7 @@
 
     @testset "vote_share()" begin
         graph = BaseGraph(square_grid_filepath, "population", "assignment")
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
 
         d_share = vote_share("share_d", election, "electionD")
@@ -65,7 +65,7 @@
 
     @testset "seats_won()" begin
         graph = BaseGraph(square_grid_filepath, "population", "assignment")
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
@@ -101,7 +101,7 @@
 
     @testset "mean_median()" begin
         graph = BaseGraph(square_grid_filepath, "population", "assignment")
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
@@ -144,7 +144,7 @@
         graph.attributes[9]["electionD"] = 4
         graph.attributes[11]["electionD"] = 4
 
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
@@ -166,7 +166,7 @@
 
     @testset "ElectionTracker updates votes" begin
         graph = BaseGraph(square_grid_filepath, "population", "assignment")
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)

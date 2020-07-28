@@ -176,6 +176,37 @@ function all_node_properties(table::Shapefile.Table)::Array{Dict{String, Any}}
 end
 
 
+function extract_attribute(node_attributes::Array,
+                           column_name::String,
+                           value_transform::Function=identity)::Array
+    """ Returns an array whose values correspond to the value of an attribute
+        for each node.
+
+        Arguments:
+
+        node_attributes :   An array of Dict{String, Any}, where each dictionary
+                            represents a mapping from attribute names to values
+                            for a particular node.
+        column_name     :   The name of the attribute (i.e., the key of the
+                            attribute in the dictionaries)
+        value_transform :   An optional argument that processes the raw value
+    """
+    return [value_transform(n[column_name]) for n in node_attributes]
+end
+
+
+function process_assignment(raw_assignment::Union{String, Int})::Int
+    """ Helper function that converts the raw value of an assignment from
+        a shapefile/JSON to an Int.
+    """
+    if raw_assignment isa Int
+        return raw_assignment
+    elseif raw_assignment isa String
+        return parse(Int, raw_assignment)
+    end
+end
+
+
 function get_node_coordinates(row::Shapefile.Row)::Vector{Vector{Vector{Vector{Float64}}}}
     """ Construct an array of LibGEOS.Polygons from the given coordinates. The
         coordinates are structured in the following way. Each element in the
@@ -224,7 +255,8 @@ function graph_from_shp(filepath::AbstractString,
     adj_matrix = adjacency_matrix_from_graph(graph)
     neighbors = neighbors_from_graph(graph)
 
-    populations, assignments = get_populations_and_assignments(attributes, pop_col, assignment_col)
+    populations =  extract_attribute(attributes, pop_col)
+    assignments = extract_attribute(attributes, assignment_col, process_assignment)
     num_districts = length(Set(assignments))
     total_pop = sum(populations)
 
@@ -306,7 +338,8 @@ function graph_from_json(filepath::AbstractString,
     num_nodes = length(nodes)
 
     # get populations, assignments and num_districts
-    populations, assignments = get_populations_and_assignments(nodes, pop_col, assignment_col)
+    populations =  extract_attribute(nodes, pop_col)
+    assignments = extract_attribute(nodes, assignment_col, process_assignment)
     num_districts = length(Set(assignments))
     total_pop = sum(populations)
 

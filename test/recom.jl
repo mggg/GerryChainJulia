@@ -17,7 +17,7 @@
     end
 
     @testset "recom_chain()" begin
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         # this is a dummy constraint
         pop_constraint = PopulationConstraint(graph, "population", 10.0)
         scores = [

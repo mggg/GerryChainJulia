@@ -19,7 +19,7 @@ end
 
 @testset "Contiguity Constraint" begin
     graph = BaseGraph(cols_grid_filepath, "population", "assignment")
-    partition = Partition(cols_grid_filepath, graph, "population", "assignment")
+    partition = Partition(graph, "assignment")
     cont_constraint = ContiguityConstraint()
     discont_proposal = FlipProposal(5, 1, 0, 30, 42,
                                     BitSet([1, 9, 13]),

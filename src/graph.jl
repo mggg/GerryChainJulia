@@ -196,6 +196,9 @@ end
 
 
 function population_to_int(raw_value::Number)::Int
+    """ Tiny helper function to coerce population counts (whether they are
+        ints or floats) to int.
+    """
     return raw_value isa Int ? raw_value : convert(Int, round(raw_value))
 end
 

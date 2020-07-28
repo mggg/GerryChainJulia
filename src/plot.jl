@@ -11,8 +11,8 @@ function score_boxplot(score_values::Array{S, 2};
                                   dimension (n x d), where n is the number of
                                   states in the chain and d is the number of
                                   districts
-            sort_by_score       : Whether we should order districts on the
-                                  by median of score value.
+            sort_by_score       : Whether we should order districts by median
+                                  of score value.
             label               : Legend key for the GerryChain boxplots. Only shown
                                   if there are scores from other plans passed in
                                   as reference points.

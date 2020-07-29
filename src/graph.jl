@@ -35,12 +35,10 @@ function read_table(filepath::AbstractString)::Shapefile.Table
         are not found, then we throw an error.
     """
     prefix = splitext(filepath)[1]
-    try
-        return Shapefile.Table(prefix)
-    catch e
-        @error "Unable to read shapefile. Tip: make sure that the .shp file is in a directory where there is also a .dbf of the same name."
-        throw(e)
+    if !(isfile(prefix * ".shp") || isfile(prefix * ".SHP")) || !(isfile(prefix * ".dbf") || isfile(prefix * ".DBF"))
+        throw(ArgumentError("Error when processing filepath as shapefile: to read a graph from a shapefile, we require a .shp and .dbf file of the same name in the same folder."))
     end
+    return Shapefile.Table(prefix)
 end
 
 

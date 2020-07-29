@@ -10,28 +10,28 @@ mutable struct DistrictAggregate <: AbstractScore
 end
 
 
-mutable struct DistrictScore <: AbstractScore
+struct DistrictScore <: AbstractScore
     """ A DistrictScore takes a user-supplied function that returns some
         quantity of interest given the nodes in a given district. The signature
         of `score_fn` should be as follows:
             score_fn(graph::BaseGraph, district_nodes::BitSet, district::int)
     """
-    name::String
+    name::Union{String, Missing}
     score_fn::Function
-    DistrictScore(score_fn::Function) = (s = new(); s.score_fn = score_fn; s)
+    DistrictScore(score_fn::Function) = new(missing, score_fn)
     DistrictScore(name::String, score_fn::Function) = new(name, score_fn)
 end
 
 
-mutable struct PlanScore <: AbstractScore
+struct PlanScore <: AbstractScore
     """ A PlanScore takes a user-supplied function that returns some
         quantity of interest given a Graph and corresponding Partition object.
         The signature of `score_fn` should be as follows:
             score_fn(graph::BaseGraph, partition::Partition)
     """
-    name::String
+    name::Union{String, Missing}
     score_fn::Function
-    PlanScore(score_fn::Function) = (s = new(); s.score_fn = score_fn; s)
+    PlanScore(score_fn::Function) = new(missing, score_fn)
     PlanScore(name::String, score_fn::Function) = new(name, score_fn)
 end
 
@@ -197,7 +197,7 @@ function score_initial_partition(graph::BaseGraph,
     score_values = Dict{String, Any}()
     for s in scores
         value = eval_score_on_partition(graph, partition, s)
-        if isdefined(s, :name) # nameless scores should not be stored
+        if !ismissing(s.name) # nameless scores should not be stored
             score_values[s.name] = value
         end
     end
@@ -239,7 +239,7 @@ function score_partition_from_proposal(graph::BaseGraph,
         else # efficiently calculate & store scores only on changed districts
             value = eval_score_on_districts(graph, partition, s, Δ_districts)
         end
-        if isdefined(s, :name)
+        if !ismissing(s.name)
             score_values[s.name] = value
         end
     end
@@ -307,12 +307,12 @@ function get_score_by_name(chain_data::ChainScoreData, score_name::String)
         first, the AbstractScore object itself, and second, the name of the
         CompositeScore it is nested within (if it is nested within one at all.)
     """
-    index = findfirst(s -> isdefined(s, :name) && s.name == score_name, chain_data.scores)
+    index = findfirst(s -> !ismissing(s.name) && s.name == score_name, chain_data.scores)
     if index == nothing
         # Check if score is nested inside a CompositeScore
         composite_scores = filter(s -> s isa CompositeScore, chain_data.scores)
         for c in composite_scores
-            index = findfirst(s -> isdefined(s, :name) && s.name == score_name, c.scores)
+            index = findfirst(s -> !ismissing(s.name) && s.name == score_name, c.scores)
             if index != nothing
                 return c.scores[index], c.name # return score and nested key
             end

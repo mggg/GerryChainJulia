@@ -131,8 +131,7 @@ function score_histogram(score_values::Array{S, 1};
                          bins::Union{Nothing, Int}=nothing,
                          range::Union{Nothing,Tuple}=nothing,
                          density::Bool=false,
-                         rwidth::Union{Nothing,U}=nothing,
-                         kwargs...) where {S<:Number, T<:Number, U<:Number}
+                         rwidth::Union{Nothing,U}=nothing) where {S<:Number, T<:Number, U<:Number}
     """ Creates a graph with histogram of the values of a score throughout
         the chain. Only applicable for scores of type PlanScore.
 
@@ -148,8 +147,6 @@ function score_histogram(score_values::Array{S, 1};
                                   where lᵢ is a label that will appear on the
                                   legend and scoreᵢ is the value of the plan-wide
                                   score for the comparison plan.
-            kwargs:               Any other arguments to matplotlib.hist that the
-                                  user wants to pass
     """
     # plot GerryChain histogram
     fig, ax = plt.subplots()
@@ -177,9 +174,8 @@ function score_histogram(chain_data::ChainScoreData, score_name::String; kwargs.
                           scores at every step of the chain
             score_name  : name of the score (i.e., the `name` field of an
                           AbstractScore)
-            kwargs      : Optional arguments, including label, comparison_scores,
-                          and sort_by_score (the latter should only be passed
-                          for district-level scores).
+            kwargs      : Optional arguments, including comparison_scores
+                          and other matplotlib arguments.
     """
     score, nested_key = get_score_by_name(chain_data, score_name)
     # throw argument error if score passed was not a PlanScore

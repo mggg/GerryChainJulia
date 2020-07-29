@@ -5,6 +5,7 @@ using LightGraphs
 using Random
 using DataStructures
 using Statistics
+using PyPlot
 
 export
 
@@ -44,7 +45,10 @@ always_accept, satisfies_acceptance_fn,
 
 # election
 AbstractElection, Election, ElectionTracker, vote_count, vote_share, seats_won,
-mean_median, wasted_votes, efficiency_gap
+mean_median, wasted_votes, efficiency_gap,
+
+# plot
+score_boxplot
 
 include("./graph.jl")
 include("./partition.jl")
@@ -55,5 +59,6 @@ include("./recom.jl")
 include("./flip.jl")
 include("./accept.jl")
 include("./election.jl")
+include("./plot.jl")
 
 end # module

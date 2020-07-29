@@ -27,6 +27,9 @@ function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tup
         bounding rectangle. A rectangle is represented by
         ([lower_left_x, lower_left_y], [upper_right_x, upper_right_y]).
     """
+    if isempty(coords)
+        throw(ArgumentError("Cannot create minimum bounding rectangle for empty coordinate array"))
+    end
     xmin, ymin , xmax, ymax = Inf, Inf, -Inf, -Inf
     for c in coords # for each polygon in the array
       points = reduce(hcat, c[1]) # we only care about the exterior ring, not holes

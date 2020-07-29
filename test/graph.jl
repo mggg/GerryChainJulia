@@ -75,6 +75,9 @@ using DataStructures
         ]
         node_mbrs = GerryChain.min_bounding_rect.(coords)
         @test correct_mbrs == node_mbrs
+        # test edge case
+        empty_coords = Vector{Vector{Vector{Vector{Float64}}}}([])
+        @test_throws ArgumentError GerryChain.min_bounding_rect.([empty_coords])
     end
 
     graph = BaseGraph(square_grid_filepath, "population", "assignment")

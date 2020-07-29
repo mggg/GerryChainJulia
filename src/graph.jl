@@ -216,7 +216,7 @@ function graph_from_shp(filepath::AbstractString,
     node_polys = polygon_array.(coords)
     node_mbrs = min_bounding_rect.(coords)
 
-    graph = simple_graph_from_shapes(node_polys, node_mbrs, adjacency)
+    graph = simple_graph_from_polygons(node_polys, node_mbrs, adjacency)
 
     # edge `i` would connect nodes edge_src[i] and edge_dst[i]
     edge_src, edge_dst = edges_from_graph(graph)

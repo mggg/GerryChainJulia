@@ -35,6 +35,11 @@ using DataStructures
 """
 
 @testset "Graph tests" begin
+    @testset "Bad extension" begin
+        # file should have a .json or .shp extension
+        @test_throws ArgumentError BaseGraph("nonexistent.txt", "population", "assignment")
+    end
+
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16

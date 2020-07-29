@@ -110,12 +110,14 @@ function BaseGraph(filepath::AbstractString,
                         assignment of that node (i.e., to a district)
     """
     extension = splitext(filepath)[2]
-    if extension == ".json"
-        return graph_from_json(filepath, pop_col, assignment_col)
-    elseif extension == ".shp"
-        return graph_from_shp(filepath, pop_col, assignment_col)
-    else
-        throw(ArgumentError("Filename must be a path to a .json or a .shp file."))
+    try
+        try
+            return graph_from_json(filepath, pop_col, assignment_col)
+        catch e
+            return graph_from_shp(filepath, pop_col, assignment_col)
+        end
+    catch
+        throw(ArgumentError("Shapefile could not be processed. Please ensure the file is a valid JSON or .shp/.dbf."))
     end
 end
 

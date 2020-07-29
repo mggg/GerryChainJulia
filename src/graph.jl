@@ -42,13 +42,23 @@ function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tup
 end
 
 
-function create_rtree(minimum_bounding_rects::Array{Tuple{Array{Float64,1},Array{Float64,1}},1})::LibSpatialIndex.RTree
+function create_rtree(minimum_bounding_rects::Vector{Tuple{Vector{Float64},Vector{Float64}}})::LibSpatialIndex.RTree
     """ Given an array of minimum bounding rectangles, constructs an R-Tree
         that will make it easier to identify candidates for intersecting nodes.
+        We expect that minimum bounding rectangles come in this form:
+        [
+            (
+                [lower_left_x, lower_left_y],
+                [upper_right_x, upper_right_y]
+            ),
+            ...
+        ]
     """
     rtree = LibSpatialIndex.RTree(2)
     # insert an MBR for each polygon in the RTree
     for (i, mbr) in enumerate(minimum_bounding_rects)
+        # mbr[1] is the coordinate of the lower left corner,
+        # mbr[2] is the coordinate of the upper right corner
         LibSpatialIndex.insert!(rtree, i, mbr[1], mbr[2])
     end
     return rtree

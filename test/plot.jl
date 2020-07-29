@@ -32,4 +32,25 @@
         @test !isa(boxplot_district_score(), Exception)
         @test !isa(boxplot_plan_score(), Exception)
     end
+
+    @testset "score_histogram()" begin
+        function histogram_no_comparison()
+            try
+                score_histogram(chain_data, "e_gap")
+            catch ex
+                return ex
+            end
+        end
+
+        function histogram_with_comparison()
+            try
+                score_histogram(chain_data, "e_gap", comparison_scores=[("abc", 0.05)])
+            catch ex
+                return ex
+            end
+        end
+        
+        @test !isa(histogram_no_comparison(), Exception)
+        @test !isa(histogram_with_comparison(), Exception)
+    end
 end

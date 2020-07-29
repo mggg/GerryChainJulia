@@ -124,3 +124,66 @@ function score_boxplot(chain_data::ChainScoreData, score_name::String; kwargs...
     score_boxplot(score_vals; kwargs...)
     plt.ylabel(score_name)
 end
+
+
+function score_histogram(score_values::Array{S, 1};
+                         comparison_scores::Array=[],
+                         bins::Union{Nothing, Int}=nothing,
+                         range::Union{Nothing,Tuple}=nothing,
+                         density::Bool=false,
+                         rwidth::Union{Nothing,T}=nothing) where {S<:Number, T<:Number}
+    """ Creates a graph with histogram of the values of a score throughout
+        the chain. Only applicable for scores of type PlanScore.
+
+        Arguments:
+            score_values        : A 1-dimensional array of score values of
+                                  length n, where n is the number of states in
+                                  the chain.
+            comparison_scores   : A list of Tuples that is passed in if the user
+                                  would like to compare core of a particular
+                                  plan with the GerryChain histogram on the same
+                                  figure. The list of tuples should have the
+                                  structure [(l₁, score₁), ... , (lᵤ, scoreᵤ)],
+                                  where lᵢ is a label that will appear on the
+                                  legend and scoreᵢ is the value of the plan-wide
+                                  score for the comparison plan.
+    """
+    # plot GerryChain histogram
+    fig, ax = plt.subplots()
+    ax.hist(score_values, bins=bins, range=range, density=density, rwidth=rwidth)
+    if length(comparison_scores) > 0
+        # cycle through colors so vertical lines do not appear all blue
+        colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+        color_index = 1
+        for p in comparison_scores
+            color = colors[color_index % length(colors) + 1] # ensure that we don't go out of bounds
+            ax.axvline(p[2], color=color, label=p[1])
+            color_index += 1
+        end
+        ax.legend()
+    end
+end
+
+
+function score_histogram(chain_data::ChainScoreData, score_name::String; kwargs...)
+    """ Creates a graph with histogram of the values of a score throughout
+        the chain. Only applicable for scores of type PlanScore.
+
+        Arguments:
+            chain_data  : ChainScoreData object that contains the values of
+                          scores at every step of the chain
+            score_name  : name of the score (i.e., the `name` field of an
+                          AbstractScore)
+            kwargs      : Optional arguments, including comparison_scores
+                          and other matplotlib arguments.
+    """
+    score, nested_key = get_score_by_name(chain_data, score_name)
+    # throw argument error if score passed was not a PlanScore
+    if !(score isa PlanScore)
+        throw(ArgumentError("Can only create histogram plot of a PlanScore"))
+    end
+    score_vals = get_score_values(chain_data.step_values, score, nested_key=nested_key)
+    score_histogram(score_vals; kwargs...)
+    plt.ylabel("Frequency")
+    plt.xlabel(score_name)
+end

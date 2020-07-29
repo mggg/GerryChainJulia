@@ -5,6 +5,8 @@ using LightGraphs
 using Random
 using DataStructures
 using Statistics
+import Shapefile
+import LibGEOS
 
 export
 

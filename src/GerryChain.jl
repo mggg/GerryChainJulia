@@ -6,6 +6,8 @@ using Random
 using DataStructures
 using Statistics
 using PyPlot
+import Shapefile
+import LibGEOS
 
 export
 

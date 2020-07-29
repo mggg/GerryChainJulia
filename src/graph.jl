@@ -81,9 +81,9 @@ function rook_intersection(intersection)::Bool
 end
 
 
-function adjacency_exists(node₁_polygons::Array{LibGEOS.Polygon, 1},
-                          node₂_polygons::Array{LibGEOS.Polygon, 1},
-                          adjacency_fn::Function)::Bool
+function adjacent(node₁_polygons::Array{LibGEOS.Polygon, 1},
+                  node₂_polygons::Array{LibGEOS.Polygon, 1},
+                  adjacency_fn::Function)::Bool
     """ Returns true if there exists an adjacency between any of the polygons
         in node 1 and any of the polygons in node 2. The user provides
         an adjacency_fn (such as queen_intersection or rook_intersection) to
@@ -101,9 +101,9 @@ function adjacency_exists(node₁_polygons::Array{LibGEOS.Polygon, 1},
 end
 
 
-function simple_graph_from_shapes(polygons::Array{Array{LibGEOS.Polygon, 1}, 1},
-                                  minimum_bounding_rects::Array{Tuple{Array{Float64,1},Array{Float64,1}},1},
-                                  adjacency::String="rook")::SimpleGraph
+function simple_graph_from_polygons(polygons::Array{Array{LibGEOS.Polygon, 1}, 1},
+                                    minimum_bounding_rects::Array{Tuple{Array{Float64,1},Array{Float64,1}},1},
+                                    adjacency::String="rook")::SimpleGraph
     """ Constructs a simple graph from polygons and the associated minimum
         bounding rectangles.
 
@@ -138,7 +138,7 @@ function simple_graph_from_shapes(polygons::Array{Array{LibGEOS.Polygon, 1}, 1},
         candidate_idxs = LibSpatialIndex.intersects(rtree, lower_left, upper_right)
         for c_idx in candidate_idxs
             # no self loops
-            if c_idx != i && !has_edge(graph, i, c_idx) && adjacency_exists(p, polygons[c_idx], adjacency_fn)
+            if c_idx != i && !has_edge(graph, i, c_idx) && adjacent(p, polygons[c_idx], adjacency_fn)
                 add_edge!(graph, i, c_idx)
             end
         end

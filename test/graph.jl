@@ -122,20 +122,20 @@ using DataStructures
         # polygon 2 and polygon 3 share a border
         # polygon 4 does not touch any other polygons
 
-        @test GerryChain.adjacency_exists([polys[1]], polys[3:4], GerryChain.queen_intersection)
-        @test !GerryChain.adjacency_exists([polys[1]], polys[3:4], GerryChain.rook_intersection)
-        @test GerryChain.adjacency_exists(polys[1:2], polys[3:4], GerryChain.queen_intersection)
-        @test GerryChain.adjacency_exists(polys[1:2], polys[3:4], GerryChain.rook_intersection)
-        @test !GerryChain.adjacency_exists(polys[1:3], [polys[4]], GerryChain.queen_intersection)
+        @test GerryChain.adjacent([polys[1]], polys[3:4], GerryChain.queen_intersection)
+        @test !GerryChain.adjacent([polys[1]], polys[3:4], GerryChain.rook_intersection)
+        @test GerryChain.adjacent(polys[1:2], polys[3:4], GerryChain.queen_intersection)
+        @test GerryChain.adjacent(polys[1:2], polys[3:4], GerryChain.rook_intersection)
+        @test !GerryChain.adjacent(polys[1:3], [polys[4]], GerryChain.queen_intersection)
     end
 
-    @testset "simple_graph_from_shapes()" begin
+    @testset "simple_graph_from_polygons()" begin
         table = GerryChain.read_table(square_shp_filepath)
         coords = GerryChain.get_node_coordinates.(table)
         node_polys = GerryChain.polygon_array.(coords)
         node_mbrs = GerryChain.min_bounding_rect.(coords)
 
-        simple_graph = GerryChain.simple_graph_from_shapes(node_polys, node_mbrs)
+        simple_graph = GerryChain.simple_graph_from_polygons(node_polys, node_mbrs)
         # there should be edges between 1 & 2, 1 & 3, 2 & 4, 3 & 4
 
         @test has_edge(simple_graph, 1, 2)

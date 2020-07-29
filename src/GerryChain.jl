@@ -8,6 +8,7 @@ using Statistics
 using PyPlot
 import Shapefile
 import LibGEOS
+import LibSpatialIndex
 
 export
 

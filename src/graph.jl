@@ -42,6 +42,45 @@ function min_bounding_rect(coords::Vector{Vector{Vector{Vector{Float64}}}})::Tup
 end
 
 
+function create_rtree(minimum_bounding_rects::Vector{Tuple{Vector{Float64},Vector{Float64}}})::LibSpatialIndex.RTree
+    """ Given an array of minimum bounding rectangles, constructs an R-Tree
+        that will make it easier to identify candidates for intersecting nodes.
+        We expect that minimum bounding rectangles come in this form:
+        [
+            (
+                [lower_left_x, lower_left_y],
+                [upper_right_x, upper_right_y]
+            ),
+            ...
+        ]
+    """
+    rtree = LibSpatialIndex.RTree(2)
+    # insert an MBR for each polygon in the RTree
+    for (i, mbr) in enumerate(minimum_bounding_rects)
+        # mbr[1] is the coordinate of the lower left corner,
+        # mbr[2] is the coordinate of the upper right corner
+        LibSpatialIndex.insert!(rtree, i, mbr[1], mbr[2])
+    end
+    return rtree
+end
+
+
+function queen_intersection(intersection)::Bool
+  """ Returns true if the LibGEOS.GEOSGeom is non-empty.
+  """
+  return !LibGEOS.isEmpty(intersection)
+end
+
+
+function rook_intersection(intersection)::Bool
+  """ Returns true if the LibGEOS.GEOSGeom is non-empty and there exists
+      a shared perimeter in the intersection (i.e., the intersection is not
+      just a point or a set of points.)
+  """
+  return queen_intersection(intersection) && !(intersection isa LibGEOS.Point || intersection isa LibGEOS.MultiPoint)
+end
+
+
 function read_table(filepath::AbstractString)::Shapefile.Table
     """ Read table from shapefile. If a .shp and a .dbf file of the same name
         are not found, then we throw an error.

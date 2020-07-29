@@ -53,6 +53,33 @@ using DataStructures
         @test node_attributes == correct_attributes
     end
 
+    @testset "Extracting coordinates and minimum bounding rectangles" begin
+        # file should have a .json or .shp extension
+        table = GerryChain.read_table(square_shp_filepath)
+        correct_coords = [
+            [[[[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]],
+            [[[[0.0, 1.0], [0.0, 2.0], [1.0, 2.0], [1.0, 1.0], [0.0, 1.0]]]],
+            [[[[1.0, 0.0], [1.0, 1.0], [2.0, 1.0], [2.0, 0.0], [1.0, 0.0]]]],
+            [[[[1.0, 1.0], [1.0, 2.0], [2.0, 2.0], [2.0, 1.0], [1.0, 1.0]]]]
+        ]
+        # extract coordinates
+        coords = GerryChain.get_node_coordinates.(table)
+        @test correct_coords == coords
+
+        # create minimum bounding rectangles
+        correct_mbrs = [
+            ([0.0, 0.0], [1.0, 1.0]),
+            ([0.0, 1.0], [1.0, 2.0]),
+            ([1.0, 0.0], [2.0, 1.0]),
+            ([1.0, 1.0], [2.0, 2.0])
+        ]
+        node_mbrs = GerryChain.min_bounding_rect.(coords)
+        @test correct_mbrs == node_mbrs
+        # test edge case
+        empty_coords = Vector{Vector{Vector{Vector{Float64}}}}([])
+        @test_throws ArgumentError GerryChain.min_bounding_rect.([empty_coords])
+    end
+
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16

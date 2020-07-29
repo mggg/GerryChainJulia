@@ -292,7 +292,6 @@ function score_partition_from_proposal(graph::BaseGraph,
     Δ_districts = [proposal.D₁, proposal.D₂]
     score_values["dists"] = Δ_districts
     for s in scores
-        value = nothing # placeholder for output of score
         if s isa PlanScore
             value = eval_score_on_partition(graph, partition, s)
         elseif s isa CompositeScore

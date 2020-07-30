@@ -1,6 +1,6 @@
 @testset "Flip tests" begin
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
-    partition = Partition(square_grid_filepath, graph, "population", "assignment")
+    partition = Partition(graph, "assignment")
 
     @testset "propose_random_flip()" begin
         flip_prop = GerryChain.propose_random_flip(graph, partition)

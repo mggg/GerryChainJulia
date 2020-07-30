@@ -85,7 +85,7 @@
     end
 
     @testset "eval_score_on_district()" begin
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         score_race = DistrictAggregate("purple")
         score_election_d = DistrictAggregate("electionD")
         @test eval_score_on_district(graph, partition, score_race, 1) == 28
@@ -100,7 +100,7 @@
     end
 
     @testset "eval_score_on_partition()" begin
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         score_race = DistrictAggregate("purple")
         purples_by_district = [28, 28, 13, 13]
         @test eval_score_on_partition(graph, partition, score_race) == purples_by_district
@@ -128,7 +128,7 @@
     end
 
     @testset "score_initial_partition()" begin
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         votes_d = DistrictAggregate("electionD")
         votes_r = DistrictAggregate("electionR")
         scores = [
@@ -152,7 +152,7 @@
     end
 
     @testset "score_partition_from_proposal()" begin
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         # create RecomProposal
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
@@ -177,7 +177,7 @@
     end
 
     @testset "get_scores_at_step()" begin
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         # initialize scores
         votes_d = DistrictAggregate("electionD")
         votes_r = DistrictAggregate("electionR")
@@ -223,7 +223,7 @@
     end
 
     @testset "get_score_values()" begin
-        partition = Partition(square_grid_filepath, graph, "population", "assignment")
+        partition = Partition(graph, "assignment")
         # initialize scores
         all_scores = Array{Dict{String, Any}, 1}()
         votes_d = DistrictAggregate("electionD")

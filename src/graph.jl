@@ -176,6 +176,61 @@ function all_node_properties(table::Shapefile.Table)::Array{Dict{String, Any}}
 end
 
 
+function get_attribute_by_key(node_attributes::Array,
+                              column_name::String,
+                              process_value::Function=identity)::Array
+    """ Returns an array whose values correspond to the value of an attribute
+        for each node.
+
+        Arguments:
+
+        node_attributes :   An array of Dict{String, Any}, where each dictionary
+                            represents a mapping from attribute names to values
+                            for a particular node.
+        column_name     :   The name of the attribute (i.e., the key of the
+                            attribute in the dictionaries)
+        process_value   :   An optional argument that processes the raw value
+    """
+    return [process_value(n[column_name]) for n in node_attributes]
+end
+
+
+function population_to_int(raw_value::Number)::Int
+    """ Tiny helper function to coerce population counts (whether they are
+        ints or floats) to int.
+    """
+    return raw_value isa Int ? raw_value : convert(Int, round(raw_value))
+end
+
+
+function get_assignments(node_attributes::Array,
+                         assignment_col::AbstractString)::Array{Int, 1}
+    """ Extracts the assignments for each node in a graph. First attempts
+        to parse the values of the assignments column as an Int; if it fails,
+        it assumes every unique string assignment corresponds to to a unique
+        district.
+    """
+    assignment_to_num = Dict{String, Int}() # map unique strings to integers
+    raw_assignments = get_attribute_by_key(node_attributes, assignment_col)
+    processed_assignments = zeros(length(raw_assignments))
+    for (i, raw_value) in enumerate(raw_assignments)
+        if raw_value isa Int
+            processed_assignments[i] = raw_value
+        elseif raw_value isa String
+            try
+                processed_assignments[i] = parse(Int, raw_assignment)
+            catch exception # if the String could not be read as an int
+                if !haskey(assignment_to_num, raw_value)
+                    assignment_to_num[raw_value] = length(assignment_to_num) + 1
+                end
+                processed_assignments[i] = assignment_to_num[raw_value]
+            end
+        end
+    end
+    return processed_assignments
+end
+
+
 function get_node_coordinates(row::Shapefile.Row)::Vector{Vector{Vector{Vector{Float64}}}}
     """ Construct an array of LibGEOS.Polygons from the given coordinates. The
         coordinates are structured in the following way. Each element in the
@@ -224,7 +279,8 @@ function graph_from_shp(filepath::AbstractString,
     adj_matrix = adjacency_matrix_from_graph(graph)
     neighbors = neighbors_from_graph(graph)
 
-    populations, assignments = get_populations_and_assignments(attributes, pop_col, assignment_col)
+    populations =  get_attribute_by_key(attributes, pop_col, population_to_int)
+    assignments = get_assignments(attributes, assignment_col)
     num_districts = length(Set(assignments))
     total_pop = sum(populations)
 
@@ -306,7 +362,8 @@ function graph_from_json(filepath::AbstractString,
     num_nodes = length(nodes)
 
     # get populations, assignments and num_districts
-    populations, assignments = get_populations_and_assignments(nodes, pop_col, assignment_col)
+    populations =  get_attribute_by_key(nodes, pop_col, population_to_int)
+    assignments = get_assignments(nodes, assignment_col)
     num_districts = length(Set(assignments))
     total_pop = sum(populations)
 

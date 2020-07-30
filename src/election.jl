@@ -15,9 +15,9 @@ function Election(name::String, parties::Array{String, 1}, num_districts::Int)
     return Election(name, parties, vote_counts, vote_shares)
 end
 
-function vote_updater(name::String, election::Election)::DistrictScore
-    """ Returns a DistrictScore function that updates the vote counts and
-        shares of the passed `election`, which can then be used by other
+function vote_updater(election::Election)::DistrictScore
+    """ Returns a nameless DistrictScore function that updates the vote counts
+        and shares of the passed `election`, which can then be used by other
         functions (such as seats_won, mean_median, etc.) This score function
         explicitly returns `nothing` and is meant only for internal use
         by the ElectionTracker object.
@@ -43,7 +43,7 @@ function vote_updater(name::String, election::Election)::DistrictScore
         election.vote_shares[district, :] = vote_shares
         return nothing
     end
-    return DistrictScore(name, score_fn)
+    return DistrictScore(score_fn)
 end
 
 
@@ -52,7 +52,7 @@ function vote_count(name::String, election::Election, party::String)::DistrictSc
         the specified party.
     """
     function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
-        """ Extracts the number of votes for the specified party in the 
+        """ Extracts the number of votes for the specified party in the
             specified district from the Election object.
         """
         party_index = findfirst(isequal(party), election.parties)
@@ -206,7 +206,7 @@ function ElectionTracker(election::Election,
         within the CompositeScore ensures that the vote update occurs first,
         followed by the partisan metrics scoring functions.
     """
-    count_votes = vote_updater("votes", election) # name does not matter
+    count_votes = vote_updater(election)
     scores = Array{AbstractScore, 1}([count_votes; scores])
     return CompositeScore(election.name, scores)
 end

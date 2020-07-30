@@ -17,12 +17,12 @@
         return partition.num_cut_edges
     end
 
-    function district_void(graph, nodes, district)
-        return nothing
+    function district_void(dict)
+        return (graph, nodes, district) -> dict["district_void"] = true
     end
 
-    function plan_void(graph, partition)
-        return nothing
+    function plan_void(dict)
+        return (graph, partition) -> dict["plan_void"] = true
     end
 
     @testset "constructors" begin
@@ -93,7 +93,7 @@
 
         broken_fn = x -> 2*x # district score functions must accept graph, node array, and district index
         bad_score = DistrictScore("break", broken_fn)
-        @test_throws MethodError eval_score_on_district(graph, partition, bad_score, 1)
+        @test_throws ArgumentError eval_score_on_district(graph, partition, bad_score, 1)
 
         race_gap = DistrictScore("race_gap", calc_disparity)
         @test eval_score_on_district(graph, partition, race_gap, 3) == -15
@@ -117,7 +117,7 @@
             return x
         end
         broken_score = PlanScore("broken", bad_plan_fn)
-        @test_throws MethodError eval_score_on_partition(graph, partition, broken_score)
+        @test_throws ArgumentError eval_score_on_partition(graph, partition, broken_score)
 
         cut_edges_score = PlanScore("cut_edges", cut_edges)
         @test eval_score_on_partition(graph, partition, cut_edges_score) == 8
@@ -131,14 +131,16 @@
         partition = Partition(graph, "assignment")
         votes_d = DistrictAggregate("electionD")
         votes_r = DistrictAggregate("electionR")
+        check_done = Dict("district_void" => false, "plan_void" => false)
         scores = [
             DistrictAggregate("purple"),
             DistrictAggregate("pink"),
             DistrictScore("race_gap", calc_disparity),
             PlanScore("cut_edges", cut_edges),
             CompositeScore("votes", [votes_d, votes_r]),
-            DistrictScore("d_void", district_void),
-            PlanScore("p_void", plan_void)
+            # create nameless scores that should not be recorded by the chain
+            DistrictScore(district_void(check_done)),
+            PlanScore(plan_void(check_done))
         ]
 
         score_vals = score_initial_partition(graph, partition, scores)
@@ -149,6 +151,9 @@
         @test score_vals["race_gap"] == [15, 15, -15, -15]
         @test ("d_void" in keys(score_vals)) == false
         @test ("p_void" in keys(score_vals)) == false
+        # verify that scoring functions still ran
+        @test check_done["district_void"]
+        @test check_done["plan_void"]
     end
 
     @testset "score_partition_from_proposal()" begin

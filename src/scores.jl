@@ -480,7 +480,7 @@ function district_and_plan_score_names(chain_data::ChainScoreData)::Array{String
     score_names = String[]
     for score in chain_data.scores
         if score isa CompositeScore # add children score names
-            named_scores = filter(s -> isdefined(s, :name), score.scores)
+            named_scores = filter(s -> !ismissing(s.name), score.scores)
             append!(score_names, [s.name for s in named_scores])
         else
             push!(score_names, score.name)

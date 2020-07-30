@@ -472,10 +472,10 @@ function get_score_values(chain_data::ChainScoreData, score_name::String)
 end
 
 
-function district_and_plan_score_names(chain_data::ChainScoreData)::Array{String, 1}
+function flattened_score_names(chain_data::ChainScoreData)::Array{String, 1}
     """ Simple helper function for `save_scores`. Extracts the names of all of
         the district/plan-level scores (including those nested within
-        CompositeScores).
+        CompositeScores, hence the term "flattened").
     """
     score_names = String[]
     for score in chain_data.scores
@@ -498,7 +498,7 @@ function save_scores(filename::String,
     """
     open(filename, "w") do f
         if isempty(score_names) # by default, export all scores from chain
-            score_names = district_and_plan_score_names(chain_data)
+            score_names = flattened_score_names(chain_data)
         end
 
         column_names = String[] # colum names of the CSV

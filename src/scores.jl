@@ -1,7 +1,7 @@
 abstract type AbstractScore end
 
 
-mutable struct DistrictAggregate <: AbstractScore
+struct DistrictAggregate <: AbstractScore
     """ A DistrictAggregate score is a simple sum of a particular property
         over all nodes in a given district.
     """
@@ -36,7 +36,7 @@ struct PlanScore <: AbstractScore
 end
 
 
-mutable struct CompositeScore <: AbstractScore
+struct CompositeScore <: AbstractScore
     """ A CompositeScore is just a group of scores that are run in sequence.
         CompositeScores are especially useful when the score functions depend
         upon/modify some shared state.

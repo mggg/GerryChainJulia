@@ -15,7 +15,7 @@ function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
         change our plan.
 
         Arguments:
-            graph:          Graph object that has the underlying network
+            graph:          BaseGraph object that has the underlying network
                             structure of the plan.
             assignment_col: the key denoting the district assignment at the
                             node level

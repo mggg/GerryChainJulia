@@ -12,15 +12,14 @@ function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
 
     """
         Partition represents a partition of the nodes of the graph.
-        It contains plan-specific information that will change each time we change
-        our plan. We assume that the JSON file contains a key "nodes" that
-        refers to an array of nodes.
+        It contains plan-specific information that will change each time we
+        change our plan.
 
         Arguments:
-            filepath:  Filepath to the .json graph file
-            graph:     Graph object that has the underlying network structure of the plan.
-            pop_col:   the key denoting the population attribute at the node level
-            assignment_col: the key denoting the district assignment at the node level
+            graph:          Graph object that has the underlying network
+                            structure of the plan.
+            assignment_col: the key denoting the district assignment at the
+                            node level
     """
     populations =  graph.populations
     assignments = get_assignments(graph.attributes, assignment_col)

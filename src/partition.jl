@@ -9,7 +9,6 @@ mutable struct Partition
 end
 
 function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
-
     """
         Partition represents a partition of the nodes of the graph.
         It contains plan-specific information that will change each time we

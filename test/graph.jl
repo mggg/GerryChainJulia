@@ -145,6 +145,37 @@ using DataStructures
         @test !has_edge(simple_graph, 2, 3)
     end
 
+    @testset "BaseGraph from shp() - rook adjacency" begin
+        graph = BaseGraph(square_shp_filepath, "population", "assignment")
+        @test graph.num_nodes == 4
+        @test graph.num_edges == 4
+        @test graph.total_pop == 20
+        @test graph.num_dists == 4
+
+        @test graph.populations == [2, 4, 6, 8]
+        @test graph.adj_matrix[1, 2] != 0
+        @test graph.adj_matrix[1, 3] != 0
+        # upper left corner and bottom right corner should be non-adjacent
+        @test graph.adj_matrix[1, 4] == 0
+    end
+
+    @testset "BaseGraph from shp() - queen adjacency" begin
+        graph = BaseGraph(square_shp_filepath, "population", "assignment", adjacency="queen")
+        @test graph.num_nodes == 4
+        @test graph.num_edges == 6 # queen adjacency means all 6 edges
+        @test graph.total_pop == 20
+        @test graph.num_dists == 4
+
+        @test graph.populations == [2, 4, 6, 8]
+        # with queen adjacency, all squares should be adjacent to each other
+        @test graph.adj_matrix[1, 2] != 0
+        @test graph.adj_matrix[1, 3] != 0
+        @test graph.adj_matrix[1, 4] != 0
+        @test graph.adj_matrix[2, 3] != 0
+        @test graph.adj_matrix[2, 4] != 0
+        @test graph.adj_matrix[3, 4] != 0
+    end
+
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
 
     @test graph.num_nodes == 16

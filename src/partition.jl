@@ -114,7 +114,7 @@ function sample_adjacent_districts_randomly(partition::Partition,
     end
 end
 
-function get_populations_and_assignments(nodes::Array{Any, 1},
+function get_populations_and_assignments(nodes::Array,
                                          pop_col::AbstractString,
                                          assignment_col::AbstractString)
     """ Returns the arrays of populations and assignments of the graph, where

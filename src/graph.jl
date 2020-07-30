@@ -204,10 +204,10 @@ end
 
 function graph_from_shp(filepath::AbstractString,
                         pop_col::AbstractString,
-                        assignment_col::AbstractString)
+                        assignment_col::AbstractString,
+                        adjacency::String="rook")::BaseGraph
     """ Constructs BaseGraph from .shp file.
     """
-    # TODO(matthew): change return type to BaseGraph
     table = read_table(filepath)
 
     attributes = all_node_properties(table)
@@ -216,8 +216,67 @@ function graph_from_shp(filepath::AbstractString,
     node_polys = polygon_array.(coords)
     node_mbrs = min_bounding_rect.(coords)
 
-    # TODO(matthew): change return type to a Graph once we are done testing
-    return nothing
+    graph = simple_graph_from_polygons(node_polys, node_mbrs, adjacency)
+
+    # edge `i` would connect nodes edge_src[i] and edge_dst[i]
+    edge_src, edge_dst = edges_from_graph(graph)
+    # each entry in adj_matrix is the edge id that connects the two nodes
+    adj_matrix = adjacency_matrix_from_graph(graph)
+    neighbors = neighbors_from_graph(graph)
+
+    populations, assignments = get_populations_and_assignments(attributes, pop_col, assignment_col)
+    num_districts = length(Set(assignments))
+    total_pop = sum(populations)
+
+    return BaseGraph(nv(graph), ne(graph), num_districts, total_pop,
+                     populations, adj_matrix, edge_src, edge_dst, neighbors,
+                     graph, attributes)
+end
+
+
+function edges_from_graph(graph::SimpleGraph)
+    """ Extract edges from graph. Returns two arrays; the first contains the
+        indices of the source nodes and the second contains the indices
+        of the destination nodes.
+    """
+    num_edges = ne(graph)
+
+    # edge `i` would connect nodes edge_src[i] and edge_dst[i]
+    edge_src = zeros(Int, num_edges)
+    edge_dst = zeros(Int, num_edges)
+
+    for (index, edge) in enumerate(edges(graph))
+        edge_src[index] = src(edge)
+        edge_dst[index] = dst(edge)
+    end
+    return edge_src, edge_dst
+end
+
+
+function adjacency_matrix_from_graph(graph::SimpleGraph)
+    """ Extract sparse adjacency matrix from graph.
+    """
+    # each entry in adj_matrix is the edge id that connects the two nodes.
+    num_nodes = nv(graph)
+    adj_matrix = spzeros(Int, num_nodes, num_nodes)
+    for (index, edge) in enumerate(edges(graph))
+        adj_matrix[src(edge), dst(edge)] = index
+        adj_matrix[dst(edge), src(edge)] = index
+    end
+    return adj_matrix
+end
+
+
+function neighbors_from_graph(graph::SimpleGraph)
+    """ Extract each node's neighbors from graph.
+    """
+    # each entry in adj_matrix is the edge id that connects the two nodes.
+    neighbors = [ Int[] for n in 1:nv(graph) ]
+    for (index, edge) in enumerate(edges(graph))
+        push!(neighbors[src(edge)], dst(edge))
+        push!(neighbors[dst(edge)], src(edge))
+    end
+    return neighbors
 end
 
 
@@ -264,22 +323,10 @@ function graph_from_json(filepath::AbstractString,
     num_edges = ne(simple_graph)
 
     # edge `i` would connect nodes edge_src[i] and edge_dst[i]
-    edge_src = zeros(Int, num_edges)
-    edge_dst = zeros(Int, num_edges)
-    neighbors = [Int[] for i in 1:num_nodes, j=1]
-
-    # each entry in adj_matrix is the edge id that connects the two nodes.
-    adj_matrix = spzeros(Int, num_nodes, num_nodes)
-    for (index, edge) in enumerate(edges(simple_graph))
-        adj_matrix[src(edge), dst(edge)] = index
-        adj_matrix[dst(edge), src(edge)] = index
-
-        edge_src[index] = src(edge)
-        edge_dst[index] = dst(edge)
-
-        push!(neighbors[src(edge)], dst(edge))
-        push!(neighbors[dst(edge)], src(edge))
-    end
+    edge_src, edge_dst = edges_from_graph(simple_graph)
+    # each entry in adj_matrix is the edge id that connects the two nodes
+    adj_matrix = adjacency_matrix_from_graph(simple_graph)
+    neighbors = neighbors_from_graph(simple_graph)
 
     # get attributes
     attributes = get_attributes(nodes)
@@ -292,7 +339,8 @@ end
 
 function BaseGraph(filepath::AbstractString,
                    pop_col::AbstractString,
-                   assignment_col::AbstractString)::BaseGraph
+                   assignment_col::AbstractString;
+                   adjacency::String="rook")::BaseGraph
     """ Builds the base Graph object. This is the underlying network of our
         districts, and its properties are immutable i.e they will not change
         from step to step in our Markov Chains.
@@ -304,13 +352,16 @@ function BaseGraph(filepath::AbstractString,
                         population of that node
         assignment_col: the node attribute key whose accompanying value is the
                         assignment of that node (i.e., to a district)
+        adjacency:      (Only used if the user specifies a filepath to a .shp
+                        file.) Should be either "queen" or "rook"; "rook" by
+                        default.
     """
     extension = splitext(filepath)[2]
     try
         try
             return graph_from_json(filepath, pop_col, assignment_col)
         catch e
-            return graph_from_shp(filepath, pop_col, assignment_col)
+            return graph_from_shp(filepath, pop_col, assignment_col, adjacency)
         end
     catch
         throw(ArgumentError("Shapefile could not be processed. Please ensure the file is a valid JSON or .shp/.dbf."))

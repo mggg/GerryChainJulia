@@ -493,10 +493,8 @@ end
 function save_scores(filename::String,
                      chain_data::ChainScoreData,
                      score_names::Array{String,1}=String[])
-    """ Save the `scores` in a CSV file named `filename`. In order to avoid
-        loading all the score values into RAM (which was the point of using
-        delta scores), we instead iterate through the history of the chain
-        and write the CSV row-by-row.
+    """ Save the `scores` in a CSV file named `filename`. We iterate through
+        each state in the history of the chain and write the CSV row-by-row.
     """
     open(filename, "w") do f
         if isempty(score_names) # by default, export all scores from chain

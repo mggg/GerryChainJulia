@@ -12,6 +12,7 @@ square_shp_filepath = "./maps/simple_squares.shp"
 tests = [
     "graph",
     "partition",
+    "geo",
     "constraints",
     "flip",
     "recom",

@@ -55,6 +55,7 @@ score_boxplot, score_histogram
 
 include("./graph.jl")
 include("./partition.jl")
+include("./geo.jl")
 include("./proposals.jl")
 include("./constraints.jl")
 include("./scores.jl")

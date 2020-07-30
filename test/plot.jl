@@ -1,6 +1,6 @@
 @testset "Plotting tests" begin
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
-    partition = Partition(square_grid_filepath, graph, "population", "assignment")
+    partition = Partition(graph, "assignment")
     # this is a dummy constraint
     pop_constraint = PopulationConstraint(graph, "population", 10.0)
     election = Election("election", ["electionD", "electionR"], graph.num_dists)
@@ -49,7 +49,7 @@
                 return ex
             end
         end
-        
+
         @test !isa(histogram_no_comparison(), Exception)
         @test !isa(histogram_with_comparison(), Exception)
     end

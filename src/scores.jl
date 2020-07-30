@@ -51,11 +51,74 @@ struct ChainScoreData
 end
 
 
+struct ChainScoreQuery
+    """ Can be used to extract scores from a ChainScoreData object via an iterator
+    """
+    requested_scores::Array{String,1} # scores that were measured on a particular chain
+    chain_data::ChainScoreData
+end
+
+
 function DistrictAggregate(key::String)
     """ Initializes a DistrictAggregate score where the name and key are
         the same.
     """
     return DistrictAggregate(key, key)
+end
+
+
+function Base.iterate(query::ChainScoreQuery)
+    """ This is 1/2 of the functions needed to make a ChainScoreQuery iterable.
+        This is the function that calls when the iterable is first run. It checks
+        that the query is valid (i.e., the user is asking for sensible scores)
+        and then returns the values of the relevant scores for the first state
+        in the chain.
+    """
+    chain_data = query.chain_data
+    if isempty(chain_data.step_values) # check that some data exists
+        return nothing
+    end
+    # check that all requested scores are in the ChainScoreData object
+    score_vals = Dict{String, Any}()
+    nested_keys = Dict{String, String}() # maps scores to the name of parent CompositeScore, if any
+    score_names = isempty(query.requested_scores) ? collect(keys(chain_data.step_values[1])) : query.requested_scores
+    for score_name in score_names
+        score, nested_key = get_score_by_name(chain_data, score_name)
+        if isnothing(score)
+            throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
+        end
+        # write value to initial dictionary
+        if isnothing(nested_key)
+            score_vals[score_name] = chain_data.step_values[1][score_name]
+        else
+            if !(haskey(score_vals, nested_key))
+                score_vals[nested_key] = Dict{String, Any}()
+            end
+            score_vals[nested_key][score_name] = chain_data.step_values[1][nested_key][score_name]
+        end
+    end
+    # keep track of next index and current dictionary
+    return score_vals, (2, deepcopy(score_vals))
+end
+
+
+function Base.iterate(query::ChainScoreQuery, state::Tuple)
+    """ This is 2/2 of the functions needed to make a ChainScoreQuery iterable.
+        This is the function that calls after the first time the iterable runs.
+        The "state" of the iterable is always captured in the step that we are on
+        and the current dictionary.
+    """
+    step, score_vals = state
+    chain_data = query.chain_data
+    if step > length(chain_data.step_values) # end iteration
+        return nothing
+    end
+    # update the dictionary of values to reflect districts changed in
+    # the next state
+    curr_scores = chain_data.step_values[step]
+    (D₁, D₂) = chain_data.step_values[step]["dists"]
+    update_dictionary!(score_vals, curr_scores, D₁, D₂)
+    return score_vals, (step + 1, deepcopy(score_vals))
 end
 
 
@@ -255,7 +318,7 @@ function update_dictionary!(original::Dict{String, Any},
                             D₂::Int)
     """ Modifies a Dict in-place by merging it with another Dict
         that contains "updates" to the former Dict. Runs recursively when there
-        are nested Dicts. Helper function for `get_scores_at_step.`
+        are nested Dicts. Helper function for ChainScoreQuery iterator.
     """
     for key in keys(original)
         if update[key] isa Array # district-level score
@@ -287,18 +350,15 @@ function get_scores_at_step(chain_data::ChainScoreData,
                            for which the user is requesting the values
     """
     # we don't want to alter the data in all_scores
+    query = ChainScoreQuery(score_names, chain_data)
+
     score_vals = Dict{String, Any}()
-    if isempty(score_names) # return all scores by default
-        score_names = collect(keys(chain_data.step_values[1]))
+    for (i, step_scores) in enumerate(query)
+        if i > step
+            score_vals = step_scores
+            break
+        end
     end
-    foreach(name -> score_vals[name] = chain_data.step_values[1][name], score_names)
-
-    for i in 1:step
-        curr_scores = chain_data.step_values[i + 1]
-        (D₁, D₂) = chain_data.step_values[i + 1]["dists"]
-        update_dictionary!(score_vals, curr_scores, D₁, D₂)
-    end
-
     return score_vals
 end
 

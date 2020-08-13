@@ -58,11 +58,7 @@ function score_boxplot(score_values::Array{S, 2};
             plan_score_vals = sort_by_score ? sort(p[2]) : p[2]
             plt.scatter(1:length(p[2]), plan_score_vals, label=p[1])
         end
-        if !isnothing(bbox_to_anchor)
-            plt.legend(bbox_to_anchor=bbox_to_anchor)
-        else
-            plt.legend()
-        end
+        isnothing(bbox_to_anchor) ? plt.legend() : plt.legend(bbox_to_anchor=bbox_to_anchor)  
     end
 end
 
@@ -104,11 +100,7 @@ function score_boxplot(score_values::Array{S, 1};
             end
             plt.scatter(1, p[2], label=p[1])
         end
-        if !isnothing(bbox_to_anchor)
-            plt.legend(bbox_to_anchor=bbox_to_anchor)
-        else
-            plt.legend()
-        end
+        isnothing(bbox_to_anchor) ? plt.legend() : plt.legend(bbox_to_anchor=bbox_to_anchor)
     end
 end
 
@@ -171,11 +163,7 @@ function score_histogram(score_values::Array{S, 1};
             ax.axvline(p[2], color=color, label=p[1])
             color_index += 1
         end
-        if !isnothing(bbox_to_anchor)
-            plt.legend(bbox_to_anchor=bbox_to_anchor)
-        else
-            plt.legend()
-        end
+        isnothing(bbox_to_anchor) ? plt.legend() : plt.legend(bbox_to_anchor=bbox_to_anchor)
     end
 end
 

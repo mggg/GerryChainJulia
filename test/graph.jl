@@ -53,6 +53,13 @@ using DataStructures
         @test node_attributes == correct_attributes
     end
 
+    @testset "Check type of district assignments - get_assignments()" begin
+        graph = BaseGraph(square_shp_filepath, "population", "assignment")
+        # assignment that is a Float should throw an error
+        foreach(d -> d["assignment"] *= 1.0, graph.attributes) # convert Int to Float
+        @test_throws DomainError GerryChain.get_assignments(graph.attributes, "assignment")
+    end
+
     @testset "BaseGraph from shp() - rook adjacency" begin
         graph = BaseGraph(square_shp_filepath, "population", "assignment")
         @test graph.num_nodes == 4

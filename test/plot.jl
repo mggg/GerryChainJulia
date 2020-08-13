@@ -29,8 +29,31 @@
             end
         end
 
+        function boxplot_plan_score_with_comparison()
+            try
+                score_boxplot(chain_data, "e_gap", comparison_scores=[("a", 0)])
+            catch ex
+                return ex
+            end
+        end
+
+        function boxplot_plan_score_with_custom_legend()
+            try
+                score_boxplot(
+                    chain_data,
+                    "e_gap",
+                    comparison_scores=[("a", 0)],
+                    bbox_to_anchor=(0.5, 0.5)
+                )
+            catch ex
+                return ex
+            end
+        end
+
         @test !isa(boxplot_district_score(), Exception)
         @test !isa(boxplot_plan_score(), Exception)
+        @test !isa(boxplot_plan_score_with_comparison(), Exception)
+        @test !isa(boxplot_plan_score_with_custom_legend(), Exception)
     end
 
     @testset "score_histogram()" begin
@@ -50,7 +73,21 @@
             end
         end
 
+        function histogram_with_custom_legend()
+            try
+                score_histogram(
+                    chain_data,
+                    "e_gap",
+                    comparison_scores=[("abc", 0.05)],
+                    bbox_to_anchor=(0.5, 0.5)
+                )
+            catch ex
+                return ex
+            end
+        end
+
         @test !isa(histogram_no_comparison(), Exception)
         @test !isa(histogram_with_comparison(), Exception)
+        @test !isa(histogram_with_custom_legend(), Exception)
     end
 end

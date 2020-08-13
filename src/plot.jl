@@ -1,7 +1,8 @@
 function score_boxplot(score_values::Array{S, 2};
                        sort_by_score::Bool=true,
                        label::String="GerryChain",
-                       comparison_scores::Array=[]) where {S<:Number}
+                       comparison_scores::Array=[],
+                       bbox_to_anchor::Union{Nothing, Tuple}=nothing) where {S<:Number}
     """ Produces a graph with multiple matplotlib box plots for the values of
         scores throughout the chain. Intended for use with district-level scores
         (DistrictAggregate, DistrictScore).
@@ -57,14 +58,19 @@ function score_boxplot(score_values::Array{S, 2};
             plan_score_vals = sort_by_score ? sort(p[2]) : p[2]
             plt.scatter(1:length(p[2]), plan_score_vals, label=p[1])
         end
-        plt.legend()
+        if !isnothing(bbox_to_anchor)
+            plt.legend(bbox_to_anchor=bbox_to_anchor)
+        else
+            plt.legend()
+        end
     end
 end
 
 
 function score_boxplot(score_values::Array{S, 1};
                        label::String="GerryChain",
-                       comparison_scores::Array=[]) where {S<:Number}
+                       comparison_scores::Array=[],
+                       bbox_to_anchor::Union{Nothing, Tuple}=nothing) where {S<:Number}
     """ Produces a single matplotlib box plot for the values of scores
         throughout the chain. Intended for use with plan-level scores.
 
@@ -98,7 +104,11 @@ function score_boxplot(score_values::Array{S, 1};
             end
             plt.scatter(1, p[2], label=p[1])
         end
-        plt.legend()
+        if !isnothing(bbox_to_anchor)
+            plt.legend(bbox_to_anchor=bbox_to_anchor)
+        else
+            plt.legend()
+        end
     end
 end
 
@@ -129,9 +139,10 @@ end
 function score_histogram(score_values::Array{S, 1};
                          comparison_scores::Array=[],
                          bins::Union{Nothing, Int}=nothing,
-                         range::Union{Nothing,Tuple}=nothing,
+                         range::Union{Nothing, Tuple}=nothing,
                          density::Bool=false,
-                         rwidth::Union{Nothing,T}=nothing) where {S<:Number, T<:Number}
+                         rwidth::Union{Nothing, T}=nothing,
+                         bbox_to_anchor::Union{Nothing, Tuple}=nothing) where {S<:Number, T<:Number}
     """ Creates a graph with histogram of the values of a score throughout
         the chain. Only applicable for scores of type PlanScore.
 
@@ -160,7 +171,11 @@ function score_histogram(score_values::Array{S, 1};
             ax.axvline(p[2], color=color, label=p[1])
             color_index += 1
         end
-        ax.legend()
+        if !isnothing(bbox_to_anchor)
+            plt.legend(bbox_to_anchor=bbox_to_anchor)
+        else
+            plt.legend()
+        end
     end
 end
 

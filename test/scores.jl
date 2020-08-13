@@ -13,10 +13,6 @@
         return diff
     end
 
-    function cut_edges(graph, partition)
-        return partition.num_cut_edges
-    end
-
     function district_void(dict)
         return (graph, nodes, district) -> dict["district_void"] = true
     end
@@ -119,7 +115,7 @@
         broken_score = PlanScore("broken", bad_plan_fn)
         @test_throws ArgumentError eval_score_on_partition(graph, partition, broken_score)
 
-        cut_edges_score = PlanScore("cut_edges", cut_edges)
+        cut_edges_score = num_cut_edges("cut_edges")
         @test eval_score_on_partition(graph, partition, cut_edges_score) == 8
 
         group_score = CompositeScore("group", Array{AbstractScore, 1}([race_gap, cut_edges_score]))
@@ -136,7 +132,7 @@
             DistrictAggregate("purple"),
             DistrictAggregate("pink"),
             DistrictScore("race_gap", calc_disparity),
-            PlanScore("cut_edges", cut_edges),
+            num_cut_edges("cut_edges"),
             CompositeScore("votes", [votes_d, votes_r]),
             # create nameless scores that should not be recorded by the chain
             DistrictScore(district_void(check_done)),
@@ -168,7 +164,7 @@
             DistrictAggregate("purple"),
             DistrictAggregate("pink"),
             DistrictScore("race_gap", calc_disparity),
-            PlanScore("cut_edges", cut_edges),
+            num_cut_edges("cut_edges"),
             CompositeScore("votes", [votes_d, votes_r])
         ]
 
@@ -190,7 +186,7 @@
             DistrictAggregate("purple"),
             DistrictAggregate("pink"),
             DistrictScore("race_gap", calc_disparity),
-            PlanScore("cut_edges", cut_edges),
+            num_cut_edges("cut_edges"),
             CompositeScore("votes", [votes_d, votes_r])
         ]
         chain_data = ChainScoreData(scores, [])
@@ -235,7 +231,7 @@
         votes_r = DistrictAggregate("electionR")
         scores = [
             DistrictAggregate("purple"),
-            PlanScore("cut_edges", cut_edges),
+            num_cut_edges("cut_edges"),
             CompositeScore("votes", [votes_d, votes_r])
         ]
         chain_data = ChainScoreData(scores, [])

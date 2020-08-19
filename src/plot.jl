@@ -128,10 +128,10 @@ end
 
 function score_histogram(score_values::Array{S, 1};
                          comparison_scores::Array=[],
-                         bins::Union{Nothing, Int}=nothing,
-                         range::Union{Nothing,Tuple}=nothing,
+                         bins::Union{Nothing, Int, Tuple}=nothing,
+                         range::Union{Nothing, Tuple}=nothing,
                          density::Bool=false,
-                         rwidth::Union{Nothing,T}=nothing) where {S<:Number, T<:Number}
+                         rwidth::Union{Nothing, T}=nothing) where {S<:Number, T<:Number}
     """ Creates a graph with histogram of the values of a score throughout
         the chain. Only applicable for scores of type PlanScore.
 

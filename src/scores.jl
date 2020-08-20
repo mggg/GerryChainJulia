@@ -490,65 +490,85 @@ function flattened_score_names(chain_data::ChainScoreData)::Array{String, 1}
 end
 
 
-function save_scores(filename::String,
-                     chain_data::ChainScoreData,
-                     score_names::Array{String,1}=String[])
-    """ Save the `scores` in a CSV file named `filename`. We iterate through
-        each state in the history of the chain and write the CSV row-by-row.
+function save_scores_as_csv(filename::String,
+                            chain_data::ChainScoreData,
+                            score_names::Array{String,1}=String[])
+    """ Save the `scores` in a CSV file named `filename`.
     """
-    open(filename, "w") do f
-        if isempty(score_names) # by default, export all scores from chain
-            score_names = flattened_score_names(chain_data)
-        end
+     open(filename, "w") do f
+         if isempty(score_names) # by default, export all scores from chain
+             score_names = flattened_score_names(chain_data)
+         end
 
-        column_names = String[] # colum names of the CSV
-        nested_keys = Dict{String, String}() # map score key to nested key, if any
+         column_names = String[] # colum names of the CSV
+         nested_keys = Dict{String, String}() # map score key to nested key, if any
 
-        num_districts = nothing
-        for score_name in score_names
-            score, nested_key = get_score_by_name(chain_data, score_name)
-            if isnothing(score)
-                throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
-            elseif score isa DistrictScore || score isa DistrictAggregate
-                if isnothing(num_districts)
-                    initial_vals = chain_data.step_values[1]
-                    if !isnothing(nested_key)
-                        initial_vals = initial_vals[nested_key]
-                    end
-                    num_districts = length(initial_vals[score_name])
-                end
-                # add new column for each district
-                district_columns = ["$(score_name)_$(i)" for i in 1:num_districts]
-                append!(column_names, district_columns)
-            elseif score isa CompositeScore
-                throw(ArgumentError("Cannot automatically save a CompositeScore to CSV. You may save a CompositeScore's child score."))
-            else # must be PlanScore
-                push!(column_names, score_name)
-            end
-            if !isnothing(nested_key)
-                nested_keys[score_name] = nested_key
-            end
-        end
-        # write column names
-        colname_row = hcat(column_names...) # turn into 1xn array
-        writedlm(f, colname_row, ',') # write intial row of column names
+         num_districts = nothing
+         for score_name in score_names
+             score, nested_key = get_score_by_name(chain_data, score_name)
+             if score isa DistrictScore || score isa DistrictAggregate
+                 if isnothing(num_districts)
+                     initial_vals = chain_data.step_values[1]
+                     if !isnothing(nested_key)
+                         initial_vals = initial_vals[nested_key]
+                     end
+                     num_districts = length(initial_vals[score_name])
+                 end
+                 # add new column for each district
+                 district_columns = ["$(score_name)_$(i)" for i in 1:num_districts]
+                 append!(column_names, district_columns)
+             elseif score isa CompositeScore
+                 throw(ArgumentError("Cannot automatically save a CompositeScore to CSV. You may save a CompositeScore's child score."))
+             elseif score isa PlanScore
+                 push!(column_names, score_name)
+             end
+             if !isnothing(nested_key)
+                 nested_keys[score_name] = nested_key
+             end
+         end
+         # write column names
+         colname_row = hcat(column_names...) # turn into 1xn array
+         writedlm(f, colname_row, ',') # write intial row of column names
 
-        # iterate through all steps of chain
-        query = ChainScoreQuery(score_names, chain_data)
-        for step_values in query
-            row_values = []
-            for key in score_names
-                if haskey(nested_keys, key)
-                    nested_key = nested_keys[key]
-                    append!(row_values, step_values[nested_key][key])
-                else
-                    append!(row_values, step_values[key])
-                end
-            end
-            # write one row for every state of the chain
-            writedlm(f, hcat(row_values...), ',')
-        end
-    end
+         # iterate through all steps of chain
+         query = ChainScoreQuery(score_names, chain_data)
+         for step_values in query
+             row_values = []
+             for key in score_names
+                 if haskey(nested_keys, key)
+                     nested_key = nested_keys[key]
+                     append!(row_values, step_values[nested_key][key])
+                 else
+                     append!(row_values, step_values[key])
+                 end
+             end
+             # write one row for every state of the chain
+             writedlm(f, hcat(row_values...), ',')
+         end
+     end
+ end
+
+
+ function save_scores_as_json(filename::String,
+                              chain_data::ChainScoreData,
+                              score_names::Array{String,1}=String[])
+     """ Save the `scores` in a JSON file named `filename`.
+     """
+     open(filename, "w") do f
+         if isempty(score_names) # by default, export all scores from chain
+             score_names = flattened_score_names(chain_data)
+         end
+
+         # iterate through all steps of chain
+         query = ChainScoreQuery(score_names, chain_data)
+         first_entry = true
+         println(f, "[")
+         for step_values in query
+             first_entry ? first_entry = false : print(f, ",\n")
+             print(f, JSON.json(step_values))
+         end
+         print(f, "\n]")
+     end
 end
 
 

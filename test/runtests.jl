@@ -3,6 +3,7 @@ import LibGEOS
 import LibSpatialIndex
 using Test
 using LightGraphs
+using JSON
 
 const testdir = dirname(@__FILE__)
 square_grid_filepath = "./maps/test_grid_4x4.json"

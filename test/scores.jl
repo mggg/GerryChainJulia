@@ -271,7 +271,7 @@
         votes_r = DistrictAggregate("electionR")
         scores = [
             DistrictAggregate("purple"),
-            PlanScore("cut_edges", cut_edges),
+            num_cut_edges("cut_edges"),
             CompositeScore("votes", [votes_d, votes_r])
         ]
         chain_data = ChainScoreData(scores, [])

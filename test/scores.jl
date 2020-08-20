@@ -263,7 +263,7 @@
     end
 
 
-    @testset "save_scores_as_json()" begin
+    @testset "save_scores_to_json()" begin
         partition = Partition(graph, "assignment")
         # initialize scores
         all_scores = Array{Dict{String, Any}, 1}()
@@ -289,7 +289,7 @@
         complete_score_vals = [init_score_vals, score_initial_partition(graph, partition, scores)]
         (fname, tio) = mktemp()
         # check that return values look correct
-        save_scores_as_json(fname, chain_data)
+        save_scores_to_json(fname, chain_data)
         step_vals = JSON.parsefile(fname)
         for i in 1:length(step_vals)
             @test step_vals[i]["purple"] == complete_score_vals[i]["purple"]

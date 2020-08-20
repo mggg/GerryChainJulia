@@ -490,7 +490,7 @@ function flattened_score_names(chain_data::ChainScoreData)::Array{String, 1}
 end
 
 
-function save_scores_as_csv(filename::String,
+function save_scores_to_csv(filename::String,
                             chain_data::ChainScoreData,
                             score_names::Array{String,1}=String[])
     """ Save the `scores` in a CSV file named `filename`.
@@ -549,7 +549,7 @@ function save_scores_as_csv(filename::String,
  end
 
 
- function save_scores_as_json(filename::String,
+ function save_scores_to_json(filename::String,
                               chain_data::ChainScoreData,
                               score_names::Array{String,1}=String[])
      """ Save the `scores` in a JSON file named `filename`.

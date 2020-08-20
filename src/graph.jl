@@ -95,8 +95,8 @@ function get_assignments(node_attributes::Array,
             end
         else
             message = """
-                District assignments should be Ints or Strings; instead,
-                type $(typeof(raw_value)) was found instead.
+                District assignments should be Ints or Strings; type
+                $(typeof(raw_value)) was found instead.
             """
             throw(DomainError(raw_value, message))
         end

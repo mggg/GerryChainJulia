@@ -93,6 +93,12 @@ function get_assignments(node_attributes::Array,
                 end
                 processed_assignments[i] = assignment_to_num[raw_value]
             end
+        else
+            message = """
+                District assignments should be Ints or Strings; instead,
+                type $(typeof(raw_value)) was found instead.
+            """
+            throw(DomainError(raw_value, message))
         end
     end
     return processed_assignments
@@ -281,15 +287,13 @@ function BaseGraph(filepath::AbstractString,
                         file.) Should be either "queen" or "rook"; "rook" by
                         default.
     """
-    extension = splitext(filepath)[2]
-    try
-        try
-            return graph_from_json(filepath, pop_col, assignment_col)
-        catch e
-            return graph_from_shp(filepath, pop_col, assignment_col, adjacency)
-        end
-    catch
-        throw(ArgumentError("Shapefile could not be processed. Please ensure the file is a valid JSON or .shp/.dbf."))
+    extension = uppercase(splitext(filepath)[2])
+    if uppercase(extension) == ".JSON"
+        return graph_from_json(filepath, pop_col, assignment_col)
+    elseif uppercase(extension) == ".SHP"
+        return graph_from_shp(filepath, pop_col, assignment_col, adjacency)
+    else
+        throw(DomainError(filepath, "Filepath must lead to valid JSON file or valid .shp/.dbf file."))
     end
 end
 

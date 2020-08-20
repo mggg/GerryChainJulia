@@ -37,7 +37,7 @@ using DataStructures
 @testset "Graph tests" begin
     @testset "Bad extension" begin
         # file should have a .json or .shp extension
-        @test_throws ArgumentError BaseGraph("nonexistent.txt", "population", "assignment")
+        @test_throws DomainError BaseGraph("nonexistent.txt", "population", "assignment")
     end
 
     @testset "Reading node attributes from shapefile" begin

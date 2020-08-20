@@ -550,3 +550,14 @@ function save_scores(filename::String,
         end
     end
 end
+
+
+function num_cut_edges(name::String)::PlanScore
+    """ Returns a PlanScore that tracks the number of cut edges in a particular
+        plan.
+    """
+    function score_fn(graph::BaseGraph, partition::Partition)
+        return partition.num_cut_edges
+    end
+    return PlanScore(name, score_fn)
+end

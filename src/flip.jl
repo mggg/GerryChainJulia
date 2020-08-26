@@ -105,7 +105,8 @@ function flip_chain(graph::BaseGraph,
                     cont_constraint::ContiguityConstraint,
                     num_steps::Int,
                     scores::Array{S, 1};
-                    acceptance_fn::F=always_accept)::ChainScoreData where
+                    acceptance_fn::F=always_accept,
+                    no_self_loops::Bool=false)::ChainScoreData where
                     {F<:Function, S<:AbstractScore}
     """ Runs a Markov Chain for `num_steps` steps using Flip proposals. Returns
         a ChainScoreData object which can be queried to retrieve the values of
@@ -121,6 +122,10 @@ function flip_chain(graph::BaseGraph,
             acceptance_fn:      A function generating a probability in [0, 1]
                                 representing the likelihood of accepting the
                                 proposal
+            no_self_loops:  If this is true, then a failure to accept a new state
+                            is not considered a self-loop; rather, the chain
+                            simply generates new proposals until the acceptance
+                            function is satisfied.
     """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
@@ -134,6 +139,10 @@ function flip_chain(graph::BaseGraph,
         if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
             # go back to the previous partition
             partition = partition.parent
+            # if user specifies this behavior, we do not increment the steps
+            # taken if the acceptance function fails. BEWARE - this can create
+            # infinite loops if the acceptance function is never satisfied!
+            if no_self_loops continue end
         end
         score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
         push!(chain_scores.step_values, score_vals)

@@ -309,11 +309,11 @@ function get_attributes(nodes::Array{Any, 1})
     return attributes
 end
 
-function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{Int, 1}
+function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Vector{Int}
     """ Returns a list of edges of the subgraph induced by vlist, which is an array of vertices.
     """
     allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
-    induced_edges = Array{Int, 1}()
+    induced_edges = Vector{Int}()
 
     vset = Set(vlist)
     for src in vlist
@@ -337,10 +337,10 @@ function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int
 end
 
 function weighted_kruskal_mst(graph::BaseGraph,
-                              edges::Array{Int, 1},
-                              nodes::Array{Int, 1},
+                              edges::Vector{Int},
+                              nodes::BitSet,
                               weights::Array{Float64, 1},
-                              rng=MersenneTwister(1234))::BitSet
+                              rng=MersenneTwister(1234))::Dict{Int, Vector{Int}}
     """ Generates and returns a minimum spanning tree from the subgraph induced by
         `edges` and `nodes`, using Kruskal's MST algorithm.
 
@@ -354,7 +354,7 @@ function weighted_kruskal_mst(graph::BaseGraph,
             nodes: Set of nodes of the sub-graph
 
         Returns:
-            mst: Array{Int, 1} of edges that form a mst
+            mst: Dict{Int, Vector{Int}} of edges that form a mst
     """
     num_nodes = length(nodes)
 
@@ -362,16 +362,85 @@ function weighted_kruskal_mst(graph::BaseGraph,
     sorted_indices = sortperm(weights)
     sorted_edges = edges[sorted_indices]
 
-    # mst = Array{Int, 1}()
-    mst = BitSet()
+    mst_edges = BitSet()
     connected_vs = DisjointSets{Int}(nodes)
 
     for edge in sorted_edges
         if !in_same_set(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
             union!(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
-            push!(mst, edge)
-            (length(mst) >= num_nodes - 1) && break
+            push!(mst_edges, edge)
+            (length(mst_edges) >= num_nodes - 1) && break
         end
     end
+    return build_mst(graph, nodes, mst_edges)
+end
+
+
+function build_mst(graph::BaseGraph, nodes::BitSet,
+                   edges::BitSet)::Dict{Int, Array{Int, 1}}
+    """ Builds a graph as an adjacency list from the `mst_nodes` and `mst_edges`.
+    """
+    mst = Dict{Int, Array{Int, 1}}()
+    for node in nodes
+        mst[node] = Array{Int, 1}()
+    end
+    for edge in edges
+        add_edge_to_mst!(graph, mst, edge)
+    end
     return mst
+end
+
+
+function remove_edge_from_mst!(graph::BaseGraph, mst::Dict{Int, Array{Int,1}}, edge::Int)
+    """ Removes an edge from the graph built by `build_mst`.
+    """
+    filter!(e -> e != graph.edge_dst[edge], mst[graph.edge_src[edge]])
+    filter!(e -> e != graph.edge_src[edge], mst[graph.edge_dst[edge]])
+end
+
+
+function add_edge_to_mst!(graph::BaseGraph, mst::Dict{Int, Array{Int,1}}, edge::Int)
+    """ Adds an edge to the graph built by `build_mst`.
+    """
+    push!(mst[graph.edge_src[edge]], graph.edge_dst[edge])
+    push!(mst[graph.edge_dst[edge]], graph.edge_src[edge])
+end
+
+function traverse_mst(mst::Dict{Int, Array{Int, 1}},
+                      start_node::Int,
+                      avoid_node::Int,
+                      stack::Stack{Int},
+                      traversed_nodes::BitSet)::BitSet
+    """ Returns the component of the MST `mst` that contains the vertex
+        `start_node`.
+
+        Arguments:
+            mst:        mst to traverse
+            start_node: the node to start traversing from
+            avoid_node: the node to avoid adn which seperates the mst into
+                        two components
+            stack:      an empty Stack
+            traversed_nodes: an empty BitSet that is to be populated.
+
+        `stack` and `traversed_nodes` are are pre-allocated and passed in to
+        reduce the number of memory allocations and consequently, time taken.
+        In the course of calling this function multiple times, it is intended that
+        we pass in the same (empty) objects repeatedly.
+    """
+    @assert isempty(stack)
+    empty!(traversed_nodes)
+
+    push!(stack, start_node)
+
+    while !isempty(stack)
+        new_node = pop!(stack)
+        push!(traversed_nodes, new_node)
+
+        for neighbor in mst[new_node]
+            if !(neighbor in traversed_nodes) && neighbor != avoid_node
+                push!(stack, neighbor)
+            end
+        end
+    end
+    return traversed_nodes
 end

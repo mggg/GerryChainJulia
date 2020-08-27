@@ -33,6 +33,7 @@ function score_boxplot(score_values::Array{S, 2};
                                     (nameₓ, [w₁, w₂, ... , wᵤ])
                                   ], where there are x comparison plans and u
                                   districts.
+            ax                  : A PyPlot (matplotlib) Axis object
 
     """
     if isnothing(ax)
@@ -89,6 +90,7 @@ function score_boxplot(score_values::Array{S, 1};
                                   is a label that will appear on the legend and
                                   scoreᵢ is the value of the plan-wide score
                                   for the comparison plan.
+            ax                  : A PyPlot (matplotlib) Axis object
     """
     if isnothing(ax)
         _, ax = plt.subplots()
@@ -158,6 +160,7 @@ function score_histogram(score_values::Array{S, 1};
                                   where lᵢ is a label that will appear on the
                                   legend and scoreᵢ is the value of the plan-wide
                                   score for the comparison plan.
+            ax                  : A PyPlot (matplotlib) Axis object
     """
     # plot GerryChain histogram
     if isnothing(ax)

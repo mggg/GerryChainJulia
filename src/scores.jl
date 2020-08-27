@@ -562,6 +562,9 @@ function save_scores_to_csv(filename::String,
          # iterate through all steps of chain
          query = ChainScoreQuery(score_names, chain_data)
          first_entry = true
+         # note that we manually write the brackets and commas because the point
+         # of writing the scores to the file row-by-row is that we never hold
+         # the entire array of scores in main memory. this may be brittle!
          println(f, "[")
          for step_values in query
              first_entry ? first_entry = false : print(f, ",\n")

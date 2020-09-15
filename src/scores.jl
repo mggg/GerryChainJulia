@@ -206,7 +206,7 @@ function eval_score_on_partition(graph::BaseGraph,
         Returns an array of the form [a₁, a₂, ..., aₘ], where m is the number
         of districts in the plan.
     """
-    all_districts = Array(1:graph.num_dists)
+    all_districts = Array(1:partition.num_dists)
     return eval_score_on_districts(graph, partition, score, all_districts)
 end
 

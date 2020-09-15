@@ -1,4 +1,5 @@
 mutable struct Partition
+    num_dists::Int
     num_cut_edges::Int
     assignments::Array{Int, 1}                  # of length(num_nodes)
     dist_populations::Array{Int, 1}             # of length(num_districts)
@@ -22,20 +23,54 @@ function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
     """
     populations =  graph.populations
     assignments = get_assignments(graph.attributes, assignment_col)
+    num_districts = length(Set(assignments))
 
     # get cut_edges, district_adjacencies
-    dist_adj, cut_edges = get_district_adj_and_cut_edges(graph, assignments, graph.num_dists)
+    dist_adj, cut_edges = get_district_adj_and_cut_edges(graph, assignments, num_districts)
     num_cut_edges = sum(cut_edges)
 
     # get district populations
-    dist_populations = get_district_populations(assignments, populations, graph.num_nodes, graph.num_dists)
+    dist_populations = get_district_populations(assignments, populations, graph.num_nodes, num_districts)
 
     # get district_nodes
-    dist_nodes = get_district_nodes(assignments, graph.num_nodes, graph.num_dists)
+    dist_nodes = get_district_nodes(assignments, graph.num_nodes, num_districts)
 
     # return Partition with no parent by default
-    return Partition(num_cut_edges, assignments, dist_populations, cut_edges,
-                     dist_adj, dist_nodes, nothing)
+    return Partition(num_districts, num_cut_edges, assignments, dist_populations,
+                     cut_edges, dist_adj, dist_nodes, nothing)
+end
+
+function get_assignments(node_attributes::Array,
+                         assignment_col::AbstractString)::Array{Int, 1}
+    """ Extracts the assignments for each node in a graph. First attempts
+        to parse the values of the assignments column as an Int; if it fails,
+        it assumes every unique string assignment corresponds to to a unique
+        district.
+    """
+    assignment_to_num = Dict{String, Int}() # map unique strings to integers
+    raw_assignments = get_attribute_by_key(node_attributes, assignment_col)
+    processed_assignments = zeros(length(raw_assignments))
+    for (i, raw_value) in enumerate(raw_assignments)
+        if raw_value isa Int
+            processed_assignments[i] = raw_value
+        elseif raw_value isa String
+            try
+                processed_assignments[i] = parse(Int, raw_assignment)
+            catch exception # if the String could not be read as an int
+                if !haskey(assignment_to_num, raw_value)
+                    assignment_to_num[raw_value] = length(assignment_to_num) + 1
+                end
+                processed_assignments[i] = assignment_to_num[raw_value]
+            end
+        else
+            message = """
+                District assignments should be Ints or Strings; type
+                $(typeof(raw_value)) was found instead.
+            """
+            throw(DomainError(raw_value, message))
+        end
+    end
+    return processed_assignments
 end
 
 function get_district_nodes(assignments::Array{Int, 1},
@@ -114,7 +149,7 @@ function update_partition_adjacency(partition::Partition,
     """ Updates the district adjacency matrix and cut edges
         to reflect the partition's assignments for each node.
     """
-    partition.dist_adj = spzeros(Int, graph.num_dists, graph.num_dists)
+    partition.dist_adj = spzeros(Int, partition.num_dists, partition.num_dists)
     partition.num_cut_edges = 0
 
     for i=1:graph.num_edges

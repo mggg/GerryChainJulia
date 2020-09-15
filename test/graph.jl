@@ -37,7 +37,7 @@ using DataStructures
 @testset "Graph tests" begin
     @testset "Bad extension" begin
         # file should have a .json or .shp extension
-        @test_throws DomainError BaseGraph("nonexistent.txt", "population", "assignment")
+        @test_throws DomainError BaseGraph("nonexistent.txt", "population")
     end
 
     @testset "Reading node attributes from shapefile" begin
@@ -53,20 +53,11 @@ using DataStructures
         @test node_attributes == correct_attributes
     end
 
-    @testset "Check type of district assignments - get_assignments()" begin
-        graph = BaseGraph(square_shp_filepath, "population", "assignment")
-        # assignment that is a Float should throw an error
-        foreach(d -> d["assignment"] *= 1.0, graph.attributes) # convert Int to Float
-        @test_throws DomainError GerryChain.get_assignments(graph.attributes, "assignment")
-    end
-
     @testset "BaseGraph from shp() - rook adjacency" begin
-        graph = BaseGraph(square_shp_filepath, "population", "assignment")
+        graph = BaseGraph(square_shp_filepath, "population")
         @test graph.num_nodes == 4
         @test graph.num_edges == 4
         @test graph.total_pop == 20
-        @test graph.num_dists == 4
-
         @test graph.populations == [2, 4, 6, 8]
         @test graph.adj_matrix[1, 2] != 0
         @test graph.adj_matrix[1, 3] != 0
@@ -75,11 +66,10 @@ using DataStructures
     end
 
     @testset "BaseGraph from shp() - queen adjacency" begin
-        graph = BaseGraph(square_shp_filepath, "population", "assignment", adjacency="queen")
+        graph = BaseGraph(square_shp_filepath, "population", adjacency="queen")
         @test graph.num_nodes == 4
         @test graph.num_edges == 6 # queen adjacency means all 6 edges
         @test graph.total_pop == 20
-        @test graph.num_dists == 4
 
         @test graph.populations == [2, 4, 6, 8]
         # with queen adjacency, all squares should be adjacent to each other
@@ -91,12 +81,11 @@ using DataStructures
         @test graph.adj_matrix[3, 4] != 0
     end
 
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population")
 
     @test graph.num_nodes == 16
     @test graph.num_edges == 24
     @test graph.total_pop == 164
-    @test graph.num_dists == 4
 
     @testset "Populations" begin
         for i in [1, 7, 9, 16]
@@ -123,6 +112,13 @@ using DataStructures
         end
     end
 
+    @testset "Check type of district assignments - get_assignments()" begin
+        partition = Partition(graph, "assignment")
+        # assignment that is a Float should throw an error
+        foreach(d -> d["assignment"] *= 1.0, graph.attributes) # convert Int to Float
+        @test_throws DomainError GerryChain.get_assignments(graph.attributes, "assignment")
+    end
+    
     # test the edge arrays
     @test graph.edge_src[graph.adj_matrix[10,11]] in (10,11)
     @test graph.edge_dst[graph.adj_matrix[11,10]] in (10,11)

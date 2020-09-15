@@ -2,7 +2,7 @@
 # We generate a new Partition for each testset because the partition object is
 # modified in each testset
 @testset "Score tests" begin
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population")
 
     function calc_disparity(graph, nodes, district)
         diff = 0

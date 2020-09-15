@@ -1,5 +1,5 @@
 @testset "Recom tests" begin
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population")
 
     @testset "traverse_mst()" begin
         nodes = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -19,7 +19,7 @@
     @testset "recom_chain()" begin
         partition = Partition(graph, "assignment")
         # this is a dummy constraint
-        pop_constraint = PopulationConstraint(graph, "population", 10.0)
+        pop_constraint = PopulationConstraint(graph, partition, "population", 10.0)
         scores = [
             DistrictAggregate("electionD"),
             DistrictAggregate("electionR"),

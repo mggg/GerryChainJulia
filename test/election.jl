@@ -6,16 +6,16 @@
             having this small helper function helps ensure that these tests
             are relatively isolated from other parts of the codebase.
         """
-        for d in 1:graph.num_dists
+        for d in 1:partition.num_dists
             # the first score should update all the vote counts
             election_tracker.scores[1].score_fn(graph, partition.dist_nodes[d], d)
         end
     end
 
     @testset "vote_updater()" begin
-        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
 
         update_vote_counts(graph, partition, election_tracker)
@@ -26,9 +26,9 @@
     end
 
     @testset "vote_count()" begin
-        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
 
         d_count = vote_count("votes_d", election, "electionD")
         r_count = vote_count("votes_r", election, "electionR")
@@ -45,9 +45,9 @@
     end
 
     @testset "vote_share()" begin
-        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
 
         d_share = vote_share("share_d", election, "electionD")
         r_share = vote_share("share_r", election, "electionR")
@@ -64,9 +64,9 @@
     end
 
     @testset "seats_won()" begin
-        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
         # Count seats won
@@ -100,9 +100,9 @@
     end
 
     @testset "mean_median()" begin
-        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
         # Measure mean median
@@ -138,14 +138,14 @@
         # in each district, D now win by 2 votes out of a total of 14 votes,
         # so wasted votes for R is (6*4) = 24, while wasted votes for D is
         # (1 * 4) = 4
-        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        graph = BaseGraph(square_grid_filepath, "population")
         graph.attributes[1]["electionD"] = 4
         graph.attributes[3]["electionD"] = 4
         graph.attributes[9]["electionD"] = 4
         graph.attributes[11]["electionD"] = 4
 
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
 
@@ -159,15 +159,15 @@
         @test d_gap_score ≈ (4 - 24) / (14 * 4)
 
         # efficiency gap should break when there are more than two elections
-        bad_election = Election("Test Election", ["A", "B", "C"], graph.num_dists)
+        bad_election = Election("Test Election", ["A", "B", "C"], partition.num_dists)
         a_gap = efficiency_gap("test", bad_election, "A")
         @test_throws ArgumentError a_gap.score_fn(graph, partition)
     end
 
     @testset "ElectionTracker updates votes" begin
-        graph = BaseGraph(square_grid_filepath, "population", "assignment")
+        graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], graph.num_dists)
+        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
 

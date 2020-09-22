@@ -266,7 +266,7 @@ function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{I
     """ Returns a list of edges of the subgraph induced by vlist, which is an array of vertices.
     """
     allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
-    induced_edges = Array{Int, 1}()
+    induced_edges = BitSet()
 
     vset = Set(vlist)
     for src in vlist
@@ -276,7 +276,7 @@ function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{I
             end
         end
     end
-    return induced_edges
+    return collect(induced_edges)
 end
 
 function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int

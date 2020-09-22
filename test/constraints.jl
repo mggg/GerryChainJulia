@@ -1,6 +1,6 @@
 @testset "Population Constraint" begin
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
-    pop_constraint = PopulationConstraint(graph, "population", 0.1)
+    pop_constraint = PopulationConstraint(graph, 0.1)
     balanced_proposal = RecomProposal(1, 3, 40, 42,
                                       BitSet([1, 2, 6]),
                                       BitSet([5, 9, 10, 13, 14]))

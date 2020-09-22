@@ -2,7 +2,7 @@
     graph = BaseGraph(square_grid_filepath, "population", "assignment")
     partition = Partition(graph, "assignment")
     # this is a dummy constraint
-    pop_constraint = PopulationConstraint(graph, "population", 10.0)
+    pop_constraint = PopulationConstraint(graph, 10.0)
     election = Election("election", ["electionD", "electionR"], graph.num_dists)
     scores = [
         DistrictAggregate("electionD"),

@@ -18,7 +18,7 @@
 
     @testset "flip_chain()" begin
         # this is a dummy constraint
-        pop_constraint = PopulationConstraint(graph, "population", 10.0)
+        pop_constraint = PopulationConstraint(graph,  10.0)
         cont_constraint = cont_constraint = ContiguityConstraint()
         scores = [
             DistrictAggregate("electionD"),

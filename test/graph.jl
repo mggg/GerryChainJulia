@@ -141,13 +141,15 @@ using DataStructures
     @test LightGraphs.ne(graph.simple_graph) == graph.num_edges
 
     # test induced_subgraph
-    @test begin
+    @testset "induced_subgraph_edges()" begin
         induced_edges = induced_subgraph_edges(graph, [1, 2, 3, 4])
+        @test sort(induced_edges) == sort([1, 3, 5])
+
         induced_vertices = Set{Int}()
         for edge in induced_edges
             push!(induced_vertices, graph.edge_src[edge], graph.edge_dst[edge])
         end
-        induced_vertices == Set{Int}([1, 2, 3, 4])
+        @test induced_vertices == Set{Int}([1, 2, 3, 4])
     end
     @test_throws ArgumentError induced_subgraph_edges(graph, [1, 1, 4])
 

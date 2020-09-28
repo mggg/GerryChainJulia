@@ -47,7 +47,7 @@
     @testset "no_self_loops" begin
         partition = Partition(graph, "assignment")
         # this is a dummy constraint
-        pop_constraint = PopulationConstraint(graph, "population", 10.0)
+        pop_constraint = PopulationConstraint(graph, partition, 10.0)
         cont_constraint = ContiguityConstraint()
         scores = [
             DistrictAggregate("electionD"),

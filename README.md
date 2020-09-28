@@ -24,7 +24,7 @@ If you need to install Julia, use Julia in Jupyter Notebooks or use learn how to
 If you have any issues or requests, please do not hesitate to [raise an issue.](https://github.com/mggg/GerryChainJulia/issues)
 
 ## Citations
-You can cite the Recombination algortihm as 
+You can cite the Recombination algorithm as
 ```
 @misc{deford2019recombination,
     title={Recombination: A family of Markov chains for redistricting},

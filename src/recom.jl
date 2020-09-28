@@ -192,7 +192,8 @@ function recom_chain(graph::BaseGraph,
                      scores::Array{S, 1};
                      num_tries::Int=3,
                      acceptance_fn::F=always_accept,
-                     rng::AbstractRNG=Random.default_rng())::ChainScoreData where
+                     rng::AbstractRNG=Random.default_rng(),
+                     no_self_loops::Bool=false)::ChainScoreData where
                      {F<:Function, S<:AbstractScore}
     """ Runs a Markov Chain for `num_steps` steps using ReCom. Returns
         a ChainScoreData object which can be queried to retrieve the values of
@@ -211,6 +212,12 @@ function recom_chain(graph::BaseGraph,
                             proposal. Should accept a Partition as input.
             rng:            Random number generator. The user can pass in their
                             own; otherwise, we use the default RNG from Random.
+            no_self_loops:  If this is true, then a failure to accept a new state
+                            is not considered a self-loop; rather, the chain
+                            simply generates new proposals until the acceptance
+                            function is satisfied. BEWARE - this can create
+                            infinite loops if the acceptance function is never
+                            satisfied!
     """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
@@ -223,6 +230,9 @@ function recom_chain(graph::BaseGraph,
         if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
             # go back to the previous partition
             partition = partition.parent
+            # if user specifies this behavior, we do not increment the steps
+            # taken if the acceptance function fails.
+            if no_self_loops continue end
         end
         score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
         push!(chain_scores.step_values, score_vals)

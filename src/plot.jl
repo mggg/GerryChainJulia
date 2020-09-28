@@ -144,7 +144,7 @@ function score_histogram(score_values::Array{S, 1};
                          range::Union{Nothing, Tuple}=nothing,
                          density::Bool=false,
                          rwidth::Union{Nothing, T}=nothing,
-                         ax=nothing) where {S<:Number, T<:Number}
+                         ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number, T<:Number}
     """ Creates a graph with histogram of the values of a score throughout
         the chain. Only applicable for scores of type PlanScore.
 

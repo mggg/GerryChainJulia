@@ -261,4 +261,42 @@
         @test d_vote_vals == [[6 6 6 6]; [8 4 6 6]]
         @test_throws ArgumentError get_score_values(chain_data, "nonexistent")
     end
+
+
+    @testset "save_scores_to_json()" begin
+        partition = Partition(graph, "assignment")
+        # initialize scores
+        all_scores = Array{Dict{String, Any}, 1}()
+        votes_d = DistrictAggregate("electionD")
+        votes_r = DistrictAggregate("electionR")
+        scores = [
+            DistrictAggregate("purple"),
+            num_cut_edges("cut_edges"),
+            CompositeScore("votes", [votes_d, votes_r])
+        ]
+        chain_data = ChainScoreData(scores, [])
+        # get scores for initial plan
+        init_score_vals = score_initial_partition(graph, partition, scores)
+        push!(chain_data.step_values, init_score_vals)
+
+        # generate RecomProposal, update partition, and generate new set of scores
+        proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
+        update_partition!(partition, graph, proposal)
+        step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+        push!(chain_data.step_values, step_score_vals)
+
+        # get complete score dictionaries
+        complete_score_vals = [init_score_vals, score_initial_partition(graph, partition, scores)]
+        (fname, tio) = mktemp()
+        # check that return values look correct
+        save_scores_to_json(fname, chain_data)
+        step_vals = JSON.parsefile(fname)
+        for i in 1:length(step_vals)
+            @test step_vals[i]["purple"] == complete_score_vals[i]["purple"]
+            @test step_vals[i]["cut_edges"] == complete_score_vals[i]["cut_edges"]
+            @test step_vals[i]["votes"]["electionD"] == complete_score_vals[i]["votes"]["electionD"]
+            @test step_vals[i]["votes"]["electionR"] == complete_score_vals[i]["votes"]["electionR"]
+        end
+        close(tio)
+    end
 end

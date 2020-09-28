@@ -1,6 +1,8 @@
 @testset "Population Constraint" begin
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
-    pop_constraint = PopulationConstraint(graph, "population", 0.1)
+    graph = BaseGraph(square_grid_filepath, "population")
+    partition = Partition(graph, "assignment")
+    pop_constraint = PopulationConstraint(graph, partition,  0.1)
+
     balanced_proposal = RecomProposal(1, 3, 40, 42,
                                       BitSet([1, 2, 6]),
                                       BitSet([5, 9, 10, 13, 14]))
@@ -18,7 +20,7 @@
 end
 
 @testset "Contiguity Constraint" begin
-    graph = BaseGraph(cols_grid_filepath, "population", "assignment")
+    graph = BaseGraph(cols_grid_filepath, "population")
     partition = Partition(graph, "assignment")
     cont_constraint = ContiguityConstraint()
     discont_proposal = FlipProposal(5, 1, 0, 30, 42,

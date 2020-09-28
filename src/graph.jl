@@ -3,7 +3,6 @@ abstract type AbstractGraph end
 struct BaseGraph<:AbstractGraph
     num_nodes::Int
     num_edges::Int
-    num_dists::Int
     total_pop::Int
     populations::Array{Int, 1}             # of length(num_nodes)
     adj_matrix::SparseMatrixCSC{Int, Int}
@@ -70,41 +69,6 @@ function population_to_int(raw_value::Number)::Int
     return raw_value isa Int ? raw_value : convert(Int, round(raw_value))
 end
 
-
-function get_assignments(node_attributes::Array,
-                         assignment_col::AbstractString)::Array{Int, 1}
-    """ Extracts the assignments for each node in a graph. First attempts
-        to parse the values of the assignments column as an Int; if it fails,
-        it assumes every unique string assignment corresponds to to a unique
-        district.
-    """
-    assignment_to_num = Dict{String, Int}() # map unique strings to integers
-    raw_assignments = get_attribute_by_key(node_attributes, assignment_col)
-    processed_assignments = zeros(length(raw_assignments))
-    for (i, raw_value) in enumerate(raw_assignments)
-        if raw_value isa Int
-            processed_assignments[i] = raw_value
-        elseif raw_value isa String
-            try
-                processed_assignments[i] = parse(Int, raw_assignment)
-            catch exception # if the String could not be read as an int
-                if !haskey(assignment_to_num, raw_value)
-                    assignment_to_num[raw_value] = length(assignment_to_num) + 1
-                end
-                processed_assignments[i] = assignment_to_num[raw_value]
-            end
-        else
-            message = """
-                District assignments should be Ints or Strings; type
-                $(typeof(raw_value)) was found instead.
-            """
-            throw(DomainError(raw_value, message))
-        end
-    end
-    return processed_assignments
-end
-
-
 function get_node_coordinates(row::Shapefile.Row)::Vector{Vector{Vector{Vector{Float64}}}}
     """ Construct an array of LibGEOS.Polygons from the given coordinates. The
         coordinates are structured in the following way. Each element in the
@@ -133,7 +97,6 @@ end
 
 function graph_from_shp(filepath::AbstractString,
                         pop_col::AbstractString,
-                        assignment_col::AbstractString,
                         adjacency::String="rook")::BaseGraph
     """ Constructs BaseGraph from .shp file.
     """
@@ -154,12 +117,10 @@ function graph_from_shp(filepath::AbstractString,
     neighbors = neighbors_from_graph(graph)
 
     populations =  get_attribute_by_key(attributes, pop_col, population_to_int)
-    assignments = get_assignments(attributes, assignment_col)
-    num_districts = length(Set(assignments))
     total_pop = sum(populations)
 
-    return BaseGraph(nv(graph), ne(graph), num_districts, total_pop,
-                     populations, adj_matrix, edge_src, edge_dst, neighbors,
+    return BaseGraph(nv(graph), ne(graph), total_pop, populations,
+                     adj_matrix, edge_src, edge_dst, neighbors,
                      graph, attributes)
 end
 
@@ -211,8 +172,7 @@ end
 
 
 function graph_from_json(filepath::AbstractString,
-                         pop_col::AbstractString,
-                         assignment_col::AbstractString)::BaseGraph
+                         pop_col::AbstractString)::BaseGraph
     """ Arguments:
 
         filepath:       file path to the .json file that contains the graph.
@@ -226,8 +186,6 @@ function graph_from_json(filepath::AbstractString,
                         destination node of the edge.
         pop_col:        the node attribute key whose accompanying value is the
                         population of that node
-        assignment_col: the node attribute key whose accompanying value is the
-                        assignment of that node (i.e., to a district)
 
     [1]: https://github.com/mggg/GerryChain/blob/c87da7e69967880abc99b781cd37468b8cb18815/gerrychain/graph/graph.py#L38
     """
@@ -235,10 +193,8 @@ function graph_from_json(filepath::AbstractString,
     nodes = raw_graph["nodes"]
     num_nodes = length(nodes)
 
-    # get populations, assignments and num_districts
+    # get populations
     populations =  get_attribute_by_key(nodes, pop_col, population_to_int)
-    assignments = get_assignments(nodes, assignment_col)
-    num_districts = length(Set(assignments))
     total_pop = sum(populations)
 
     # Generate the base SimpleGraph.
@@ -262,15 +218,14 @@ function graph_from_json(filepath::AbstractString,
     # get attributes
     attributes = get_attributes(nodes)
 
-    return BaseGraph(num_nodes, num_edges, num_districts, total_pop,
-                     populations, adj_matrix, edge_src, edge_dst, neighbors,
+    return BaseGraph(num_nodes, num_edges, total_pop, populations,
+                     adj_matrix, edge_src, edge_dst, neighbors,
                      simple_graph, attributes)
 end
 
 
 function BaseGraph(filepath::AbstractString,
-                   pop_col::AbstractString,
-                   assignment_col::AbstractString;
+                   pop_col::AbstractString;
                    adjacency::String="rook")::BaseGraph
     """ Builds the base Graph object. This is the underlying network of our
         districts, and its properties are immutable i.e they will not change
@@ -281,17 +236,15 @@ function BaseGraph(filepath::AbstractString,
                         information needed to construct the graph.
         pop_col:        the node attribute key whose accompanying value is the
                         population of that node
-        assignment_col: the node attribute key whose accompanying value is the
-                        assignment of that node (i.e., to a district)
         adjacency:      (Only used if the user specifies a filepath to a .shp
                         file.) Should be either "queen" or "rook"; "rook" by
                         default.
     """
     extension = uppercase(splitext(filepath)[2])
     if uppercase(extension) == ".JSON"
-        return graph_from_json(filepath, pop_col, assignment_col)
+        return graph_from_json(filepath, pop_col)
     elseif uppercase(extension) == ".SHP"
-        return graph_from_shp(filepath, pop_col, assignment_col, adjacency)
+        return graph_from_shp(filepath, pop_col, adjacency)
     else
         throw(DomainError(filepath, "Filepath must lead to valid JSON file or valid .shp/.dbf file."))
     end
@@ -313,7 +266,7 @@ function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{I
     """ Returns a list of edges of the subgraph induced by vlist, which is an array of vertices.
     """
     allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
-    induced_edges = Array{Int, 1}()
+    induced_edges = Set{Int}()
 
     vset = Set(vlist)
     for src in vlist
@@ -323,7 +276,7 @@ function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{I
             end
         end
     end
-    return induced_edges
+    return collect(induced_edges)
 end
 
 function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int

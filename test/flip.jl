@@ -1,5 +1,5 @@
 @testset "Flip tests" begin
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population")
     partition = Partition(graph, "assignment")
 
     function accept_on_third_try()
@@ -23,7 +23,7 @@
 
     @testset "flip_chain()" begin
         # this is a dummy constraint
-        pop_constraint = PopulationConstraint(graph, "population", 10.0)
+        pop_constraint = PopulationConstraint(graph, partition, 10.0)
         cont_constraint = ContiguityConstraint()
         scores = [
             DistrictAggregate("electionD"),

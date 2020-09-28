@@ -6,7 +6,7 @@ function sample_subgraph(graph::BaseGraph,
     """ Randomly sample two adjacent districts and returns them and their
         induced edges and nodes.
     """
-    D₁, D₂ = sample_adjacent_districts_randomly(partition, graph.num_dists, rng)
+    D₁, D₂ = sample_adjacent_districts_randomly(partition, rng)
 
     # take all their nodes
     nodes = union(partition.dist_nodes[D₁],

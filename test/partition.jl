@@ -32,8 +32,9 @@
 
 # partition tests
 @testset "Partition tests" begin
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population")
     partition = Partition(graph, "assignment")
+    @test partition.num_dists == 4
 
     @test partition.num_cut_edges == 8
     @test partition.dist_populations[1] == 41
@@ -42,8 +43,8 @@
     @test partition.dist_populations[4] == 41
 
     @testset "District Adjacency" begin
-        for i in 1:graph.num_dists
-            for j in 1:graph.num_dists
+        for i in 1:partition.num_dists
+            for j in 1:partition.num_dists
                 @test partition.dist_adj[i,j] == partition.dist_adj[j,i]
             end
         end

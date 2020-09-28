@@ -2,7 +2,7 @@ function score_boxplot(score_values::Array{S, 2};
                        sort_by_score::Bool=true,
                        label::String="GerryChain",
                        comparison_scores::Array=[],
-                       ax=nothing) where {S<:Number}
+                       ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number}
     """ Produces a graph with multiple matplotlib box plots for the values of
         scores throughout the chain. Intended for use with district-level scores
         (DistrictAggregate, DistrictScore).
@@ -71,7 +71,7 @@ end
 function score_boxplot(score_values::Array{S, 1};
                        label::String="GerryChain",
                        comparison_scores::Array=[],
-                       ax=nothing) where {S<:Number}
+                       ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number}
     """ Produces a single matplotlib box plot for the values of scores
         throughout the chain. Intended for use with plan-level scores.
 

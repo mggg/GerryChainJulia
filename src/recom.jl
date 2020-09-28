@@ -215,7 +215,9 @@ function recom_chain(graph::BaseGraph,
             no_self_loops:  If this is true, then a failure to accept a new state
                             is not considered a self-loop; rather, the chain
                             simply generates new proposals until the acceptance
-                            function is satisfied.
+                            function is satisfied. BEWARE - this can create
+                            infinite loops if the acceptance function is never
+                            satisfied!
     """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
@@ -229,8 +231,7 @@ function recom_chain(graph::BaseGraph,
             # go back to the previous partition
             partition = partition.parent
             # if user specifies this behavior, we do not increment the steps
-            # taken if the acceptance function fails. BEWARE - this can create
-            # infinite loops if the acceptance function is never satisfied!
+            # taken if the acceptance function fails.
             if no_self_loops continue end
         end
         score_vals = score_partition_from_proposal(graph, partition, proposal, scores)

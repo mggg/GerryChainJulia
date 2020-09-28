@@ -19,7 +19,7 @@
     @testset "recom_chain()" begin
         partition = Partition(graph, "assignment")
         # this is a dummy constraint
-        pop_constraint = PopulationConstraint(graph, partition, "population", 10.0)
+        pop_constraint = PopulationConstraint(graph, partition, 10.0)
         scores = [
             DistrictAggregate("electionD"),
             DistrictAggregate("electionR"),

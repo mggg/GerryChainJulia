@@ -118,7 +118,7 @@ using DataStructures
         foreach(d -> d["assignment"] *= 1.0, graph.attributes) # convert Int to Float
         @test_throws DomainError GerryChain.get_assignments(graph.attributes, "assignment")
     end
-    
+
     # test the edge arrays
     @test graph.edge_src[graph.adj_matrix[10,11]] in (10,11)
     @test graph.edge_dst[graph.adj_matrix[11,10]] in (10,11)
@@ -137,13 +137,15 @@ using DataStructures
     @test LightGraphs.ne(graph.simple_graph) == graph.num_edges
 
     # test induced_subgraph
-    @test begin
+    @testset "induced_subgraph_edges()" begin
         induced_edges = induced_subgraph_edges(graph, [1, 2, 3, 4])
+        @test sort(induced_edges) == sort([1, 3, 5])
+
         induced_vertices = Set{Int}()
         for edge in induced_edges
             push!(induced_vertices, graph.edge_src[edge], graph.edge_dst[edge])
         end
-        induced_vertices == Set{Int}([1, 2, 3, 4])
+        @test induced_vertices == Set{Int}([1, 2, 3, 4])
     end
     @test_throws ArgumentError induced_subgraph_edges(graph, [1, 1, 4])
 

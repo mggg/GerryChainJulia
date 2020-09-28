@@ -12,10 +12,9 @@ end
 
 
 function PopulationConstraint(graph::BaseGraph,
-                              num_dists::Int,
-                              population_col::AbstractString,
+                              partition::Partition,
                               tolerance::Float64)
-    ideal_pop = graph.total_pop / num_dists
+    ideal_pop = graph.total_pop / partition.num_dists
 
     # no particular reason to not use floor() instead of ceil()
     min_pop = Int(ceil((1-tolerance) * ideal_pop))

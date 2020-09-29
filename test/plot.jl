@@ -15,9 +15,9 @@
     chain_data = recom_chain(graph, partition, pop_constraint, num_steps, scores)
 
     @testset "score_boxplot()" begin
-        function boxplot_district_score()
+        function boxplot_district_score(ax=nothing)
             try
-                score_boxplot(chain_data, "electionD")
+                score_boxplot(chain_data, "electionD", ax=ax)
             catch ex
                 return ex
             end
@@ -32,13 +32,15 @@
         end
 
         @test !isa(boxplot_district_score(), Exception)
+        _, ax = GerryChain.PyPlot.plt.subplots()
+        @test !isa(boxplot_district_score(ax), Exception) # pass in existing ax object
         @test !isa(boxplot_plan_score(), Exception)
     end
 
     @testset "score_histogram()" begin
-        function histogram_no_comparison()
+        function histogram_no_comparison(ax=nothing)
             try
-                score_histogram(chain_data, "e_gap")
+                score_histogram(chain_data, "e_gap", ax=ax)
             catch ex
                 return ex
             end
@@ -53,6 +55,8 @@
         end
 
         @test !isa(histogram_no_comparison(), Exception)
+        _, ax = GerryChain.PyPlot.plt.subplots()
+        @test !isa(histogram_no_comparison(ax), Exception) # pass in existing ax object
         @test !isa(histogram_with_comparison(), Exception)
     end
 end

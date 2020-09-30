@@ -10,6 +10,7 @@ using PyPlot
 import Shapefile
 import LibGEOS
 import LibSpatialIndex
+using Logging
 
 export
 

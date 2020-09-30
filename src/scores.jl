@@ -584,3 +584,34 @@ function num_cut_edges(name::String)::PlanScore
     end
     return PlanScore(name, score_fn)
 end
+
+
+function coerce_dist_agg_to_be_float!(graph::BaseGraph,
+                                      score::DistrictAggregate)
+    """ Converts the graph attribute `score.key` in `graph` to a Float if it is
+        a String.
+    """
+    for node in 1:graph.num_nodes
+        if graph.attributes[node][score.key] isa String
+            graph.attributes[node][score.key] = parse(Float64,
+                                                      graph.attributes[node][score.key])
+
+            @info string("The ", score.key, " attribute was of type String, ",
+                         "but was converted to type Float64") maxlog=1
+        end
+    end
+end
+
+function coerce_types_on_graph!(graph::BaseGraph,
+                                scores::Array{S, 1}) where {S<:AbstractScore}
+    """ Coerces the data types in `graph` to types that the eval_score()
+        functions expect.
+        Currently, it only coerces DistrictAggregate attributes to be Floats if
+        they are Strings.
+    """
+    for score in scores
+        if score isa DistrictAggregate
+            coerce_dist_agg_to_be_float!(graph, score)
+        end
+    end
+end

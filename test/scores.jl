@@ -299,4 +299,24 @@
         end
         close(tio)
     end
+
+    @testset "Type Coercions" begin
+        graph = BaseGraph(square_grid_filepath, "population")
+        scores = [
+               DistrictAggregate("attr_name", "str_attr"),
+        ]
+
+        # set an attribute to be a string
+        for attr_dict in graph.attributes
+            attr_dict["str_attr"] = "1"
+        end
+
+        with_logger(NullLogger()) do # this suppresses the info msg during testing
+            @test_logs (:info,"The str_attr attribute was of type String, ",
+                              "but was converted to type Float64")
+                        GerryChain.coerce_types_on_graph!(graph, scores)
+        end
+
+        @test graph.attributes[1]["str_attr"] isa Float64
+    end
 end

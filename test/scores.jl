@@ -302,19 +302,21 @@
 
     @testset "Type Coercions" begin
         graph = BaseGraph(square_grid_filepath, "population")
-        scores = [
-               DistrictAggregate("attr_name", "str_attr"),
-        ]
+        partition = Partition(graph, "assignment")
+        str_score = DistrictAggregate("attr_name", "str_attr")
+        scores = [str_score]
 
         # set an attribute to be a string
         for attr_dict in graph.attributes
             attr_dict["str_attr"] = "1"
         end
 
+        @test_throws ArgumentError eval_score_on_partition(graph, partition, str_score)
+
         with_logger(NullLogger()) do # this suppresses the info msg during testing
             @test_logs (:info,"The str_attr attribute was of type String, ",
                               "but was converted to type Float64")
-                        GerryChain.coerce_types_on_graph!(graph, scores)
+                        GerryChain.coerce_aggregated_attributes!(graph, scores)
         end
 
         @test graph.attributes[1]["str_attr"] isa Float64

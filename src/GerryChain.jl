@@ -44,7 +44,7 @@ AbstractScore,
 ChainScoreData,
 score_initial_partition, score_partition_from_proposal, eval_score_on_district,
 get_scores_at_step, eval_score_on_partition, save_scores_to_csv,
-save_scores_to_json, get_score_values, num_cut_edges,
+save_scores_to_json, get_score_values, num_cut_edges, coerce_aggregated_attributes!,
 
 # acceptance functions
 always_accept, satisfies_acceptance_fn,

@@ -133,11 +133,23 @@ function eval_score_on_district(graph::BaseGraph,
     """ Evaluates a DistrictAggregate score on the nodes in a particular
         district.
     """
-    sum = 0
-    for node in partition.dist_nodes[district]
-        sum += graph.attributes[node][score.key]
+    try
+        sum = 0
+        for node in partition.dist_nodes[district]
+            sum += graph.attributes[node][score.key]
+        end
+        return sum
+    catch e
+        if isa(e, MethodError)
+            error_msg = string("The DistrictAggregate Score ", score.name,
+                               " seems to be of type String when a Number was ",
+                               "expected. Try calling the function ",
+                               "coerce_aggregated_attributes!(graph, scores_array) ",
+                               "before running the chain.")
+            throw(ArgumentError(error_msg))
+        end
+        throw(e)
     end
-    return sum
 end
 
 
@@ -585,33 +597,30 @@ function num_cut_edges(name::String)::PlanScore
     return PlanScore(name, score_fn)
 end
 
-
-function coerce_dist_agg_to_be_float!(graph::BaseGraph,
-                                      score::DistrictAggregate)
-    """ Converts the graph attribute `score.key` in `graph` to a Float if it is
-        a String.
+function coerce_attribute_type!(graph::BaseGraph,
+                                key::String,
+                                new_type::DataType)
+    """ Coerces attribute `key` in `graph` to be of type `new_type` if it is
+        of type String.
     """
     for node in 1:graph.num_nodes
-        if graph.attributes[node][score.key] isa String
-            graph.attributes[node][score.key] = parse(Float64,
-                                                      graph.attributes[node][score.key])
-
-            @info string("The ", score.key, " attribute was of type String, ",
+        if graph.attributes[node][key] isa String
+            graph.attributes[node][key] = parse(new_type,
+                                                graph.attributes[node][key])
+            @info string("Key ", key, " attribute was of type String, ",
                          "but was converted to type Float64") maxlog=1
         end
     end
 end
 
-function coerce_types_on_graph!(graph::BaseGraph,
-                                scores::Array{S, 1}) where {S<:AbstractScore}
-    """ Coerces the data types in `graph` to types that the eval_score()
-        functions expect.
-        Currently, it only coerces DistrictAggregate attributes to be Floats if
+function coerce_aggregated_attributes!(graph::BaseGraph,
+                                       scores::Array{S, 1}) where {S<:AbstractScore}
+    """ Coerces DistrictAggregate attributes in `scores` to be Floats if
         they are Strings.
     """
     for score in scores
         if score isa DistrictAggregate
-            coerce_dist_agg_to_be_float!(graph, score)
+            coerce_attribute_type!(graph, score.key, Float64)
         end
     end
 end

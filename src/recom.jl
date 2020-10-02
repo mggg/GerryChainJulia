@@ -219,8 +219,6 @@ function recom_chain(graph::BaseGraph,
                             infinite loops if the acceptance function is never
                             satisfied!
     """
-    coerce_types_on_graph!(graph, scores)
-
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
     chain_scores = ChainScoreData(deepcopy(scores), [first_scores])

@@ -608,7 +608,7 @@ function coerce_attribute_type!(graph::BaseGraph,
             graph.attributes[node][key] = parse(new_type,
                                                 graph.attributes[node][key])
             @info string("Key ", key, " attribute was of type String, ",
-                         "but was converted to type Float64") maxlog=1
+                         "but was converted to type ", new_type) maxlog=1
         end
     end
 end

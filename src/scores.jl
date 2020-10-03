@@ -151,7 +151,7 @@ function eval_score_on_district(graph::BaseGraph,
     try
         return score.score_fn(graph, partition.dist_nodes[district], district)
     catch e # Check if the user-specified method was constructed incorrectly
-        if isa(e, MethodError)
+        if !applicable(score.score_fn, graph, partition)
             error_msg = "DistrictScore function must accept graph, array of nodes, and district index."
             throw(ArgumentError(error_msg))
         end
@@ -219,7 +219,7 @@ function eval_score_on_partition(graph::BaseGraph,
     try
         return score.score_fn(graph, partition)
     catch e # Check if the user-specified method was constructed incorrectly
-        if isa(e, MethodError)
+        if !applicable(score.score_fn, graph, partition)
             error_msg = "PlanScore function must accept graph and partition."
             throw(ArgumentError(error_msg))
         end

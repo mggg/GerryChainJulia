@@ -17,7 +17,7 @@ AbstractGraph, BaseGraph, Partition,
 
 get_attributes, get_populations_and_assignments, get_district_nodes,
 get_district_populations, get_district_adj_and_cut_edges,
-weighted_kruskal_mst, get_subgraph_population,
+kruskal_mst, random_kruskal_mst, wilson_ust, get_subgraph_population,
 induced_subgraph_edges, update_partition_adjacency,
 
 # proposals
@@ -29,7 +29,7 @@ ContiguityConstraint,
 satisfy_constraint,
 
 # recom
-update_partition!, recom_chain,
+update_partition!, recom_chain, reversible_recom_chain,
 
 # flip
 flip_chain,

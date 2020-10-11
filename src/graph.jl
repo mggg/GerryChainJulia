@@ -336,12 +336,11 @@ function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int
     return total_pop
 end
 
-function weighted_kruskal_mst(graph::BaseGraph,
-                              edges::Array{Int, 1},
-                              nodes::Array{Int, 1},
-                              weights::Array{Float64, 1},
-                              rng=MersenneTwister(1234))::BitSet
-    """ Generates and returns a minimum spanning tree from the subgraph induced by
+function kruskal_mst(graph::BaseGraph,
+                     edges::Array{Int, 1},
+                     nodes::Array{Int, 1},
+                     weights::Array{Float64, 1}) ::BitSet
+    """Generates and returns a minimum spanning tree from the subgraph induced by
         `edges` and `nodes`, using Kruskal's MST algorithm.
 
         Note: the `graph` represents the entire graph of
@@ -350,11 +349,12 @@ function weighted_kruskal_mst(graph::BaseGraph,
 
         Arguments:
             graph: Underlying Graph object
-            edges: Arr of edges of the sub-graph
-            nodes: Set of nodes of the sub-graph
+            edges: Array of edges of the subgraph
+            nodes: Array of nodes of the subgraph
+            weights: Weights on the edges
 
         Returns:
-            mst: Array{Int, 1} of edges that form a mst
+            mst: A set of edges that form an MST.
     """
     num_nodes = length(nodes)
 
@@ -375,3 +375,91 @@ function weighted_kruskal_mst(graph::BaseGraph,
     end
     return mst
 end
+
+function random_kruskal_mst(graph::BaseGraph,
+                            edges::Array{Int, 1},
+                            nodes::Array{Int, 1},
+                            rng=MersenneTwister(1234))::BitSet
+    """Generates and returns a random minimum spanning tree from the subgraph induced
+       by `edges` and `nodes`, using Kruskal's MST algorithm.
+
+        Note: the `graph` represents the entire graph of
+        the plan, where as `edges` and `nodes` represent only the sub-graph on
+        which we want to draw the MST.
+
+        Arguments:
+            graph: Underlying Graph object
+            edges: Array of edges of the subgraph
+            nodes: Array of nodes of the subgraph
+            rng: Random number generator used to generate edge weights
+
+        Returns:
+            mst: A set of edges that form an MST.
+    """
+    weights = rand(rng, length(edges))
+    return kruskal_mst(graph, edges, nodes, weights)
+end
+
+function wilson_ust(graph::BaseGraph,
+                    edges::Array{Int, 1},
+                    nodes::Array{Int, 1},
+                    rng=MersenneTwister(1234))::BitSet
+    """ Generates and returns a random uniform spanning tree from the subgraph induced
+        by `edges` and `nodes` using Wilson's algorithm.
+
+        This implementation is copied nearly verbatim from pseudocode in David B. Wilson's
+        1996 paper "Generating Random Spanning Trees More Quickly than the Cover Time"
+        (Figure 1).
+
+        Note: the `graph` represents the entire graph of
+        the plan, where as `edges` and `nodes` represent only the sub-graph on
+        which we want to draw the MST.
+
+
+        Arguments:
+            graph: Underlying Graph object
+            edges: Array of edges of the subgraph
+            nodes: Array of nodes of the subgraph
+            rng: Random number generator used to generate edge weights
+
+        Returns:
+            mst: A set of edges that form an MST.
+    """
+    node_to_idx = Dict(node => idx for (idx, node) in enumerate(nodes))
+    n = length(nodes)
+    root = rand(1:n)
+    in_tree = zeros(Bool, n)
+    next = -ones(Int, n)
+    in_tree[root] = true
+    for i in 1:n
+        u = i
+        while !in_tree[u]
+            neighbors = [n for n in graph.neighbors[nodes[u]]
+                         if n in keys(node_to_idx)]
+            next_node = rand(rng, neighbors)
+            next[u] = node_to_idx[next_node]
+            u = next[u]
+        end
+        u = i
+        while !in_tree[u]
+            in_tree[u] = true
+            u = next[u]
+        end
+    end
+
+    mst_edges = BitSet([])
+    idx_pair_to_edge = Dict(tuple(sort([node_to_idx[graph.edge_dst[e]],
+                                        node_to_idx[graph.edge_src[e]]])) => e
+                            for e in edges)
+    for (curr_idx, next_idx) in enumerate(next)
+        if next_idx != -1
+            edge_pair = tuple(sort([curr_idx, next_idx]))
+            push!(mst_edges, idx_pair_to_edge[edge_pair])
+        end
+    end
+    #println("mst edges: ", mst_edges)
+    #println("missing nodes: ", setdiff(Set(1:n), Set(next)))
+    @assert length(mst_edges) == length(nodes) - 1
+    return mst_edges
+end
+

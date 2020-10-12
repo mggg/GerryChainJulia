@@ -22,6 +22,7 @@ induced_subgraph_edges, update_partition_adjacency,
 
 # proposals
 RecomProposal, FlipProposal, DummyProposal,
+get_valid_proposal_contraction, get_valid_proposal_memoization,
 
 # constraints
 PopulationConstraint,

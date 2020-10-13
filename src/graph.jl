@@ -223,23 +223,27 @@ function graph_from_json(filepath::AbstractString,
                      simple_graph, attributes)
 end
 
+"""
+    BaseGraph(filepath::AbstractString,
+              pop_col::AbstractString;
+              adjacency::String="rook")::BaseGraph
 
+    Builds the base Graph object. This is the underlying network of our
+    districts, and its properties are immutable i.e they will not change
+    from step to step in our Markov Chains.
+
+    *Arguments:*
+    filepath:       A path to a .json or .shp file which contains the
+                    information needed to construct the graph.
+    pop_col:        the node attribute key whose accompanying value is the
+                    population of that node
+    adjacency:      (Only used if the user specifies a filepath to a .shp
+                    file.) Should be either "queen" or "rook"; "rook" by
+                    default.
+"""
 function BaseGraph(filepath::AbstractString,
                    pop_col::AbstractString;
                    adjacency::String="rook")::BaseGraph
-    """ Builds the base Graph object. This is the underlying network of our
-        districts, and its properties are immutable i.e they will not change
-        from step to step in our Markov Chains.
-
-        Arguments:
-        filepath:       A path to a .json or .shp file which contains the
-                        information needed to construct the graph.
-        pop_col:        the node attribute key whose accompanying value is the
-                        population of that node
-        adjacency:      (Only used if the user specifies a filepath to a .shp
-                        file.) Should be either "queen" or "rook"; "rook" by
-                        default.
-    """
     extension = uppercase(splitext(filepath)[2])
     if uppercase(extension) == ".JSON"
         return graph_from_json(filepath, pop_col)
@@ -250,11 +254,13 @@ function BaseGraph(filepath::AbstractString,
     end
 end
 
+"""
+    get_attributes(nodes::Array{Any, 1})
 
+    *Returns* an array of dicts `attributes` of length `length(nodes)` where
+    the attributes of the `nodes[i]` is at `attributes[i]` as a dictionary.
+"""
 function get_attributes(nodes::Array{Any, 1})
-    """ Returns an array of dicts where the attributes of the i'th node is
-        at attributes[i] as a dictionary.
-    """
     attributes = Array{Dict{String, Any}}(undef, length(nodes))
     for (index, node) in enumerate(nodes)
         attributes[index] = node
@@ -262,9 +268,15 @@ function get_attributes(nodes::Array{Any, 1})
     return attributes
 end
 
-function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{Int, 1}
-    """ Returns a list of edges of the subgraph induced by vlist, which is an array of vertices.
-    """
+"""
+    induced_subgraph_edges(graph::BaseGraph,
+                           vlist::Array{Int, 1})::Array{Int, 1}
+
+    *Returns* a list of edges of the subgraph induced by `vlist`, which is an array
+    of vertices.
+"""
+function induced_subgraph_edges(graph::BaseGraph,
+                                vlist::Array{Int, 1})::Array{Int, 1}
     allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
     induced_edges = Set{Int}()
 
@@ -279,9 +291,18 @@ function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int, 1})::Array{I
     return collect(induced_edges)
 end
 
-function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int
-    """ Returns the population of the subgraph induced by `nodes`.
-    """
+"""
+    get_subgraph_population(graph::BaseGraph,
+                            nodes::BitSet)::Int
+
+    *Arguments:*
+        graph: Underlying graph object
+        nodes: A Set of Ints
+
+    *Returns* the population of the subgraph induced by `nodes`.
+"""
+function get_subgraph_population(graph::BaseGraph,
+                                 nodes::BitSet)::Int
     total_pop = 0
     for node in nodes
         total_pop += graph.populations[node]
@@ -289,33 +310,40 @@ function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int
     return total_pop
 end
 
+"""
+    weighted_kruskal_mst(graph::BaseGraph,
+                         edges::Array{Int, 1},
+                         nodes::Array{Int, 1},
+                         weights::Array{Float64, 1},
+                         rng=MersenneTwister(1234))::BitSet
+
+    Generates and returns a minimum spanning tree from the subgraph induced by
+    `edges` and `nodes`, using Kruskal's MST algorithm.
+
+    ### Note:
+    The `graph` represents the entire graph of the plan, where as `edges` and
+    `nodes` represent only the sub-graph on which we want to draw the MST.
+
+    *Arguments:*
+        graph: Underlying Graph object
+        edges: Array of edges of the sub-graph
+        nodes: Set of nodes of the sub-graph
+        weights: Array of weights of `length(edges)` where `weights[i]` is the
+                 weight of `edges[i]`
+
+    *Returns* a BitSet of edges that form a mst.
+"""
 function weighted_kruskal_mst(graph::BaseGraph,
                               edges::Array{Int, 1},
                               nodes::Array{Int, 1},
                               weights::Array{Float64, 1},
                               rng=MersenneTwister(1234))::BitSet
-    """ Generates and returns a minimum spanning tree from the subgraph induced by
-        `edges` and `nodes`, using Kruskal's MST algorithm.
-
-        Note: the `graph` represents the entire graph of
-        the plan, where as `edges` and `nodes` represent only the sub-graph on
-        which we want to draw the MST.
-
-        Arguments:
-            graph: Underlying Graph object
-            edges: Arr of edges of the sub-graph
-            nodes: Set of nodes of the sub-graph
-
-        Returns:
-            mst: Array{Int, 1} of edges that form a mst
-    """
     num_nodes = length(nodes)
 
     # sort the edges arr by their weights
     sorted_indices = sortperm(weights)
     sorted_edges = edges[sorted_indices]
 
-    # mst = Array{Int, 1}()
     mst = BitSet()
     connected_vs = DisjointSets{Int}(nodes)
 

@@ -21,3 +21,7 @@ makedocs(sitename="GerryChain",
             "Markov Chains" => "chains.md",
         ]
 )
+
+deploydocs(
+    repo = "github.com/mggg/GerryChainJulia.git",
+)

@@ -1,6 +1,11 @@
 # Saving results
 Let's say that you've run a chain and want to save the resulting `ChainScoreData` object to your hard drive, so that you can do analysis of the results at a later time without having to re-run the chain. Below are some options you could pursue to do that.
 
+```@index
+Order = [:type, :function]
+Pages   = ["saving_results.md"]
+```
+
 ## Serialization
 One super simple way to save the results is to use Julia's built-in `Serialization` library to save the `ChainScoreData` object. Here's an example:
 

@@ -161,3 +161,14 @@ down to efficiency. Recall that each plan in the chain (whether it is uses
 only re-calculating district-level scores on the districts that were changed.
 However, for plan-level scores, we always have to re-run the score function
 on the entire partition.
+
+# Other Score Functions
+
+```@autodocs
+Modules = [GerryChain]
+Pages   = ["scores.jl"]
+Private = false
+Filter = t -> t ∉ [DistrictAggregate, DistrictScore, PlanScore, CompositeScore,
+                   num_cut_edges, get_score_values, save_scores_to_csv,
+                   save_scores_to_json, get_scores_at_step, ChainScoreData]
+```

@@ -215,8 +215,8 @@ Evaluates a user-supplied `DistrictScore` function or `DistrictAggregate`
 score repeatedly on districts specified by the districts array.
 
 Returns an array of the form [a₁, a₂, ..., aᵢ], where aᵢ corresponds to
-the value of the score for the district indexed by i in the `districts`
-array and n is the length of `districts`.
+the value of the score for the district indexed by `i` in the `districts`
+array and `n` is the length of `districts`.
 """
 function eval_score_on_districts(graph::BaseGraph,
                                  partition::Partition,
@@ -235,16 +235,19 @@ Evaluates the user-supplied functions in the `CompositeScore` scores
 array on each of the districts in the partition.
 
 Returns an Dict of the form:
+
+```json
 {
     # District-level scores
-    d_score₁.name :     [a₁, a₂, ..., aᵢ]
+    d\\_score₁.name :     [a₁, a₂, ..., aᵢ]
         ...
-    d_scoreᵤ.name :     [b₁, b₂, ..., bᵢ]
+    d\\_scoreᵤ.name :     [b₁, b₂, ..., bᵢ]
     # Partition-level scores
-    p_score₁.name :     c,
+    p\\_score₁.name :     c,
         ...
-    p_scoreᵥ.name :     d,
+    p\\_scoreᵥ.name :     d,
 }
+```
 """
 function eval_score_on_partition(graph::BaseGraph,
                                  partition::Partition,
@@ -296,30 +299,33 @@ end
                             scores::Array{S, 1}) where {S<:AbstractScore}
 
 Returns a dictionary of scores for the initial partition. The dictionary
-has the following form (where n is the number of districts, u is the
-number of district-level scores, v is the number of partition-level
-scores, and i is the number of composite scores):
+has the following form (where `n` is the number of districts, `u` is the
+number of district-level scores, `v` is the number of partition-level
+scores, and `i` is the number of composite scores):
+
+```json
 {
     # District-level scores
-    d_score₁.name :     [a₁, a₂, ..., aᵤ]
+    d\\_score₁.name :     [a₁, a₂, ..., aᵤ]
         ...
-    d_scoreᵤ.name :     [b₁, b₂, ..., bᵤ]
+    d\\_scoreᵤ.name :     [b₁, b₂, ..., bᵤ]
     # Partition-level scores
-    p_score₁.name :     c,
+    p\\_score₁.name :     c,
         ...
-    p_scoreᵥ.name :     d,
+    p\\_scoreᵥ.name :     d,
     # Composite scores
-    c_score₁.name :
+    c\\_score₁.name :
         {
-            c_score₁.scores[1].name :     ...
+            c\\_score₁.scores[1].name :     ...
                 ...
         }
         ...
-    c_scoreᵢ.name :
+    c\\_scoreᵢ.name :
         {
             ...
         }
 }
+```
 """
 function score_initial_partition(graph::BaseGraph,
                                  partition::Partition,
@@ -347,16 +353,17 @@ after `proposal` was accepted,
 (c) composite scores, that may be comprised of scores from (a) or (b).
 
 For example, suppose district 4's new White population is 43 and
-the new Sen2010_Dem population is 62, district 8's new White population
-is 22 and new Sen2010_Dem population is 66. The Δ scores would
+the new Sen2010\\_Dem population is 62, district 8's new White population
+is 22 and new Sen2010\\_Dem population is 66. The Δ scores would
 look like:
+```json
     {
-        "num_cut_edges" : partition.num_cut_edges,
+        "num_cut_edges" : partition.num\\_cut\\_edges,
         "dists"         : (5, 8),
         "White"         : [43, 22],
         "Sen2010_Dem"   : [62, 66],
     }
-
+```
 """
 function score_partition_from_proposal(graph::BaseGraph,
                                        partition::Partition,
@@ -476,7 +483,7 @@ end
 
 """
     get_score_values(all_scores::Array{Dict{String, Any}, 1},
-                     score::Union{DistrictAggregate`, DistrictScore};
+                     score::Union{DistrictAggregate, DistrictScore};
                      nested_key::Union{String,Nothing}=nothing)::Array
 
 Helper function that returns the value of specified

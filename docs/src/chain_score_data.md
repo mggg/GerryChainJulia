@@ -2,6 +2,11 @@
 
 The purpose of the `ChainScoreData` object is reflected in its name: its purpose is to store data about the values of scores throughout the entire history of the Markov chain. You can think of it as containing an `Array` of `Dict` objects, where each element in the array is a `Dict` that corresponds to one state of the chain. In turn, each `Dict` contains keys for every `AbstractScore` passed to the chain by the user, and the values of the `Dict` are the values of the scoring functions, evaluated on a particular plan in the chain.
 
+```@index
+Order = [:type, :function]
+Pages   = ["chain_score_data.md"]
+```
+
 ## get\_scores\_at\_step()
 
 ```@docs

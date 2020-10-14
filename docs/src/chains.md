@@ -13,6 +13,11 @@ You can think of the chain as a loop that progresses like this:
 ➡ record value of scores on the new plan)
 x `num_steps`.
 
+```@index
+Order = [:type, :function]
+Pages   = ["chains.md"]
+```
+
 ## ReCom Chain
 
 Runs a Markov Chain for `num_steps` steps using ReCom. In summary, the ReCom proposal method works as follows: merge two districts in the plan, generate a minimum spanning tree for the precincts in the merged district, then "split" the merged district into two new districts by finding a population-balanced cut of the MST. This method could potentially be used to merge/split an arbitrary number of districts, but currently, our implementation only supports merging 2 districts and splitting into 2 new districts.

@@ -19,6 +19,11 @@ functions are really most useful in cases like the
 and "[burning in](http://background.uchicago.edu/~whu/Courses/Ast321_11/Projects/mcmc_helsby.pdf)".
 If, for some reason, you need a deterministic acceptance function, you can simply have it return 0 or 1.
 
+```@index
+Order = [:type, :function]
+Pages   = ["accept.md"]
+```
+
 The following is a sample acceptance function included in the `GerryChain` library:
 
 ```@docs

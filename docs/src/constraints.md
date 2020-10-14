@@ -7,5 +7,10 @@ common in the definition of districting plans:
 
 ```@docs
 PopulationConstraint
+```
+
+## ContiguityConstraint
+
+```@docs
 ContiguityConstraint
 ```

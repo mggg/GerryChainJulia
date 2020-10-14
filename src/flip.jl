@@ -1,11 +1,16 @@
+
+"""
+    propose_random_flip(graph::BaseGraph,
+                        partition::Partition)
+
+Proposes a random boundary flip from the partition.
+
+*Arguments:*
+- graph:      BaseGraph
+- partition:  Partition
+"""
 function propose_random_flip(graph::BaseGraph,
                              partition::Partition)
-    """ Proposes a random boundary flip from the partition.
-
-    Arguments:
-        partition:  Partition
-        graph:      BaseGraph
-    """
     if partition.num_cut_edges == 0
         throw(ArgumentError("No cut edges in the districting plan"))
     end
@@ -38,15 +43,21 @@ function propose_random_flip(graph::BaseGraph,
     return FlipProposal(flipped_node, D₁, D₂, D₁_pop, D₂_pop, D₁_n, D₂_n)
 end
 
+"""
+    is_valid(graph::BaseGraph,
+             partition::Partition,
+             pop_constraint::PopulationConstraint,
+             cont_constraint::ContiguityConstraint,
+             proposal::FlipProposal)
 
+Helper function that checks whether a proposal both (a) is population
+balanced and (b) does not break contiguity.
+"""
 function is_valid(graph::BaseGraph,
                   partition::Partition,
                   pop_constraint::PopulationConstraint,
                   cont_constraint::ContiguityConstraint,
                   proposal::FlipProposal)
-    """ Helper function that checks whether a proposal both (a) is population
-        balanced and (b) does not break contiguity.
-    """
     return satisfy_constraint(pop_constraint,
                               proposal.D₂_pop,
                               proposal.D₁_pop) &&
@@ -56,14 +67,19 @@ function is_valid(graph::BaseGraph,
                               proposal)
 end
 
+"""
+    get_valid_proposal(graph::BaseGraph,
+                       partition::Partition,
+                       pop_constraint::PopulationConstraint,
+                       cont_constraint::ContiguityConstraint)
 
+Returns a population balanced FlipProposal subject to a contiguity
+constraint.
+"""
 function get_valid_proposal(graph::BaseGraph,
                             partition::Partition,
                             pop_constraint::PopulationConstraint,
                             cont_constraint::ContiguityConstraint)
-    """ Returns a population balanced FlipProposal subject to a contiguity
-        constraint.
-    """
     proposal = propose_random_flip(graph, partition)
     # continuously generate new proposals until one satisfies our constraints
     while !is_valid(graph, partition, pop_constraint, cont_constraint, proposal)
@@ -72,13 +88,18 @@ function get_valid_proposal(graph::BaseGraph,
     return proposal
 end
 
+"""
+    update_partition!(partition::Partition,
+                      graph::BaseGraph,
+                      proposal::FlipProposal,
+                      copy_parent::Bool=false)
 
+Updates the `Partition` with the `FlipProposal`.
+"""
 function update_partition!(partition::Partition,
                            graph::BaseGraph,
                            proposal::FlipProposal,
                            copy_parent::Bool=false)
-    """ Updates the Partition with the FlipProposal
-    """
     if copy_parent
         partition.parent = nothing
         old_partition = deepcopy(partition)
@@ -98,7 +119,37 @@ function update_partition!(partition::Partition,
     update_partition_adjacency(partition, graph)
 end
 
+"""
+    flip_chain(graph::BaseGraph,
+               partition::Partition,
+               pop_constraint::PopulationConstraint,
+               cont_constraint::ContiguityConstraint,
+               num_steps::Int,
+               scores::Array{S, 1};
+               acceptance_fn::F=always_accept,
+               no_self_loops::Bool=false)::ChainScoreData where {F<:Function, S<:AbstractScore}
 
+Runs a Markov Chain for `num_steps` steps using Flip proposals. Returns
+a `ChainScoreData` object which can be queried to retrieve the values of
+every score at each step of the chain.
+
+*Arguments:*
+- graph:              `BaseGraph`
+- partition:          `Partition` with the plan information
+- pop_constraint:     `PopulationConstraint`
+- cont_constraint:    `ContiguityConstraint`
+- num_steps:          Number of steps to run the chain for
+- scores:             Array of `AbstractScore`s to capture at each step
+- acceptance_fn:      A function generating a probability in [0, 1]
+                      representing the likelihood of accepting the
+                      proposal
+- no\\_self\\_loops:  If this is true, then a failure to accept a new state
+                      is not considered a self-loop; rather, the chain
+                      simply generates new proposals until the acceptance
+                      function is satisfied. BEWARE - this can create
+                      infinite loops if the acceptance function is never
+                      satisfied!
+"""
 function flip_chain(graph::BaseGraph,
                     partition::Partition,
                     pop_constraint::PopulationConstraint,
@@ -108,27 +159,6 @@ function flip_chain(graph::BaseGraph,
                     acceptance_fn::F=always_accept,
                     no_self_loops::Bool=false)::ChainScoreData where
                     {F<:Function, S<:AbstractScore}
-    """ Runs a Markov Chain for `num_steps` steps using Flip proposals. Returns
-        a ChainScoreData object which can be queried to retrieve the values of
-        every score at each step of the chain.
-
-        Arguments:
-            graph:              BaseGraph
-            partition:          Partition with the plan information
-            pop_constraint:     PopulationConstraint
-            cont_constraint:    ContiguityConstraint
-            num_steps:          Number of steps to run the chain for
-            scores:             Array of AbstractScores to capture at each step
-            acceptance_fn:      A function generating a probability in [0, 1]
-                                representing the likelihood of accepting the
-                                proposal
-            no_self_loops:  If this is true, then a failure to accept a new state
-                            is not considered a self-loop; rather, the chain
-                            simply generates new proposals until the acceptance
-                            function is satisfied. BEWARE - this can create
-                            infinite loops if the acceptance function is never
-                            satisfied!
-    """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
     chain_scores = ChainScoreData(deepcopy(scores), [first_scores])

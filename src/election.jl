@@ -5,23 +5,32 @@ mutable struct Election
     vote_shares::Array{Float64, 2} # row: district, col: vote share by party
 end
 
+"""
+    Election(name::String,
+             parties::Array{String, 1},
+             num_districts::Int)
 
-function Election(name::String, parties::Array{String, 1}, num_districts::Int)
-    """ Initializes an Election for a given number of parties and districts,
-        initializing the vote counts & shares to zero.
-    """
+Initializes an Election for a given number of parties and districts,
+initializing the vote counts & shares to zero.
+"""
+function Election(name::String,
+                  parties::Array{String, 1},
+                  num_districts::Int)
     vote_counts = zeros((num_districts, length(parties)))
     vote_shares = zeros((num_districts, length(parties)))
     return Election(name, parties, vote_counts, vote_shares)
 end
 
+"""
+    vote_updater(election::Election)::DistrictScore
+
+Returns a nameless DistrictScore function that updates the vote counts
+and shares of the passed `election`, which can then be used by other
+functions (such as seats_won, mean_median, etc.) This score function
+explicitly returns `nothing` and is meant only for internal use
+by the ElectionTracker object.
+"""
 function vote_updater(election::Election)::DistrictScore
-    """ Returns a nameless DistrictScore function that updates the vote counts
-        and shares of the passed `election`, which can then be used by other
-        functions (such as seats_won, mean_median, etc.) This score function
-        explicitly returns `nothing` and is meant only for internal use
-        by the ElectionTracker object.
-    """
     party_names = election.parties
     function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
         """ Updates the Election object to reflect the new election results
@@ -46,11 +55,17 @@ function vote_updater(election::Election)::DistrictScore
     return DistrictScore(score_fn)
 end
 
+"""
+    vote_count(name::String,
+               election::Election,
+               party::String)::DistrictScore
 
-function vote_count(name::String, election::Election, party::String)::DistrictScore
-    """ Returns a DistrictScore that will return the number of votes won by
-        the specified party.
-    """
+Returns a DistrictScore that will return the number of votes won by the
+specified party.
+"""
+function vote_count(name::String,
+                    election::Election,
+                    party::String)::DistrictScore
     function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
         """ Extracts the number of votes for the specified party in the
             specified district from the Election object.
@@ -61,11 +76,17 @@ function vote_count(name::String, election::Election, party::String)::DistrictSc
     return DistrictScore(name, score_fn)
 end
 
+"""
+    vote_share(name::String,
+               election::Election,
+               party::String)::DistrictScore
 
-function vote_share(name::String, election::Election, party::String)::DistrictScore
-    """ Returns a DistrictScore that will return the percentage of votes won by
-        the specified party.
-    """
+Returns a DistrictScore that will return the percentage of votes won by the
+specified party.
+"""
+function vote_share(name::String,
+                    election::Election,
+                    party::String)::DistrictScore
     function score_fn(graph::BaseGraph, nodes::BitSet, district::Int)
         """ Extracts the share of votes for the specified party in the
             specified district from the Election object.
@@ -77,13 +98,18 @@ function vote_share(name::String, election::Election, party::String)::DistrictSc
 end
 
 
+"""
+    seats_won(name::String,
+              election::Election,
+              party::String)::PlanScore
+
+Returns a PlanScore with a custom scoring function specific to `election`
+that returns the number of seats won by a particular party across all districts
+in a given plan.
+"""
 function seats_won(name::String,
                    election::Election,
                    party::String)::PlanScore
-    """ Returns a PlanScore with a custom scoring function specific to
-        `election` that returns the number of seats won by a particular party
-        across all districts in a given plan.
-    """
     function score_fn(args...)
         """ Calculates the number of seats won by a particular party across
             all districts in a given plan. In the case of a tie, neither party
@@ -113,13 +139,18 @@ function seats_won(name::String,
 end
 
 
+"""
+    mean_median(name::String,
+                election::Election,
+                party::String)::PlanScore
+
+Returns a `PlanScore` with a custom scoring function specific to
+`election` that calculates the mean-median score
+of a particular plan for a particular party.
+"""
 function mean_median(name::String,
                      election::Election,
                      party::String)::PlanScore
-     """ Returns a PlanScore with a custom scoring function specific to
-         `election` that calculates the mean-median score
-         of a particular plan for a particular party.
-     """
     function score_fn(args...)
         """ Computes the mean-median score for `party` in `election`. Note that
             while the function will be passed a graph and partition (as is required
@@ -133,13 +164,17 @@ function mean_median(name::String,
     return PlanScore(name, score_fn)
 end
 
+"""
+    wasted_votes(party₁_votes::Int,
+                 party₂_votes::Int)
 
-function wasted_votes(party₁_votes::Int, party₂_votes::Int)
-    """ Computes the number of votes "wasted" by each party. Wasted votes are
-        votes that are either more than necessary than the party needed to win
-        a seat or votes in a race that party lost. In a tie, all votes are
-        considered to have been wasted.
-    """
+Computes the number of votes "wasted" by each party. Wasted votes are
+votes that are either more than necessary than the party needed to win
+a seat or votes in a race that party lost. In a tie, all votes are
+considered to have been wasted.
+"""
+function wasted_votes(party₁_votes::Int,
+                      party₂_votes::Int)
     total = party₁_votes + party₂_votes
 
     if party₁_votes > party₂_votes
@@ -156,13 +191,17 @@ function wasted_votes(party₁_votes::Int, party₂_votes::Int)
 end
 
 
+"""
+    efficiency_gap(name::String,
+                   election::Election,
+                   party::String)::PlanScore
+
+Returns a PlanScore with a custom scoring function specific to `election`
+that calculates the efficiency gap of a particular plan for a particular party.
+"""
 function efficiency_gap(name::String,
                         election::Election,
                         party::String)::PlanScore
-    """ Returns a PlanScore with a custom scoring function specific to
-        `election` that calculates the efficiency gap of a particular plan for
-        a particular party.
-    """
     function score_fn(args...)
         """ Computes the efficiency gap for both parties in `election`. Note
             that while the function takes a graph and partition (as is required for
@@ -194,18 +233,22 @@ function efficiency_gap(name::String,
 end
 
 
+"""
+    ElectionTracker(election::Election,
+                    scores::Array{S, 1}=AbstractScore[])::CompositeScore where {S <: AbstractScore}
+                    
+The ElectionTracker method returns a CompositeScore that first updates
+the vote count / share for changed districts and then proceeds to
+run other scores (such as vote count for a particular party, partisan
+metrics, etc.), as desired by the user.
+Re-calculating vote counts only for changed districts means that the
+CompositeScore does not perform redundant computations for all of the
+partisan metrics. Furthermore, packaging all election-related scores
+within the CompositeScore ensures that the vote update occurs first,
+followed by the partisan metrics scoring functions.
+"""
 function ElectionTracker(election::Election,
                          scores::Array{S, 1}=AbstractScore[])::CompositeScore where {S <: AbstractScore}
-    """ The ElectionTracker method returns a CompositeScore that first updates
-        the vote count / share for changed districts and then proceeds to
-        run other scores (such as vote count for a particular party, partisan
-        metrics, etc.), as desired by the user.
-        Re-calculating vote counts only for changed districts means that the
-        CompositeScore does not perform redundant computations for all of the
-        partisan metrics. Furthermore, packaging all election-related scores
-        within the CompositeScore ensures that the vote update occurs first,
-        followed by the partisan metrics scoring functions.
-    """
     count_votes = vote_updater(election)
     scores = Array{AbstractScore, 1}([count_votes; scores])
     return CompositeScore(election.name, scores)

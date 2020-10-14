@@ -5,15 +5,28 @@ struct PopulationConstraint <: AbstractConstraint
     max_pop::Int
 end
 
+"""
+    ContiguityConstraint()
 
+Initializes and returns a `ContiguityConstraint` object.
+"""
 struct ContiguityConstraint <: AbstractConstraint
     # No metadata (for now); implements the `AbstractConstraint` interface.
 end
 
+"""
+    PopulationConstraint(graph::BaseGraph,
+                         partition::Partition,
+                         tolerance::Float64)::PopulationConstraint
 
+Initializes a `PopulationConstraint` that stores the minimum and maximum populations
+a district in a `partition` could have within `tolerance`.
+
+*Returns* the PopulationConstraint object.
+"""
 function PopulationConstraint(graph::BaseGraph,
                               partition::Partition,
-                              tolerance::Float64)
+                              tolerance::Float64)::PopulationConstraint
     ideal_pop = graph.total_pop / partition.num_dists
 
     # no particular reason to not use floor() instead of ceil()
@@ -22,11 +35,14 @@ function PopulationConstraint(graph::BaseGraph,
     return PopulationConstraint(min_pop, max_pop)
 end
 
+"""
+    satisfy_constraint(constraint::PopulationConstraint,
+                       proposal::RecomProposal)
 
+Test whether a RecomProposal satisfies a population constraint.
+"""
 function satisfy_constraint(constraint::PopulationConstraint,
                             proposal::RecomProposal)
-    """ Test whether a RecomProposal satisfies a population constraint.
-    """
     if proposal.D₁_pop >= constraint.min_pop && proposal.D₁_pop <= constraint.max_pop
         if proposal.D₂_pop >= constraint.min_pop && proposal.D₂_pop <= constraint.max_pop
             return true
@@ -35,12 +51,16 @@ function satisfy_constraint(constraint::PopulationConstraint,
     return false
 end
 
+"""
+    satisfy_constraint(constraint::PopulationConstraint,
+                       D₁_pop::Int,
+                       D₂_pop::Int)
 
+Test whether two population counts satisfy a PopulationConstraint.
+"""
 function satisfy_constraint(constraint::PopulationConstraint,
                             D₁_pop::Int,
                             D₂_pop::Int)
-    """ Test whether two population counts satisfy a PopulationConstraint.
-    """
     if D₁_pop >= constraint.min_pop && D₁_pop <= constraint.max_pop
         if D₂_pop >= constraint.min_pop && D₂_pop <= constraint.max_pop
             return true
@@ -49,13 +69,20 @@ function satisfy_constraint(constraint::PopulationConstraint,
     return false
 end
 
+"""
+    satisfy_constraint(constraint::ContiguityConstraint,
+                       graph::BaseGraph,
+                       partition::Partition,
+                       flip::FlipProposal)
 
-function satisfy_constraint(constraint::ContiguityConstraint, graph::BaseGraph,
-                            partition::Partition, flip::FlipProposal)
-    """ Test whether a FlipProposal satisfies the contiguity constraint.
-        Based on Parker's implementation on GitHub, located in the Flips.jl
-        repository at src/constraints.jl.
-    """
+Test whether a FlipProposal satisfies the contiguity constraint.
+Based on Parker's implementation on GitHub, located in the Flips.jl
+repository at src/constraints.jl.
+"""
+function satisfy_constraint(constraint::ContiguityConstraint,
+                            graph::BaseGraph,
+                            partition::Partition,
+                            flip::FlipProposal)
     # get node's neighbors who were in its old district
     neighbors = [n for n in graph.neighbors[flip.node]
                  if partition.assignments[n] == flip.D₁]

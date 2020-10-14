@@ -1,83 +1,105 @@
 abstract type AbstractScore end
 
+"""
+    DistrictAggregate(name::String,
+                      key::String)
 
+A DistrictAggregate score is a simple sum of a particular property
+over all nodes in a given district.
+"""
 struct DistrictAggregate <: AbstractScore
-    """ A DistrictAggregate score is a simple sum of a particular property
-        over all nodes in a given district.
-    """
     name::String
     key::String
 end
 
+"""
+    DistrictScore(name::Union{String, Missing}
+                  score_fn::Function)
 
+A `DistrictScore` takes a user-supplied function that returns some
+quantity of interest given the nodes in a given district. The signature
+of `score_fn` should be as follows:
+    `score_fn(graph::BaseGraph, district_nodes::BitSet, district::int)`
+"""
 struct DistrictScore <: AbstractScore
-    """ A DistrictScore takes a user-supplied function that returns some
-        quantity of interest given the nodes in a given district. The signature
-        of `score_fn` should be as follows:
-            score_fn(graph::BaseGraph, district_nodes::BitSet, district::int)
-    """
     name::Union{String, Missing}
     score_fn::Function
     DistrictScore(score_fn::Function) = new(missing, score_fn)
     DistrictScore(name::String, score_fn::Function) = new(name, score_fn)
 end
 
+"""
+    PlanScore(name::Union{String, Missing},
+              score_fn::Function)
 
+A `PlanScore` takes a user-supplied function that returns some quantity of
+interest given a `BaseGraph` and corresponding `Partition` object.
+
+The signature of `score_fn` should be as follows:
+    `score_fn(graph::BaseGraph, partition::Partition)`
+"""
 struct PlanScore <: AbstractScore
-    """ A PlanScore takes a user-supplied function that returns some
-        quantity of interest given a Graph and corresponding Partition object.
-        The signature of `score_fn` should be as follows:
-            score_fn(graph::BaseGraph, partition::Partition)
-    """
     name::Union{String, Missing}
     score_fn::Function
     PlanScore(score_fn::Function) = new(missing, score_fn)
     PlanScore(name::String, score_fn::Function) = new(name, score_fn)
 end
 
+"""
+    CompositeScore(name::String,
+                   scores::Array{S,1}) where {S<:AbstractScore} # should be other AbstractScores
 
+A `CompositeScore` is just a group of scores that are run in sequence.
+`CompositeScore`s are especially useful when the score functions depend
+upon/modify some shared state.
+"""
 struct CompositeScore <: AbstractScore
-    """ A CompositeScore is just a group of scores that are run in sequence.
-        CompositeScores are especially useful when the score functions depend
-        upon/modify some shared state.
-    """
     name::String
     scores::Array{S,1} where {S<:AbstractScore} # should be other AbstractScores
 end
 
 
+"""
+    ChainScoreData(scores::Array{S,1} where {S<:AbstractScore} # scores that were measured on a particular chain
+                   step_values::Array{Dict{String, Any}}) # array of Dicts which map {score name: score value}
+
+The `ChainScoreData` object stores the values returned by score functions
+at every step of the chain as well as the scores themselves.
+"""
 struct ChainScoreData
-    """ The ChainScoreData object stores the values returned by score functions
-        at every step of the chain as well as the scores themselves.
-    """
     scores::Array{S,1} where {S<:AbstractScore} # scores that were measured on a particular chain
     step_values::Array{Dict{String, Any}} # array of Dicts which map {score name: score value}
 end
 
 
+"""
+    ChainScoreQuery(requested_scores::Array{String, 1}, # scores that were measured on a particular chain
+                    chain_data::ChainScoreData)
+
+Can be used to extract scores from a `ChainScoreData` object via an iterator.
+"""
 struct ChainScoreQuery
-    """ Can be used to extract scores from a ChainScoreData object via an iterator
-    """
     requested_scores::Array{String,1} # scores that were measured on a particular chain
     chain_data::ChainScoreData
 end
 
+"""
+    DistrictAggregate(key::String)
 
+Initializes a DistrictAggregate score where the name and key are the same.
+"""
 function DistrictAggregate(key::String)
-    """ Initializes a DistrictAggregate score where the name and key are
-        the same.
-    """
     return DistrictAggregate(key, key)
 end
 
-
+"""
+This is 1/2 of the functions needed to make a ChainScoreQuery iterable.
+This is the function that calls when the iterable is first run. It checks
+that the query is valid (i.e., the user is asking for sensible scores)
+and then returns the values of the relevant scores for the first state
+in the chain.
+"""
 function Base.iterate(query::ChainScoreQuery)
-    """ This is 1/2 of the functions needed to make a ChainScoreQuery iterable.
-        This is the function that calls when the iterable is first run. It checks
-        that the query is valid (i.e., the user is asking for sensible scores)
-        and then returns the values of the relevant scores for the first state
-        in the chain.
-    """
     chain_data = query.chain_data
     if isempty(chain_data.step_values) # check that some data exists
         return nothing
@@ -105,13 +127,13 @@ function Base.iterate(query::ChainScoreQuery)
     return score_vals, (2, deepcopy(score_vals))
 end
 
-
+"""
+This is 2/2 of the functions needed to make a ChainScoreQuery iterable.
+This is the function that calls after the first time the iterable runs.
+The "state" of the iterable is always captured in the step that we are on
+and the current dictionary.
+"""
 function Base.iterate(query::ChainScoreQuery, state::Tuple)
-    """ This is 2/2 of the functions needed to make a ChainScoreQuery iterable.
-        This is the function that calls after the first time the iterable runs.
-        The "state" of the iterable is always captured in the step that we are on
-        and the current dictionary.
-    """
     step, score_vals = state
     chain_data = query.chain_data
     if step > length(chain_data.step_values) # end iteration
@@ -125,14 +147,19 @@ function Base.iterate(query::ChainScoreQuery, state::Tuple)
     return score_vals, (step + 1, deepcopy(score_vals))
 end
 
+"""
+    eval_score_on_district(graph::BaseGraph,
+                           partition::Partition,
+                           score::DistrictAggregate,
+                           district::Int)::Number
 
+Evaluates a `DistrictAggregate` score on the nodes in a particular
+`district`.
+"""
 function eval_score_on_district(graph::BaseGraph,
                                 partition::Partition,
                                 score::DistrictAggregate,
                                 district::Int)::Number
-    """ Evaluates a DistrictAggregate score on the nodes in a particular
-        district.
-    """
     try
         sum = 0
         for node in partition.dist_nodes[district]
@@ -153,13 +180,19 @@ function eval_score_on_district(graph::BaseGraph,
 end
 
 
+"""
+    eval_score_on_district(graph::BaseGraph,
+                           partition::Partition,
+                           score::DistrictScore,
+                           district::Int)
+
+Evaluates a user-supplied `DistrictScore` function on the nodes in a
+particular `district`.
+"""
 function eval_score_on_district(graph::BaseGraph,
                                 partition::Partition,
                                 score::DistrictScore,
                                 district::Int)
-    """ Evaluates a user-supplied DistrictScore function on the nodes in a
-        particular district.
-    """
     try
         return score.score_fn(graph, partition.dist_nodes[district], district)
     catch e # Check if the user-specified method was constructed incorrectly
@@ -172,62 +205,79 @@ function eval_score_on_district(graph::BaseGraph,
 end
 
 
+"""
+    eval_score_on_districts(graph::BaseGraph,
+                            partition::Partition,
+                            score::Union{DistrictScore,DistrictAggregate},
+                            districts::Array{Int, 1})::Array
+
+Evaluates a user-supplied `DistrictScore` function or `DistrictAggregate`
+score repeatedly on districts specified by the districts array.
+
+Returns an array of the form [a₁, a₂, ..., aᵢ], where aᵢ corresponds to
+the value of the score for the district indexed by i in the `districts`
+array and n is the length of `districts`.
+"""
 function eval_score_on_districts(graph::BaseGraph,
                                  partition::Partition,
                                  score::Union{DistrictScore,DistrictAggregate},
                                  districts::Array{Int, 1})::Array
-    """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
-        score repeatedly on districts specified by the districts array.
-
-        Returns an array of the form [a₁, a₂, ..., aₙ], where aᵢ corresponds to
-        the value of the score for the district indexed by i in the `districts`
-        array and n is the length of `districts`.
-    """
     return [eval_score_on_district(graph, partition, score, d) for d in districts]
 end
 
 
+"""
+    eval_score_on_partition(graph::BaseGraph,
+                            partition::Partition,
+                            composite::CompositeScore)
+
+Evaluates the user-supplied functions in the `CompositeScore` scores
+array on each of the districts in the partition.
+
+Returns an Dict of the form:
+{
+    # District-level scores
+    d_score₁.name :     [a₁, a₂, ..., aᵢ]
+        ...
+    d_scoreᵤ.name :     [b₁, b₂, ..., bᵢ]
+    # Partition-level scores
+    p_score₁.name :     c,
+        ...
+    p_scoreᵥ.name :     d,
+}
+"""
 function eval_score_on_partition(graph::BaseGraph,
                                  partition::Partition,
                                  composite::CompositeScore)
-    """ Evaluates the user-supplied functions in the CompositeScore scores
-        array on each of the districts in the partition.
-
-        Returns an Dict of the form:
-        {
-            # District-level scores
-            d_score₁.name :     [a₁, a₂, ..., aₙ]
-                ...
-            d_scoreᵤ.name :     [b₁, b₂, ..., bₙ]
-            # Partition-level scores
-            p_score₁.name :     c,
-                ...
-            p_scoreᵥ.name :     d,
-        }
-    """
     return score_initial_partition(graph, partition, composite.scores)
 end
 
 
+"""
+Evaluates a user-supplied `DistrictScore` function or `DistrictAggregate` score
+on  all districts in an entire plan.
+
+*Returns* an array of the form [a₁, a₂, ..., aᵢ], where `i` is the number
+of districts in the plan.
+"""
 function eval_score_on_partition(graph::BaseGraph,
                                  partition::Partition,
                                  score::Union{DistrictScore,DistrictAggregate})::Array
-    """ Evaluates a user-supplied DistrictScore function or DistrictAggregate
-        score on all districts in an entire plan.
-
-        Returns an array of the form [a₁, a₂, ..., aₘ], where m is the number
-        of districts in the plan.
-    """
     all_districts = Array(1:partition.num_dists)
     return eval_score_on_districts(graph, partition, score, all_districts)
 end
 
 
+"""
+    eval_score_on_partition(graph::BaseGraph,
+                            partition::Partition,
+                            score::PlanScore)
+
+Evaluates a user-supplied `PlanScore` function on the entire partition.
+"""
 function eval_score_on_partition(graph::BaseGraph,
                                  partition::Partition,
                                  score::PlanScore)
-    """ Evaluates a user-supplied PlanScore function on the entire partition.
-    """
     try
         return score.score_fn(graph, partition)
     catch e # Check if the user-specified method was constructed incorrectly
@@ -240,35 +290,40 @@ function eval_score_on_partition(graph::BaseGraph,
 end
 
 
+"""
+    score_initial_partition(graph::BaseGraph,
+                            partition::Partition,
+                            scores::Array{S, 1}) where {S<:AbstractScore}
+
+Returns a dictionary of scores for the initial partition. The dictionary
+has the following form (where n is the number of districts, u is the
+number of district-level scores, v is the number of partition-level
+scores, and i is the number of composite scores):
+{
+    # District-level scores
+    d_score₁.name :     [a₁, a₂, ..., aᵤ]
+        ...
+    d_scoreᵤ.name :     [b₁, b₂, ..., bᵤ]
+    # Partition-level scores
+    p_score₁.name :     c,
+        ...
+    p_scoreᵥ.name :     d,
+    # Composite scores
+    c_score₁.name :
+        {
+            c_score₁.scores[1].name :     ...
+                ...
+        }
+        ...
+    c_scoreᵢ.name :
+        {
+            ...
+        }
+}
+"""
 function score_initial_partition(graph::BaseGraph,
                                  partition::Partition,
                                  scores::Array{S, 1}) where {S<:AbstractScore}
-    """ Returns a dictionary of scores for the initial partition. The dictionary
-        has the following form (where n is the number of districts, u is the
-        number of district-level scores, v is the number of partition-level
-        scores, and t is the number of composite scores):
-        {
-            # District-level scores
-            d_score₁.name :     [a₁, a₂, ..., aₙ]
-                ...
-            d_scoreᵤ.name :     [b₁, b₂, ..., bₙ]
-            # Partition-level scores
-            p_score₁.name :     c,
-                ...
-            p_scoreᵥ.name :     d,
-            # Composite scores
-            c_score₁.name :
-                {
-                    c_score₁.scores[1].name :     ...
-                        ...
-                }
-                ...
-            c_scoreₜ.name :
-                {
-                    ...
-                }
-        }
-    """
     score_values = Dict{String, Any}()
     for s in scores
         value = eval_score_on_partition(graph, partition, s)
@@ -279,27 +334,34 @@ function score_initial_partition(graph::BaseGraph,
     return score_values
 end
 
+"""
+    score_partition_from_proposal(graph::BaseGraph,
+                                  partition::Partition,
+                                  proposal::AbstractProposal,
+                                  scores::Array{S, 1}) where {S<:AbstractScore}
+
+Returns a Dictionary of
+- (a) updated district-level scores for districts that were altered
+after `proposal` was accepted,
+- (b) partition-level scores, and
+(c) composite scores, that may be comprised of scores from (a) or (b).
+
+For example, suppose district 4's new White population is 43 and
+the new Sen2010_Dem population is 62, district 8's new White population
+is 22 and new Sen2010_Dem population is 66. The Δ scores would
+look like:
+    {
+        "num_cut_edges" : partition.num_cut_edges,
+        "dists"         : (5, 8),
+        "White"         : [43, 22],
+        "Sen2010_Dem"   : [62, 66],
+    }
+
+"""
 function score_partition_from_proposal(graph::BaseGraph,
                                        partition::Partition,
                                        proposal::AbstractProposal,
                                        scores::Array{S, 1}) where {S<:AbstractScore}
-    """ Returns a Dictionary of (a) updated district-level scores for districts
-        that were altered after `proposal` was accepted, (b) partition-level
-        scores, and (c) composite scores, that may be comprised of scores from
-        (a) or (b).
-
-        For example, suppose district 4's new White population is 43 and
-        the new Sen2010_Dem population is 62, district 8's new White population
-        is 22 and new Sen2010_Dem population is 66. The Δ scores would
-        look like:
-            {
-                "num_cut_edges" : partition.num_cut_edges,
-                "dists"         : (5, 8),
-                "White"         : [43, 22],
-                "Sen2010_Dem"   : [62, 66],
-            }
-
-    """
     score_values = Dict{String, Any}()
     Δ_districts = [proposal.D₁, proposal.D₂]
     score_values["dists"] = Δ_districts
@@ -322,14 +384,20 @@ function score_partition_from_proposal(graph::BaseGraph,
 end
 
 
+"""
+    update_dictionary!(original::Dict{String, Any},
+                       update::Dict{String, Any},
+                       D₁::Int,
+                       D₂::Int)
+
+Modifies a Dict in-place by merging it with another Dict that contains
+`update` to the former Dict. Runs recursively when there are nested Dicts.
+Helper function for ChainScoreQuery iterator.
+"""
 function update_dictionary!(original::Dict{String, Any},
                             update::Dict{String, Any},
                             D₁::Int,
                             D₂::Int)
-    """ Modifies a Dict in-place by merging it with another Dict
-        that contains "updates" to the former Dict. Runs recursively when there
-        are nested Dicts. Helper function for ChainScoreQuery iterator.
-    """
     for key in keys(original)
         if update[key] isa Array # district-level score
             original[key][D₁] = update[key][1]
@@ -342,23 +410,27 @@ function update_dictionary!(original::Dict{String, Any},
     end
 end
 
+"""
+    get_scores_at_step(chain_data::ChainScoreData,
+                       step::Int;
+                       score_names::Array{String,1}=String[])::Dict{String, Any}
 
+Returns the detailed scores of the partition at step `step`. If no
+scores are passed in, all scores are returned by default. Here, step=0
+represents the score of the original (initial) partition, so step=t
+will return the scores of the plan that was produced after taking
+t steps of the Markov chain.
+
+*Arguments:*
+- chain_data   : ChainScoreData object containing scores of partitions
+                 at each step of the Markov Chain
+- step         : The step of the chain at which scores are desired
+- score_names  : An optional array of Strings representing the scores
+                 for which the user is requesting the values
+"""
 function get_scores_at_step(chain_data::ChainScoreData,
                             step::Int;
                             score_names::Array{String,1}=String[])::Dict{String, Any}
-    """ Returns the detailed scores of the partition at step `step`. If no
-        scores are passed in, all scores are returned by default. Here, step=0
-        represents the score of the original (initial) partition, so step=t
-        will return the scores of the plan that was produced after taking
-        t steps of the Markov chain.
-
-        Arguments:
-            chain_data   : ChainScoreData object containing scores of partitions
-                           at each step of the Markov Chain
-            step         : The step of the chain at which scores are desired
-            score_names  : An optional array of Strings representing the scores
-                           for which the user is requesting the values
-    """
     # we don't want to alter the data in all_scores
     query = ChainScoreQuery(score_names, chain_data)
 
@@ -373,12 +445,19 @@ function get_scores_at_step(chain_data::ChainScoreData,
 end
 
 
-function get_score_by_name(chain_data::ChainScoreData, score_name::String)
-    """ Private helper function to extract the AbstractScore object whose name
-        matches `score_name` from the ChainScoreData object. Returns two values:
-        first, the AbstractScore object itself, and second, the name of the
-        CompositeScore it is nested within (if it is nested within one at all.)
-    """
+"""
+    get_score_by_name(chain_data::ChainScoreData,
+                      score_name::String)
+
+Private helper function to extract the `AbstractScore` object whose name
+matches `score_name` from the `ChainScoreData` object.
+
+*Returns* two values:
+first, the `AbstractScore` object itself, and second, the name of the
+`CompositeScore` it is nested within (if it is nested within one at all.)
+"""
+function get_score_by_name(chain_data::ChainScoreData,
+                           score_name::String)
     index = findfirst(s -> !ismissing(s.name) && s.name == score_name, chain_data.scores)
     if index == nothing
         # Check if score is nested inside a CompositeScore
@@ -395,19 +474,24 @@ function get_score_by_name(chain_data::ChainScoreData, score_name::String)
 end
 
 
+"""
+    get_score_values(all_scores::Array{Dict{String, Any}, 1},
+                     score::Union{DistrictAggregate`, DistrictScore};
+                     nested_key::Union{String,Nothing}=nothing)::Array
+
+Helper function that returns the value of specified
+`DistrictScore`/`DistrictAggregate` score at every step of the chain.
+
+*Arguments:*
+- all_scores  : List of scores of partitions at each step of
+                the Markov Chain
+- score       : `DistrictScore` of interest
+- nested_key  : If the score is nested within a `CompositeScore`, this
+                argument provides the `CompositeScore`'s name
+"""
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::Union{DistrictAggregate, DistrictScore};
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Helper function that returns the value of specified
-        DistrictScore/DistrictAggregate score at every step of the chain.
-
-        Arguments:
-            all_scores  : List of scores of partitions at each step of
-                         the Markov Chain
-            score       : DistrictScore of interest
-            nested_key  : If the score is nested within a CompositeScore, this
-                          argument provides the CompositeScore's name
-    """
     # check if score is nested inside a CompositeScore
     nested = nested_key != nothing
     init_vals = nested ? all_scores[1][nested_key][score.name] : all_scores[1][score.name]
@@ -430,19 +514,24 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
 end
 
 
+"""
+    get_score_values(all_scores::Array{Dict{String, Any}, 1},
+                     score::PlanScore;
+                     nested_key::Union{String,Nothing}=nothing)::Array
+
+Helper function that returns the value of specified `PlanScore` at every step of
+the chain.
+
+*Arguments:*
+- all_scores  : List of scores of partitions at each step of
+                the Markov Chain
+- score       : `PlanScore` of interest
+- nested_key  : If the score is nested within a `CompositeScore`, this
+                argument provides the `CompositeScore`'s name
+"""
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           score::PlanScore;
                           nested_key::Union{String,Nothing}=nothing)::Array
-    """ Helper function that returns the value of specified PlanScore at every
-        step of the chain.
-
-        Arguments:
-            all_scores  : List of scores of partitions at each step of
-                          the Markov Chain
-            score       : PlanScore of interest
-            nested_key  : If the score is nested within a CompositeScore, this
-                          argument provides the CompositeScore's name
-    """
     num_states = length(all_scores)
     if nested_key == nothing
         return deepcopy([all_scores[i][score.name] for i in 1:num_states])
@@ -451,29 +540,37 @@ function get_score_values(all_scores::Array{Dict{String, Any}, 1},
 end
 
 
+"""
+    get_score_values(all_scores::Array{Dict{String, Any}, 1},
+                     composite::CompositeScore)::Dict{String, Array}
+
+Helper function that returns the value of specified `CompositeScore` at
+every step of the chain.
+
+*Arguments:*
+- all_scores  : List of scores of partitions at each step of
+                the Markov Chain
+- composite   : `CompositeScore` of interest
+"""
 function get_score_values(all_scores::Array{Dict{String, Any}, 1},
                           composite::CompositeScore)::Dict{String, Array}
-    """ Helper function that returns the value of specified CompositeScore at
-        every step of the chain.
-
-        Arguments:
-            all_scores  : List of scores of partitions at each step of
-                          the Markov Chain
-            composite   : CompositeScore of interest
-    """
     fetch_vals = s -> get_score_values(all_scores, s, nested_key = composite.name)
     return Dict(s.name => fetch_vals(s) for s in composite.scores)
 end
 
 
-function get_score_values(chain_data::ChainScoreData, score_name::String)
-    """ Returns the value of specified score at every step of the chain.
+"""
+    get_score_values(chain_data::ChainScoreData,
+                     score_name::String)
+Returns the value of specified score at every step of the chain.
 
-        Arguments:
-            chain_data   : ChainScoreData object containing scores of partitions
-                           at each step of the Markov Chain
-            score_name   : Name of the score of interest
-    """
+*Arguments:*
+- chain_data   : ChainScoreData object containing scores of partitions
+                 at each step of the Markov Chain
+- score_name   : Name of the score of interest
+"""
+function get_score_values(chain_data::ChainScoreData,
+                          score_name::String)
     score, nested_key = get_score_by_name(chain_data, score_name)
     if score == nothing
         throw(ArgumentError("No score with requested name found."))
@@ -484,11 +581,14 @@ function get_score_values(chain_data::ChainScoreData, score_name::String)
 end
 
 
+"""
+    flattened_score_names(chain_data::ChainScoreData)::Array{String, 1}
+
+Simple helper function for `save_scores`. Extracts the names of all of
+the district/plan-level scores (including those nested within
+CompositeScores, hence the term "flattened").
+"""
 function flattened_score_names(chain_data::ChainScoreData)::Array{String, 1}
-    """ Simple helper function for `save_scores`. Extracts the names of all of
-        the district/plan-level scores (including those nested within
-        CompositeScores, hence the term "flattened").
-    """
     score_names = String[]
     for score in chain_data.scores
         if score isa CompositeScore # add children score names
@@ -502,11 +602,16 @@ function flattened_score_names(chain_data::ChainScoreData)::Array{String, 1}
 end
 
 
+"""
+    save_scores_to_csv(filename::String,
+                       chain_data::ChainScoreData,
+                       score_names::Array{String,1}=String[])
+
+Save the `scores` in a CSV file named `filename`.
+"""
 function save_scores_to_csv(filename::String,
                             chain_data::ChainScoreData,
                             score_names::Array{String,1}=String[])
-    """ Save the `scores` in a CSV file named `filename`.
-    """
      open(filename, "w") do f
          if isempty(score_names) # by default, export all scores from chain
              score_names = flattened_score_names(chain_data)
@@ -561,11 +666,16 @@ function save_scores_to_csv(filename::String,
  end
 
 
+ """
+     save_scores_to_json(filename::String,
+                         chain_data::ChainScoreData,
+                         score_names::Array{String,1}=String[])
+
+ Save the `scores` in a JSON file named `filename`.
+ """
  function save_scores_to_json(filename::String,
                               chain_data::ChainScoreData,
                               score_names::Array{String,1}=String[])
-     """ Save the `scores` in a JSON file named `filename`.
-     """
      open(filename, "w") do f
          if isempty(score_names) # by default, export all scores from chain
              score_names = flattened_score_names(chain_data)
@@ -587,22 +697,29 @@ function save_scores_to_csv(filename::String,
 end
 
 
+"""
+    num_cut_edges(name::String)::PlanScore
+
+Returns a `PlanScore` that tracks the number of cut edges in a particular plan.
+"""
 function num_cut_edges(name::String)::PlanScore
-    """ Returns a PlanScore that tracks the number of cut edges in a particular
-        plan.
-    """
     function score_fn(graph::BaseGraph, partition::Partition)
         return partition.num_cut_edges
     end
     return PlanScore(name, score_fn)
 end
 
+"""
+    coerce_attribute_type!(graph::BaseGraph,
+                           key::String,
+                           new_type::DataType)
+
+Coerces attribute `key` in `graph` to be of type `new_type` if it is of
+type String.
+"""
 function coerce_attribute_type!(graph::BaseGraph,
                                 key::String,
                                 new_type::DataType)
-    """ Coerces attribute `key` in `graph` to be of type `new_type` if it is
-        of type String.
-    """
     for node in 1:graph.num_nodes
         if graph.attributes[node][key] isa String
             graph.attributes[node][key] = parse(new_type,
@@ -613,11 +730,15 @@ function coerce_attribute_type!(graph::BaseGraph,
     end
 end
 
+"""
+    coerce_aggregated_attributes!(graph::BaseGraph,
+                                  scores::Array{S, 1}) where {S<:AbstractScore}
+
+Coerces DistrictAggregate attributes in `scores` to be Floats if they are
+Strings.
+"""
 function coerce_aggregated_attributes!(graph::BaseGraph,
                                        scores::Array{S, 1}) where {S<:AbstractScore}
-    """ Coerces DistrictAggregate attributes in `scores` to be Floats if
-        they are Strings.
-    """
     for score in scores
         if score isa DistrictAggregate
             coerce_attribute_type!(graph, score.key, Float64)

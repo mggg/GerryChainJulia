@@ -617,7 +617,7 @@ function save_scores_to_csv(filename::String,
              score_names = flattened_score_names(chain_data)
          end
 
-         column_names = String[] # colum names of the CSV
+         column_names = String[] # column names of the CSV
          nested_keys = Dict{String, String}() # map score key to nested key, if any
 
          num_districts = nothing

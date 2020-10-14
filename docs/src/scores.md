@@ -57,17 +57,12 @@ In this case, you would instantiate your score as
 DistrictAggregate("BLACK")
 ```
 
-[TODO: Put this at score retrieval]
-Running `get_scores_at_step(chain_data, step, "name_of_district_aggregate_score")`
-would return an `Array` of length `d`, where `d` is the number of districts.
 
 ## `DistrictScore`
 This score works best when you're interested in tracking a statistic for each
 district for all plans in the chain. For example, you might want to know the
 [Polsby-Popper score](https://en.wikipedia.org/wiki/Polsby%E2%80%93Popper_test)
-for each district at every step of the chain. Running `get_scores_at_step(chain_data,
-  step, "name_of_district_score")` would return an `Array` of length `d`,
-where `d` is the number of districts.
+for each district at every step of the chain.
 
 ```@docs
 DistrictScore
@@ -106,11 +101,6 @@ DistrictScore("edges_within_dist", num_edges_within_dist)
 This type of score is suited to statistics that are evaluated on an entire plan.
 For example, the number of districts won by a party for a given plan would be a
 `PlanScore`.
-
-[TODO: Bhushan]
-Running `get_scores_at_step(chain_data, step, "name_of_plan_score")` would
-return a single value, representing the value of the `PlanScore` for the plan
-at step `step`.
 
 ```@docs
 PlanScore

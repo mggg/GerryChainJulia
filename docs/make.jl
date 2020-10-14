@@ -1,3 +1,3 @@
 using Documenter, GerryChain
 
-makedocs(sitename="GerryChain Documentation")
+makedocs(sitename="GerryChain")

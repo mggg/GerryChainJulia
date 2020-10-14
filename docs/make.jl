@@ -2,7 +2,6 @@ using Documenter, GerryChain
 
 makedocs(sitename="GerryChain",
          modules = [GerryChain],
-         # clean = false,
         pages = Any[
             "Home" => "index.md",
             "Installation" => "installation.md",

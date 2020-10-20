@@ -87,9 +87,15 @@
         @test eval_score_on_district(graph, partition, score_race, 1) == 28
         @test eval_score_on_district(graph, partition, score_election_d, 2) == 6
 
-        broken_fn = x -> 2*x # district score functions must accept graph, node array, and district index
-        bad_score = DistrictScore("break", broken_fn)
-        @test_throws ArgumentError eval_score_on_district(graph, partition, bad_score, 1)
+        broken_fn_wrong_args = x -> 2*x # district score functions must accept graph, node array, and district index
+        wrong_args_score = DistrictScore("break", broken_fn_wrong_args)
+        @test_throws ArgumentError eval_score_on_district(graph, partition, wrong_args_score, 1)
+
+        function broken_fn_inner_bug(graph, district_nodes, district_index)
+            "1" + 1 # this is an invalid operation
+        end
+        inner_bug_score = PlanScore("broken2", broken_fn_inner_bug)
+        @test_throws MethodError eval_score_on_district(graph, partition, inner_bug_score, 1)
 
         race_gap = DistrictScore("race_gap", calc_disparity)
         @test eval_score_on_district(graph, partition, race_gap, 3) == -15
@@ -109,11 +115,17 @@
         @test eval_score_on_partition(graph, partition, race_gap) == gaps
 
         # PlanScore should take a graph & partition
-        function bad_plan_fn(x)
+        function bad_plan_fn_wrong_args(x)
             return x
         end
-        broken_score = PlanScore("broken", bad_plan_fn)
-        @test_throws ArgumentError eval_score_on_partition(graph, partition, broken_score)
+        wrong_args_score = PlanScore("broken", bad_plan_fn_wrong_args)
+        @test_throws ArgumentError eval_score_on_partition(graph, partition, wrong_args_score)
+
+        function bad_plan_fn_inner_bug(graph::BaseGraph, partition::Partition)
+            "1" + 1 # this is an invalid operation
+        end
+        inner_bug_score = PlanScore("broken2", bad_plan_fn_inner_bug)
+        @test_throws MethodError eval_score_on_partition(graph, partition, inner_bug_score)
 
         cut_edges_score = num_cut_edges("cut_edges")
         @test eval_score_on_partition(graph, partition, cut_edges_score) == 8
@@ -298,5 +310,27 @@
             @test step_vals[i]["votes"]["electionR"] == complete_score_vals[i]["votes"]["electionR"]
         end
         close(tio)
+    end
+
+    @testset "Type Coercions" begin
+        graph = BaseGraph(square_grid_filepath, "population")
+        partition = Partition(graph, "assignment")
+        str_score = DistrictAggregate("attr_name", "str_attr")
+        scores = [str_score]
+
+        # set an attribute to be a string
+        for attr_dict in graph.attributes
+            attr_dict["str_attr"] = "1"
+        end
+
+        @test_throws ArgumentError eval_score_on_partition(graph, partition, str_score)
+
+        with_logger(NullLogger()) do # this suppresses the info msg during testing
+            @test_logs (:info,"The str_attr attribute was of type String, ",
+                              "but was converted to type Float64")
+                        GerryChain.coerce_aggregated_attributes!(graph, scores)
+        end
+
+        @test graph.attributes[1]["str_attr"] isa Float64
     end
 end

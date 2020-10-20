@@ -1,7 +1,8 @@
 function score_boxplot(score_values::Array{S, 2};
                        sort_by_score::Bool=true,
                        label::String="GerryChain",
-                       comparison_scores::Array=[]) where {S<:Number}
+                       comparison_scores::Array=[],
+                       ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number}
     """ Produces a graph with multiple matplotlib box plots for the values of
         scores throughout the chain. Intended for use with district-level scores
         (DistrictAggregate, DistrictScore).
@@ -32,8 +33,12 @@ function score_boxplot(score_values::Array{S, 2};
                                     (nameₓ, [w₁, w₂, ... , wᵤ])
                                   ], where there are x comparison plans and u
                                   districts.
+            ax                  : A PyPlot (matplotlib) Axis object
 
     """
+    if isnothing(ax)
+        _, ax = plt.subplots()
+    end
     if sort_by_score
         # within every step of the chain (i.e., within each row),
         # sort districts by value of the score
@@ -43,28 +48,30 @@ function score_boxplot(score_values::Array{S, 2};
     end
     # plot GerryChain boxplots
     medianprops=Dict("color" => "black") # make sure median line is black
-    plt.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
-    plt.xlabel("Indexed districts")
+    ax.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
+    ax.set_xlabel("Indexed districts")
     if length(comparison_scores) > 0
         # inserts a legend entry that shows the "GerryChain" label next to a
         # marker that looks like a boxplot
-        plt.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
+        ax.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
         # iterate through the comparison scores and plot them one by one
         for p in comparison_scores
             if !(p isa Tuple) || length(p) != 2 || !(p[1] isa String) || !(typeof(p[2]) <: AbstractArray)
                 throw(ArgumentError("Scores of comparison plans must be passed as tuples with structure (name of plan, [scores for each district])."))
             end
             plan_score_vals = sort_by_score ? sort(p[2]) : p[2]
-            plt.scatter(1:length(p[2]), plan_score_vals, label=p[1])
+            ax.scatter(1:length(p[2]), plan_score_vals, label=p[1])
         end
-        plt.legend()
+        ax.legend()
     end
+    return ax
 end
 
 
 function score_boxplot(score_values::Array{S, 1};
                        label::String="GerryChain",
-                       comparison_scores::Array=[]) where {S<:Number}
+                       comparison_scores::Array=[],
+                       ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number}
     """ Produces a single matplotlib box plot for the values of scores
         throughout the chain. Intended for use with plan-level scores.
 
@@ -83,23 +90,27 @@ function score_boxplot(score_values::Array{S, 1};
                                   is a label that will appear on the legend and
                                   scoreᵢ is the value of the plan-wide score
                                   for the comparison plan.
+            ax                  : A PyPlot (matplotlib) Axis object
     """
-    # plot GerryChain boxplot
+    if isnothing(ax)
+        _, ax = plt.subplots()
+    end
     medianprops=Dict("color" => "black") # make sure median line is black
-    plt.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
+    ax.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
     if length(comparison_scores) > 0
         # inserts a legend entry that shows the "GerryChain" label next to a
         # marker that looks like a boxplot
-        plt.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
+        ax.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
         # iterate through the comparison scores and plot them one by one
         for p in comparison_scores
             if !(p isa Tuple) || length(p) != 2 || !(p[1] isa String) || !(typeof(p[2]) <: Number)
                 throw(ArgumentError("Scores of comparison plans must be passed as tuples with structure (name of plan, score of plan)."))
             end
-            plt.scatter(1, p[2], label=p[1])
+            ax.scatter(1, p[2], label=p[1])
         end
-        plt.legend()
+        ax.legend()
     end
+    return ax
 end
 
 
@@ -121,8 +132,9 @@ function score_boxplot(chain_data::ChainScoreData, score_name::String; kwargs...
         throw(ArgumentError("Cannot make a boxplot of a CompositeScore"))
     end
     score_vals = get_score_values(chain_data.step_values, score, nested_key=nested_key)
-    score_boxplot(score_vals; kwargs...)
-    plt.ylabel(score_name)
+    ax = score_boxplot(score_vals; kwargs...)
+    ax.set_ylabel(score_name)
+    return ax
 end
 
 
@@ -131,7 +143,8 @@ function score_histogram(score_values::Array{S, 1};
                          bins::Union{Nothing, Int, Vector}=nothing,
                          range::Union{Nothing, Tuple}=nothing,
                          density::Bool=false,
-                         rwidth::Union{Nothing, T}=nothing) where {S<:Number, T<:Number}
+                         rwidth::Union{Nothing, T}=nothing,
+                         ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number, T<:Number}
     """ Creates a graph with histogram of the values of a score throughout
         the chain. Only applicable for scores of type PlanScore.
 
@@ -147,9 +160,12 @@ function score_histogram(score_values::Array{S, 1};
                                   where lᵢ is a label that will appear on the
                                   legend and scoreᵢ is the value of the plan-wide
                                   score for the comparison plan.
+            ax                  : A PyPlot (matplotlib) Axis object
     """
     # plot GerryChain histogram
-    fig, ax = plt.subplots()
+    if isnothing(ax)
+        _, ax = plt.subplots()
+    end
     ax.hist(score_values, bins=bins, range=range, density=density, rwidth=rwidth)
     if length(comparison_scores) > 0
         # cycle through colors so vertical lines do not appear all blue
@@ -162,6 +178,7 @@ function score_histogram(score_values::Array{S, 1};
         end
         ax.legend()
     end
+    return ax
 end
 
 
@@ -183,7 +200,8 @@ function score_histogram(chain_data::ChainScoreData, score_name::String; kwargs.
         throw(ArgumentError("Can only create histogram plot of a PlanScore"))
     end
     score_vals = get_score_values(chain_data.step_values, score, nested_key=nested_key)
-    score_histogram(score_vals; kwargs...)
-    plt.ylabel("Frequency")
-    plt.xlabel(score_name)
+    ax = score_histogram(score_vals; kwargs...)
+    ax.set_ylabel("Frequency")
+    ax.set_xlabel(score_name)
+    return ax
 end

@@ -35,9 +35,26 @@ using DataStructures
 """
 
 @testset "Graph tests" begin
+
+    function is_cycle_present(mst::Dict{Int, Array{Int, 1}}, nodes::BitSet)
+        connected_vs = DisjointSets{Int}(nodes)
+        for node in keys(mst)
+            neighbors = mst[node]
+            for neighbor in neighbors
+                if in_same_set(connected_vs, node, neighbor)
+                    return true
+                else
+                    union!(connected_vs, node, neighbor)
+                    filter!(n -> n ≠ node, mst[neighbor]) 
+                end
+            end
+        end
+        return false
+    end
+
     @testset "Bad extension" begin
         # file should have a .json or .shp extension
-        @test_throws DomainError BaseGraph("nonexistent.txt", "population", "assignment")
+        @test_throws DomainError BaseGraph("nonexistent.txt", "population")
     end
 
     @testset "Reading node attributes from shapefile" begin
@@ -53,20 +70,11 @@ using DataStructures
         @test node_attributes == correct_attributes
     end
 
-    @testset "Check type of district assignments - get_assignments()" begin
-        graph = BaseGraph(square_shp_filepath, "population", "assignment")
-        # assignment that is a Float should throw an error
-        foreach(d -> d["assignment"] *= 1.0, graph.attributes) # convert Int to Float
-        @test_throws DomainError GerryChain.get_assignments(graph.attributes, "assignment")
-    end
-
     @testset "BaseGraph from shp() - rook adjacency" begin
-        graph = BaseGraph(square_shp_filepath, "population", "assignment")
+        graph = BaseGraph(square_shp_filepath, "population")
         @test graph.num_nodes == 4
         @test graph.num_edges == 4
         @test graph.total_pop == 20
-        @test graph.num_dists == 4
-
         @test graph.populations == [2, 4, 6, 8]
         @test graph.adj_matrix[1, 2] != 0
         @test graph.adj_matrix[1, 3] != 0
@@ -75,11 +83,10 @@ using DataStructures
     end
 
     @testset "BaseGraph from shp() - queen adjacency" begin
-        graph = BaseGraph(square_shp_filepath, "population", "assignment", adjacency="queen")
+        graph = BaseGraph(square_shp_filepath, "population", adjacency="queen")
         @test graph.num_nodes == 4
         @test graph.num_edges == 6 # queen adjacency means all 6 edges
         @test graph.total_pop == 20
-        @test graph.num_dists == 4
 
         @test graph.populations == [2, 4, 6, 8]
         # with queen adjacency, all squares should be adjacent to each other
@@ -91,12 +98,11 @@ using DataStructures
         @test graph.adj_matrix[3, 4] != 0
     end
 
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population")
 
     @test graph.num_nodes == 16
     @test graph.num_edges == 24
     @test graph.total_pop == 164
-    @test graph.num_dists == 4
 
     @testset "Populations" begin
         for i in [1, 7, 9, 16]
@@ -123,6 +129,13 @@ using DataStructures
         end
     end
 
+    @testset "Check type of district assignments - get_assignments()" begin
+        partition = Partition(graph, "assignment")
+        # assignment that is a Float should throw an error
+        foreach(d -> d["assignment"] *= 1.0, graph.attributes) # convert Int to Float
+        @test_throws DomainError GerryChain.get_assignments(graph.attributes, "assignment")
+    end
+
     # test the edge arrays
     @test graph.edge_src[graph.adj_matrix[10,11]] in (10,11)
     @test graph.edge_dst[graph.adj_matrix[11,10]] in (10,11)
@@ -141,13 +154,15 @@ using DataStructures
     @test LightGraphs.ne(graph.simple_graph) == graph.num_edges
 
     # test induced_subgraph
-    @test begin
+    @testset "induced_subgraph_edges()" begin
         induced_edges = induced_subgraph_edges(graph, [1, 2, 3, 4])
+        @test sort(induced_edges) == sort([1, 3, 5])
+
         induced_vertices = Set{Int}()
         for edge in induced_edges
             push!(induced_vertices, graph.edge_src[edge], graph.edge_dst[edge])
         end
-        induced_vertices == Set{Int}([1, 2, 3, 4])
+        @test induced_vertices == Set{Int}([1, 2, 3, 4])
     end
     @test_throws ArgumentError induced_subgraph_edges(graph, [1, 1, 4])
 
@@ -159,28 +174,15 @@ using DataStructures
     # test random_weighted_kruskal_mst
     @testset "Kruskal MST" begin
         rng = MersenneTwister(1234)
-        nodes = [1, 2, 3, 4, 5, 6, 7, 8]
+        nodes = BitSet([1, 2, 3, 4, 5, 6, 7, 8])
         edges = [graph.adj_matrix[1,2], graph.adj_matrix[2,3], graph.adj_matrix[3,4],
                  graph.adj_matrix[5,6], graph.adj_matrix[6,7], graph.adj_matrix[7,8],
                  graph.adj_matrix[1,5], graph.adj_matrix[2,6], graph.adj_matrix[3,7],
                  graph.adj_matrix[4,8]]
         weights = rand(rng, length(edges))
         mst = weighted_kruskal_mst(graph, edges, nodes, weights, rng)
-        @test length(mst) == length(nodes) - 1
-        @test begin # are there loops in the tree?
-            # find by union-find algorithm
-            connected_vs = DisjointSets{Int}(nodes)
-            cycle_found = false
-            for edge in mst
-                if in_same_set(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
-                    cycle_found = true
-                    break
-                else
-                    union!(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
-                end
-            end
-            !cycle_found
-        end
+        @test length(mst) == length(nodes)
+        @test !is_cycle_present(mst, nodes)
     end
 
     # test that attributes can be accessed

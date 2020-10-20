@@ -1,5 +1,5 @@
 @testset "satisfies_acceptance_fn" begin
-    graph = BaseGraph(square_grid_filepath, "population", "assignment")
+    graph = BaseGraph(square_grid_filepath, "population")
     partition = Partition(graph, "assignment")
 
     inval_acc_fn_1(p) = "hi"

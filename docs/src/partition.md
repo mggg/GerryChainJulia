@@ -32,7 +32,7 @@ A Partition can be initialized in the following way:
 Partition
 ```
 
-## Full Docs
+## API
 
 ```@autodocs
 Modules = [GerryChain]

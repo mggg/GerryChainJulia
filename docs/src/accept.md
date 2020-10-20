@@ -30,7 +30,7 @@ The following is a sample acceptance function included in the `GerryChain` libra
 always_accept
 ```
 
-## Full Docs
+## API
 ```@autodocs
 Modules = [GerryChain]
 Pages   = ["accept.jl"]

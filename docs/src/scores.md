@@ -9,7 +9,7 @@ of the chain. The resulting values are saved in a dictionary, which is itself
 added to a growing `ChainScoreData` object at each step of the chain.
 The `ChainScoreData` returned by `recom_chain()` and `flip_chain()` is like
 a "history" of the scores at each step of the chain.
-(See [get_scores_at_step](#get_scores_at_step) for information about how to
+(See [get\_scores\_at\_step()](@ref) for information about how to
 retrieve the values of any subset of scores at a particular step in the chain.)
 
 ## Score types
@@ -24,7 +24,7 @@ All Scores have the type `AbstractScore`. There are four categories of scores
 | `CompositeScore`    | `name` (String),  `scores` (Array{S, 1} where S<:AbstractScore) | A CompositeScore is just a group of scores that are run in sequence. CompositeScores are especially useful when the score functions depend upon/modify some shared state. The `Election` object is implemented as a `CompositeScore`.                                                                               |
 
 <!---
-The below @setup macro is sets up the import for all the @repl and @example blocks
+The below @setup macro sets up the import for all the @repl and @example blocks
 rendered below.
 -->
 ```@setup env

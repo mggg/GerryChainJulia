@@ -50,7 +50,7 @@ We assume that the JSON file has the structure of a dictionary where
 (3) the key "id" within the edge dictionary indicates the destination node of the edge.
 
 
-## Full Docs
+## API
 
 ```@autodocs
 Modules = [GerryChain]

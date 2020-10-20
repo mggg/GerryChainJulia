@@ -36,7 +36,7 @@ Runs a Markov Chain for `num_steps` steps using Flip proposals.
 flip_chain
 ```
 
-## Full Docs
+## API
 ```@autodocs
 Modules = [GerryChain]
 Pages   = ["recom.jl", "flip.jl"]

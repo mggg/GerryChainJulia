@@ -2,7 +2,7 @@ using Documenter, GerryChain
 
 makedocs(sitename="GerryChain",
          modules = [GerryChain],
-        pages = Any[
+         pages = Any[
             "Home" => "index.md",
             "Installation" => "installation.md",
             "Getting started with a chain" => "getting_started.md",
@@ -18,7 +18,7 @@ makedocs(sitename="GerryChain",
             ],
             "Election" => "election.md",
             "Markov Chains" => "chains.md",
-        ]
+         ]
 )
 
 deploydocs(

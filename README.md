@@ -37,16 +37,16 @@ You can cite the Recombination algorithm as
 ```
 The current version of the code can be cited as
 ```
-@software{parker_rule_2020_4003431,
+@software{gerrychain_julia_2020_4064975,
   author       = {Parker Rule and
                   Matthew Sun and
                   Bhushan Suwal},
-  title        = {mggg/GerryChainJulia: First Release},
-  month        = aug,
+  title        = {mggg/GerryChainJulia: v0.1.1},
+  month        = oct,
   year         = 2020,
   publisher    = {Zenodo},
-  version      = {v0.1.0},
-  doi          = {10.5281/zenodo.4003431},
-  url          = {https://doi.org/10.5281/zenodo.4003431}
+  version      = {v0.1.1},
+  doi          = {10.5281/zenodo.4064975},
+  url          = {https://doi.org/10.5281/zenodo.4064975}
 }
 ```

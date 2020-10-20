@@ -126,10 +126,10 @@ end
                                    num_districts::Int)
 
 *Returns:*
-- district_adj: a num_districts x num_districts matrix where the
-                elements are the number of cut_edges between the districts
-- cut_edges:    an Array of size(num_edges) where i'th element is 1
-                if edge `i` is a cut_edge, 0 otherwise
+- district\\_adj: a `num_districts` x `num_districts` matrix where the
+                elements are the number of cut edges between the districts
+- cut\\_edges:    an Array of size(num\\_edges) where i'th element is 1
+                if edge `i` is a cut\\_edge, 0 otherwise
 """
 function get_district_adj_and_cut_edges(graph::BaseGraph,
                                         assignments::Array{Int, 1},

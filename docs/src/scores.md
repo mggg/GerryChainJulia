@@ -23,10 +23,7 @@ All Scores have the type `AbstractScore`. There are four categories of scores
 | `PlanScore`         | `name` (String),  `score_fn` (Function)                         | A PlanScore takes a user-supplied function that returns some quantity of interest given a BaseGraph and corresponding Partition object. The signature of `score_fn` should be as follows: `score_fn(graph::BaseGraph, partition::Partition)`               |
 | `CompositeScore`    | `name` (String),  `scores` (Array{S, 1} where S<:AbstractScore) | A CompositeScore is just a group of scores that are run in sequence. CompositeScores are especially useful when the score functions depend upon/modify some shared state. The `Election` object is implemented as a `CompositeScore`.                                                                               |
 
-<!---
-The below @setup macro sets up the import for all the @repl and @example blocks
-rendered below.
--->
+
 ```@setup env
 using GerryChain
 ```

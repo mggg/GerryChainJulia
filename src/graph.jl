@@ -321,8 +321,8 @@ end
                             nodes::BitSet)::Int
 
 *Arguments:*
-    - graph: Underlying graph object
-    - nodes: A Set of Ints
+- graph: Underlying graph object
+- nodes: A Set of Ints
 
 *Returns* the population of the subgraph induced by `nodes`.
 """
@@ -350,11 +350,11 @@ The `graph` represents the entire graph of the plan, where as `edges` and
 `nodes` represent only the sub-graph on which we want to draw the MST.
 
 *Arguments:*
-    - graph: Underlying Graph object
-    - edges: Array of edges of the sub-graph
-    - nodes: Set of nodes of the sub-graph
-    - weights: Array of weights of `length(edges)` where `weights[i]` is the
-             weight of `edges[i]`
+- graph: Underlying Graph object
+- edges: Array of edges of the sub-graph
+- nodes: Set of nodes of the sub-graph
+- weights: Array of weights of `length(edges)` where `weights[i]` is the
+           weight of `edges[i]`
 
 *Returns* a BitSet of edges that form a mst.
 """

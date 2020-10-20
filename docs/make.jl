@@ -23,4 +23,5 @@ makedocs(sitename="GerryChain",
 
 deploydocs(
     repo = "github.com/mggg/GerryChainJulia.git",
+    devbranch = "main",
 )

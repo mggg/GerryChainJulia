@@ -20,7 +20,7 @@ chain_data = deserialize("example.jld")
 ```
 Note that the `.jld` format is specific to Julia, so you won't be able to `deserialize` in a script written in another language, like Python or R.
 
-## Saving scores to csv
+## Saving scores to CSV
 CSV is a common format used to store data. We've written a function called `save_scores_to_csv()` into GerryChain that makes it super simple to export scores to a CSV format, which can then be read by programs in any language of your choosing. Each row of the CSV will correspond to one state in the chain, while each score corresponds to one or more columns. (District level scores will produce one column for each district. For example: a district-level score called `bvap` evaluated on plans with 10 districts will generate 10 columns: `bvap_1`, `bvap_2`, ...`bvap_10`.) The order of the rows corresponds to the order of the states visited by the chain. Here's what the function looks like:
 
 ```@docs
@@ -43,7 +43,7 @@ cut_edges,vote_count_d_1,vote_count_d_2,vote_count_d_3,vote_share_d_1,vote_share
 6,3,5,2,0.3,0.5,0.2
 ```
 
-## Saving score to JSON
+## Saving scores to JSON
 ```@docs
 save_scores_to_json
 ```

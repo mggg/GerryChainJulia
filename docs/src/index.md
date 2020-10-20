@@ -42,4 +42,4 @@ The most up to date citation of the code would be at [![DOI](https://zenodo.org/
 
 ## How do I get started?
 
-You'll want to start with [setting up your computing environment](installation.md). Next, you should check out [our tutorial on running your first GerryChain](getting_started.md)!. If you wish to contribute to the development of this project, please refer to our [contributing guidelines](https://github.com/mggg/GerryChainJulia/blob/main/CONTRIBUTING.md).
+You'll want to start with [setting up your computing environment](installation.md). Next, you should check out [our tutorial on running your first GerryChain](getting_started.md)! If you wish to contribute to the development of this project, please refer to our [contributing guidelines](https://github.com/mggg/GerryChainJulia/blob/main/CONTRIBUTING.md).

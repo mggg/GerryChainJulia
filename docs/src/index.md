@@ -26,8 +26,6 @@ Julia is a [highly-performant](https://julialang.org/benchmarks/), [dynamically-
 At a fundamental level, GerryChain exists because it is infeasible to compare an initial plan to the complete universe of possible districting plans for a particular region. (In many cases, there are more possible plans than atoms in the universe!) Through the GerryChain approach, we instead take a "random walk" in the universe of possible plans, generating some finite number of plans, to which we can then compare our initial plan. Speeding up the GerryChain computations with Julia means that we can generate a number of plans an order of magnitude greater than what we could achieve with the Python library in the same amount of time, with the intention that the subsequent analysis is more robust.
 
 ## Citations
-
-## Citations
 You can cite the Recombination algorithm as
 ```
 @misc{deford2019recombination,

@@ -23,5 +23,8 @@ makedocs(sitename="GerryChain",
 
 deploydocs(
     repo = "github.com/mggg/GerryChainJulia.git",
+    branch = "gh-pages",
     devbranch = "main",
+    devurl = "dev",
+    versions = ["stable" => "v^", "v#.#", devurl => devurl],
 )

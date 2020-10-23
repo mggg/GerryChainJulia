@@ -2,6 +2,8 @@
 [![Build Status](https://api.travis-ci.com/mggg/GerryChainJulia.svg?branch=main)](https://travis-ci.com/mggg/GerryChainJulia)
 [![Code Coverage](https://codecov.io/gh/mggg/GerryChainJulia/branch/main/graph/badge.svg)](https://codecov.io/gh/mggg/GerryChainJulia/branch/main)
 [![DOI](https://zenodo.org/badge/239854101.svg)](https://zenodo.org/badge/latestdoi/239854101)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mggg.github.io/GerryChainJulia/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://mggg.github.io/GerryChainJulia/dev)
 
 Welcome to the GerryChain Julia! Thank you for taking the time to use and/or
 learn about our package. If you were looking for the Python wiki, go [here](https://gerrychain.readthedocs.io/).

@@ -3,6 +3,8 @@
 [![Build Status](https://api.travis-ci.com/mggg/GerryChainJulia.svg?branch=main)](https://travis-ci.com/mggg/GerryChainJulia)
 [![Code Coverage](https://codecov.io/gh/mggg/GerryChainJulia/branch/main/graph/badge.svg)](https://codecov.io/gh/mggg/GerryChainJulia/branch/main)
 [![DOI](https://zenodo.org/badge/239854101.svg)](https://zenodo.org/badge/latestdoi/239854101)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mggg.github.io/GerryChainJulia/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://mggg.github.io/GerryChainJulia/dev)
 
 `GerryChain` is a Julia package for building ensembles of districting plans using [Markov Chain Monte Carlo](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo) techniques. It is developed and maintained by the [Metric Geometry and Gerrymandering Group](https://www.mggg.org/) and our network of volunteers. We also have [a Python package of the same name](https://github.com/mggg/GerryChain).
 
@@ -14,12 +16,14 @@ If you already have Julia installed, then installing `GerryChain` is easy using 
 using Pkg; Pkg.add("GerryChain")
 using GerryChain
 ```
-If you need to install Julia, use Julia in Jupyter Notebooks or use learn how to use `GerryChain` in a specific virtual environment, head over to [our more detailed setup instructions](https://github.com/mggg/GerryChainJulia/wiki/Setting-up-your-environment).
+If you need to install Julia, use Julia in Jupyter Notebooks or use learn how to use `GerryChain` in a specific virtual environment, head over to [our more detailed setup instructions](https://mggg.github.io/GerryChainJulia/stable/installation/).
 
 ## Useful links
-[Running Your First Chain](https://github.com/mggg/GerryChainJulia/wiki/Getting-started-with-a-chain)
+Please refer to [our documentation pages](https://mggg.github.io/GerryChainJulia/stable) for API references.
 
-[API Reference](https://github.com/mggg/GerryChainJulia/wiki/API-Reference)
+Follow [this link](https://mggg.github.io/GerryChainJulia/stable/getting_started/) if you want to get started on your first chain already.
+
+If you want to contribute to this project, please check [our contributing guidelines](https://github.com/mggg/GerryChainJulia/blob/main/CONTRIBUTING.md).
 
 If you have any issues or requests, please do not hesitate to [raise an issue.](https://github.com/mggg/GerryChainJulia/issues)
 
@@ -37,16 +41,16 @@ You can cite the Recombination algorithm as
 ```
 The current version of the code can be cited as
 ```
-@software{gerrychain_julia_2020_4064975,
-  author       = {Parker Rule and
+@software{gerrychain_julia_2020_4111000,
+  author       = {Bhushan Suwal and
                   Matthew Sun and
-                  Bhushan Suwal},
-  title        = {mggg/GerryChainJulia: v0.1.1},
+                  Parker Rule},
+  title        = {mggg/GerryChainJulia: v0.1.2},
   month        = oct,
   year         = 2020,
   publisher    = {Zenodo},
-  version      = {v0.1.1},
-  doi          = {10.5281/zenodo.4064975},
-  url          = {https://doi.org/10.5281/zenodo.4064975}
+  version      = {v0.1.2},
+  doi          = {10.5281/zenodo.4111000},
+  url          = {https://doi.org/10.5281/zenodo.4111000}
 }
 ```

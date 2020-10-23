@@ -3,6 +3,8 @@
 [![Build Status](https://api.travis-ci.com/mggg/GerryChainJulia.svg?branch=main)](https://travis-ci.com/mggg/GerryChainJulia)
 [![Code Coverage](https://codecov.io/gh/mggg/GerryChainJulia/branch/main/graph/badge.svg)](https://codecov.io/gh/mggg/GerryChainJulia/branch/main)
 [![DOI](https://zenodo.org/badge/239854101.svg)](https://zenodo.org/badge/latestdoi/239854101)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mggg.github.io/GerryChainJulia/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://mggg.github.io/GerryChainJulia/dev)
 
 `GerryChain` is a Julia package for building ensembles of districting plans using [Markov Chain Monte Carlo](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo) techniques. It is developed and maintained by the [Metric Geometry and Gerrymandering Group](https://www.mggg.org/) and our network of volunteers. We also have [a Python package of the same name](https://github.com/mggg/GerryChain).
 

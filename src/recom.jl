@@ -323,7 +323,7 @@ function get_reversible_recom_proposal(
     pop_constraint::PopulationConstraint,
     M::Int,
     rng::AbstractRNG,
-    tree_fn::Function=random_kruskal_mst,
+    tree_fn::Function=wilson_ust,
     balance_edge_fn::Function=memoized_balance_edges,
     node_repeats::Int=1)::Union{RecomProposal, String}
     """TODO"""

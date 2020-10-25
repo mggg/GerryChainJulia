@@ -73,7 +73,6 @@ function get_assignments(node_attributes::Array,
         end
     end
     return processed_assignments
->>>>>>> recom-redo-memoization
 end
 
 function get_district_nodes(assignments::Array{Int, 1},

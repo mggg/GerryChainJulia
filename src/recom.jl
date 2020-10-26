@@ -3,12 +3,19 @@ struct CutSet
     succ::Dict{Int, BitSet}
 end
 
+
+"""
+    sample_subgraph(graph::BaseGraph,
+                    partition::Partition,
+                    rng::AbstractRNG)
+
+Randomly sample two adjacent districts D₁ and D₂ and return a tuple
+(D₁, D₂, edges, nodes) where D₁ and D₂ are Ints, `edges` and `nodes` are Sets
+containing the Int edges and Int nodes of the induced subgraph.
+"""
 function sample_subgraph(graph::BaseGraph,
                          partition::Partition,
                          rng::AbstractRNG)
-    """ Randomly sample two adjacent districts and returns them and their
-        induced edges and nodes.
-    """
     D₁, D₂ = sample_adjacent_districts_randomly(partition, rng)
 
     # take all their nodes
@@ -226,7 +233,6 @@ function get_recom_proposal(graph::BaseGraph,
 end
 
 
-
 function update_partition!(partition::Partition,
                            graph::BaseGraph,
                            proposal::RecomProposal,
@@ -257,6 +263,34 @@ function update_partition!(partition::Partition,
     update_partition_weight!(partition, weight)
 end
 
+"""
+Runs a Markov Chain for `num_steps` steps using ReCom. Returns a `ChainScoreData`
+object which can be queried to retrieve the values of every score at each
+step of the chain.
+
+*Arguments:*
+- graph:            `BaseGraph`
+- partition:        `Partition` with the plan information
+- pop_constraint:   `PopulationConstraint`
+- num_steps:        Number of steps to run the chain for
+- scores:           Array of `AbstractScore`s to capture at each step
+- num_tries:        num times to try getting a balanced cut from a subgraph
+                    before giving up
+- acceptance_fn:    A function generating a probability in [0, 1]
+                    representing the likelihood of accepting the
+                    proposal. Should accept a `Partition` as input.
+- proposal_fn:      A function used to generate a single ReCom proposal.
+                    This function will typically be a parameterized 
+                    variant of `get_recom_proposal`.
+- rng:              Random number generator. The user can pass in their
+                    own; otherwise, we use the default RNG from Random.
+- no\\_self\\_loops: If this is true, then a failure to accept a new state
+                    is not considered a self-loop; rather, the chain
+                    simply generates new proposals until the acceptance
+                    function is satisfied. BEWARE - this can create
+                    infinite loops if the acceptance function is never
+                    satisfied!
+"""
 function recom_chain(graph::BaseGraph,
                      partition::Partition,
                      pop_constraint::PopulationConstraint,
@@ -267,33 +301,6 @@ function recom_chain(graph::BaseGraph,
                      proposal_fn::Function=get_recom_proposal,
                      rng::AbstractRNG=Random.default_rng(),
                      no_self_loops::Bool=false)::ChainScoreData
-        """Runs a Markov chain for `num_steps` steps using ReCom. Returns
-        a ChainScoreData object which can be queried to retrieve the values of
-        every score at each step of the chain.
-
-        Arguments:
-            graph:           BaseGraph
-            partition:       Partition with the plan information
-            pop_constraint:  PopulationConstraint
-            num_steps:       Number of steps to run the chain for
-            scores:          Array of AbstractScores to capture at each step
-            num_tries:       num times to try getting a balanced cut from a subgraph
-                             before giving up
-            acceptance_fn:   A function generating a probability in [0, 1]
-                             representing the likelihood of accepting the
-                             proposal. Should accept a Partition as input.
-            proposal_fn:     A function used to generate a single ReCom proposal.
-                             This function will typically be a parameterized 
-                             variant of `get_recom_proposal`.
-            rng:             Random number generator. The user can pass in their
-                             own; otherwise, we use the default RNG from Random.
-            no_self_loops:   If this is true, then a failure to accept a new state
-                             is not considered a self-loop; rather, the chain
-                             simply generates new proposals until the acceptance
-                             function is satisfied. BEWARE - this can create
-                             infinite loops if the acceptance function is never
-                             satisfied!
-    """
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
     chain_scores = ChainScoreData(deepcopy(scores), [first_scores])
@@ -443,9 +450,8 @@ function reversible_recom_chain(
             else
                 partition.weight = self_loops + 1
                 partition.chain_meta = Dict("reasons" => reasons)
-                #println(reasons)
                 score_vals = score_partition_from_proposal(graph, partition,
-                                                        proposal, scores)
+                                                           proposal, scores)
                 push!(chain_scores.step_values, score_vals)
                 # case: reset self-loops
                 self_loops = 0

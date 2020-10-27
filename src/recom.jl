@@ -378,18 +378,17 @@ function get_reversible_recom_proposal(
     return "no proposals"
 end
 
-function reversible_recom_chain(
+@resumable function reversible_recom_iterator(
     graph::BaseGraph,
     partition::Partition,
     pop_constraint::PopulationConstraint,
     M::Int,
     num_steps::Int, 
-    scores::Array{S, 1}; 
+    scores::Array{AbstractScore, 1}; 
     num_tries::Int=3,
     proposal_fn::Function=get_reversible_recom_proposal,
-    acceptance_fn::F=always_accept, 
-    rng::AbstractRNG=Random.default_rng())::ChainScoreData where
-    {F<:Function, S<:AbstractScore}
+    acceptance_fn::Function=always_accept, 
+    rng::AbstractRNG=Random.default_rng())
     """Runs a Markov chain for `num_steps` steps using reversible ReCom.
        (See Cannon, Duchin, Randall, Rule 2020; forthcoming.)  Returns
         a ChainScoreData object which can be queried to retrieve the values of
@@ -433,9 +432,9 @@ function reversible_recom_chain(
     steps_taken = 0
     self_loops = 0
     reasons = DefaultDict{String, Int}(0)
-    first_scores = score_initial_partition(graph, partition, scores)
-    chain_scores = ChainScoreData(deepcopy(scores), [first_scores])
     custom_acceptance = acceptance_fn !== always_accept
+
+    @yield score_initial_partition(graph, partition, scores)
 
     while steps_taken < num_steps
         proposal = proposal_fn(graph, partition, pop_constraint, M, rng)
@@ -452,7 +451,7 @@ function reversible_recom_chain(
                 partition.chain_meta = Dict("reasons" => reasons)
                 score_vals = score_partition_from_proposal(graph, partition,
                                                            proposal, scores)
-                push!(chain_scores.step_values, score_vals)
+                @yield score_vals
                 # case: reset self-loops
                 self_loops = 0
                 reasons = DefaultDict{String, Int}(0)
@@ -462,6 +461,15 @@ function reversible_recom_chain(
             reasons[proposal] += 1
         end
         steps_taken += 1
+    end
+end
+
+
+
+function reversible_recom_chain(args...; kwargs...)::ChainScoreData
+    chain_scores = ChainScoreData(deepcopy(scores), [])
+    for step in reversible_recom_iterator(args...; kwargs...)
+        push!(chain_scores.step_values, score_vals)
     end
     return chain_scores
 end

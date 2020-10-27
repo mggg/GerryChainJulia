@@ -11,6 +11,7 @@ import Shapefile
 import LibGEOS
 import LibSpatialIndex
 using Logging
+using ResumableFunctions
 
 export
 
@@ -32,6 +33,7 @@ satisfy_constraint,
 
 # recom
 update_partition!, recom_chain, reversible_recom_chain,
+reversible_recom_iterator,
 
 # flip
 flip_chain,

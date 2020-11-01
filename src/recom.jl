@@ -291,7 +291,7 @@ step of the chain.
                     infinite loops if the acceptance function is never
                     satisfied!
 """
-@resumable function recom_chain_iterator(
+@resumable function recom_iterator(
     graph::BaseGraph,
     partition::Partition,
     pop_constraint::PopulationConstraint,

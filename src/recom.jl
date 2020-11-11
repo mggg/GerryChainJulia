@@ -189,7 +189,7 @@ function get_recom_proposal(graph::BaseGraph,
                             partition::Partition,
                             pop_constraint::PopulationConstraint,
                             rng::AbstractRNG,
-                            tree_fn::Function=weighted_kruskal_mst,
+                            tree_fn::Function=random_kruskal_mst,
                             balance_edge_fn::Function=memoized_balance_edges,
                             node_repeats::Int=1)::RecomProposal
     """ Returns a population-balanced Recom proposal.
@@ -214,7 +214,7 @@ function get_recom_proposal(graph::BaseGraph,
     subgraph_pop = partition.dist_populations[D₁] + partition.dist_populations[D₂]
 
     while true
-        mst = tree_fn(graph, sg_edges, sg_nodes, rng)
+        mst = tree_fn(graph, sg_edges, [n for n in sg_nodes], rng)
         for _ in 1:node_repeats
             # see if we can get a population-balanced cut in this mst
             cut_set = balance_edge_fn(graph, mst, sg_nodes,
@@ -222,7 +222,7 @@ function get_recom_proposal(graph::BaseGraph,
             if length(cut_set.balance_nodes) > 0
                 # Choose a random balance node.
                 root = rand(rng, keys(cut_set.balance_nodes))
-                component₁ - component_nodes(cut_set, root)
+                component₁ = component_nodes(cut_set, root)
                 pop₁ = cut_set.balance_nodes[root]
                 component₂ = setdiff(sg_nodes, component₁)
                 pop₂ = subgraph_pop - pop₁ 
@@ -263,41 +263,12 @@ function update_partition!(partition::Partition,
     update_partition_weight!(partition, weight)
 end
 
-"""
-Runs a Markov Chain for `num_steps` steps using ReCom. Returns a `ChainScoreData`
-object which can be queried to retrieve the values of every score at each
-step of the chain.
-
-*Arguments:*
-- graph:            `BaseGraph`
-- partition:        `Partition` with the plan information
-- pop_constraint:   `PopulationConstraint`
-- num_steps:        Number of steps to run the chain for
-- scores:           Array of `AbstractScore`s to capture at each step
-- num_tries:        num times to try getting a balanced cut from a subgraph
-                    before giving up
-- acceptance_fn:    A function generating a probability in [0, 1]
-                    representing the likelihood of accepting the
-                    proposal. Should accept a `Partition` as input.
-- proposal_fn:      A function used to generate a single ReCom proposal.
-                    This function will typically be a parameterized 
-                    variant of `get_recom_proposal`.
-- rng:              Random number generator. The user can pass in their
-                    own; otherwise, we use the default RNG from Random.
-- no\\_self\\_loops: If this is true, then a failure to accept a new state
-                    is not considered a self-loop; rather, the chain
-                    simply generates new proposals until the acceptance
-                    function is satisfied. BEWARE - this can create
-                    infinite loops if the acceptance function is never
-                    satisfied!
-"""
 @resumable function recom_iterator(
     graph::BaseGraph,
     partition::Partition,
     pop_constraint::PopulationConstraint,
     num_steps::Int,
     scores::Array{AbstractScore, 1};
-    num_tries::Int=3,
     acceptance_fn::Function=always_accept,
     proposal_fn::Function=get_recom_proposal,
     rng::AbstractRNG=Random.default_rng(),
@@ -307,7 +278,7 @@ step of the chain.
     @yield score_initial_partition(graph, partition, scores)
 
     while steps_taken < num_steps
-        proposal = proposal_fn(graph, partition, pop_constraint, rng, num_tries)
+        proposal = proposal_fn(graph, partition, pop_constraint, rng)
         custom_acceptance = acceptance_fn !== always_accept
         update_partition!(partition, graph, proposal, custom_acceptance)
         if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)

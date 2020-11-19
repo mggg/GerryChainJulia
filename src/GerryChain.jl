@@ -34,6 +34,7 @@ satisfy_constraint,
 # recom
 update_partition!, recom_chain, reversible_recom_chain,
 reversible_recom_iterator, recom_iterator,
+get_reversible_recom_proposal,
 
 # flip
 flip_chain,

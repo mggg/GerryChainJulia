@@ -196,9 +196,9 @@ function get_valid_proposal(graph::BaseGraph,
             mst_edges = random_kruskal_mst(graph, sg_edges, collect(sg_nodes))
 
             # see if we can get a population-balanced cut in this mst
-            proposal = get_balanced_proposal(graph, mst_edges, sg_nodes,
-                                             partition, pop_constraint,
-                                             D₁, D₂)
+            proposal = get_balanced_proposal_naive(graph, mst_edges, sg_nodes,
+                                                   partition, pop_constraint,
+                                                   D₁, D₂)
 
             if proposal isa RecomProposal return proposal end
         end

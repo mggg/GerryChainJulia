@@ -130,14 +130,18 @@ Tries to find a balanced cut on the subgraph induced by `mst_edges` and
 `mst_nodes` such that the population is balanced according to
 `pop_constraint`.
 This subgraph was formed by the combination of districts `D₁` and `D₂`.
+``Naive" because it simply iterates over the mst's edges to see if cutting it
+results in a balanced cut.
+Returns a RecomProposal from the first balanced cut found, DummyProposal if no
+such edges exist.
 """
-function get_balanced_proposal(graph::BaseGraph,
-                               mst_edges::BitSet,
-                               mst_nodes::BitSet,
-                               partition::Partition,
-                               pop_constraint::PopulationConstraint,
-                               D₁::Int,
-                               D₂::Int)
+function get_balanced_proposal_naive(graph::BaseGraph,
+                                     mst_edges::BitSet,
+                                     mst_nodes::BitSet,
+                                     partition::Partition,
+                                     pop_constraint::PopulationConstraint,
+                                     D₁::Int,
+                                     D₂::Int)
     mst = build_mst(graph, mst_nodes, mst_edges)
     subgraph_pop = partition.dist_populations[D₁] + partition.dist_populations[D₂]
 

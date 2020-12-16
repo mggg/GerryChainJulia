@@ -136,23 +136,22 @@ Returns a RecomProposal from the first balanced cut found, DummyProposal if no
 such edges exist.
 """
 function get_balanced_proposal_naive(graph::BaseGraph,
-                                     mst_edges::BitSet,
+                                     mst::Dict{Int, Array{Int, 1}},
                                      mst_nodes::BitSet,
                                      partition::Partition,
                                      pop_constraint::PopulationConstraint,
                                      D₁::Int,
                                      D₂::Int)
-    mst = build_mst(graph, mst_nodes, mst_edges)
     subgraph_pop = partition.dist_populations[D₁] + partition.dist_populations[D₂]
 
     # pre-allocated reusable data structures to reduce number of memory allocations
     stack = Stack{Int}()
     component_container = BitSet([])
 
-    for edge in mst_edges
+    for src in keys(mst), dst in mst[src]
         component₁ = traverse_mst(mst,
-                                  graph.edge_src[edge],
-                                  graph.edge_dst[edge],
+                                  src,
+                                  dst,
                                   stack,
                                   component_container)
 
@@ -193,10 +192,10 @@ function get_valid_proposal(graph::BaseGraph,
         D₁, D₂, sg_edges, sg_nodes = sample_subgraph(graph, partition, rng)
 
         for _ in 1:num_tries
-            mst_edges = random_kruskal_mst(graph, sg_edges, collect(sg_nodes))
+            mst = random_kruskal_mst(graph, sg_edges, collect(sg_nodes))
 
             # see if we can get a population-balanced cut in this mst
-            proposal = get_balanced_proposal_naive(graph, mst_edges, sg_nodes,
+            proposal = get_balanced_proposal_naive(graph, mst, sg_nodes,
                                                    partition, pop_constraint,
                                                    D₁, D₂)
 

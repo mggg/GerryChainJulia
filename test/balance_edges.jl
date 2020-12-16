@@ -17,17 +17,33 @@ using DataStructures
              graph.adj_matrix[4,8]]
 
     mst = random_kruskal_mst(graph, edges, nodes, rng)
-    @test length(mst) == length(nodes) - 1
+    @test length(keys(mst)) == length(nodes)
+
+    @test begin
+        mst_edges = Set{Tuple{Int, Int}}()
+        for src in keys(mst), dst in mst[src]
+            push!(mst_edges, Tuple([min(src, dst), max(src, dst)]))
+        end
+        length(mst_edges) == length(nodes) - 1
+    end
+
     @test begin # are there loops in the tree?
         # find by union-find algorithm
         connected_vs = DisjointSets{Int}(nodes)
         cycle_found = false
-        for edge in mst
-            if in_same_set(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
+
+        mst_edges = Set{Tuple{Int, Int}}()
+        for src in keys(mst), dst in mst[src]
+            push!(mst_edges, Tuple([min(src, dst), max(src, dst)]))
+        end
+
+        for edge in mst_edges
+            src, dst = edge
+            if in_same_set(connected_vs, src, dst)
                 cycle_found = true
                 break
             else
-                union!(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
+                union!(connected_vs, src, dst)
             end
         end
         !cycle_found

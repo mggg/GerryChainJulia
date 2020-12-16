@@ -28,24 +28,24 @@ function kruskal_mst(graph::BaseGraph,
                      edges::Array{Int, 1},
                      nodes::Array{Int, 1},
                      weights::Array{Float64, 1},
-                     rng=MersenneTwister(1234))::BitSet
+                     rng=MersenneTwister(1234))::Dict{Int, Array{Int, 1}}
     num_nodes = length(nodes)
 
     # sort the edges arr by their weights
     sorted_indices = sortperm(weights)
     sorted_edges = edges[sorted_indices]
 
-    mst = BitSet()
+    mst_edges = BitSet()
     connected_vs = DisjointSets{Int}(nodes)
 
     for edge in sorted_edges
         if !in_same_set(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
             union!(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
-            push!(mst, edge)
-            (length(mst) >= num_nodes - 1) && break
+            push!(mst_edges, edge)
+            (length(mst_edges) >= num_nodes - 1) && break
         end
     end
-    return mst
+    return build_mst(graph, BitSet(nodes), mst_edges)
 end
 
 """
@@ -71,7 +71,7 @@ The `graph` represents the entire graph of the plan, where as `edges` and
 function random_kruskal_mst(graph::BaseGraph,
                             edges::Array{Int, 1},
                             nodes::Array{Int, 1},
-                            rng=MersenneTwister(1234))::BitSet
+                            rng=MersenneTwister(1234))::Dict{Int, Array{Int, 1}}
     weights = rand(rng, length(edges))
     return kruskal_mst(graph, edges, nodes, weights)
 end

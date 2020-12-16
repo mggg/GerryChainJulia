@@ -1,13 +1,15 @@
 
-"""
-    weighted_kruskal_mst(graph::BaseGraph,
-                         edges::Array{Int, 1},
-                         nodes::Array{Int, 1},
-                         weights::Array{Float64, 1},
-                         rng=MersenneTwister(1234))::BitSet
 
-Generates and returns a minimum spanning tree from the subgraph induced by
-`edges` and `nodes`, using Kruskal's MST algorithm.
+"""
+    kruskal_mst(graph::BaseGraph,
+                edges::Array{Int, 1},
+                nodes::Array{Int, 1},
+                weights::Array{Float64, 1},
+                rng=MersenneTwister(1234))::BitSet
+
+Generates and returns a minimum spanning tree from the subgraph induced
+by `edges` and `nodes`, using Kruskal's MST algorithm. The `edges` are weighted
+by `weights`.
 
 ## Note:
 The `graph` represents the entire graph of the plan, where as `edges` and
@@ -46,23 +48,30 @@ function kruskal_mst(graph::BaseGraph,
     return mst
 end
 
+"""
+    random_kruskal_mst(graph::BaseGraph,
+                       edges::Array{Int, 1},
+                       nodes::Array{Int, 1},
+                       rng=MersenneTwister(1234))::BitSet
+
+Generates and returns a random minimum spanning tree from the subgraph induced
+by `edges` and `nodes`, using Kruskal's MST algorithm.
+
+## Note:
+The `graph` represents the entire graph of the plan, where as `edges` and
+`nodes` represent only the sub-graph on which we want to draw the MST.
+
+*Arguments:*
+- graph: Underlying Graph object
+- edges: Array of edges of the sub-graph
+- nodes: Set of nodes of the sub-graph
+
+*Returns* a BitSet of edges that form a mst.
+"""
 function random_kruskal_mst(graph::BaseGraph,
                             edges::Array{Int, 1},
                             nodes::Array{Int, 1},
                             rng=MersenneTwister(1234))::BitSet
-    """Generates and returns a random minimum spanning tree from the subgraph induced
-       by `edges` and `nodes`, using Kruskal's MST algorithm.
-        Note: the `graph` represents the entire graph of
-        the plan, where as `edges` and `nodes` represent only the sub-graph on
-        which we want to draw the MST.
-        Arguments:
-            graph: Underlying Graph object
-            edges: Array of edges of the subgraph
-            nodes: Array of nodes of the subgraph
-            rng: Random number generator used to generate edge weights
-        Returns:
-            mst: A set of edges that form an MST.
-    """
     weights = rand(rng, length(edges))
     return kruskal_mst(graph, edges, nodes, weights)
 end

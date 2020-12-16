@@ -189,8 +189,7 @@ function get_valid_proposal(graph::BaseGraph,
         D₁, D₂, sg_edges, sg_nodes = sample_subgraph(graph, partition, rng)
 
         for _ in 1:num_tries
-            weights = rand(rng, length(sg_edges))
-            mst_edges = weighted_kruskal_mst(graph, sg_edges, collect(sg_nodes), weights)
+            mst_edges = random_kruskal_mst(graph, sg_edges, collect(sg_nodes))
 
             # see if we can get a population-balanced cut in this mst
             proposal = get_balanced_proposal(graph, mst_edges, sg_nodes,

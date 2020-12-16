@@ -6,7 +6,7 @@ using DataStructures
 """
 
 # test random_weighted_kruskal_mst
-@testset "Kruskal MST" begin
+@testset "Random Kruskal MST" begin
     graph = BaseGraph(square_grid_filepath, "population")
 
     rng = MersenneTwister(1234)
@@ -15,8 +15,8 @@ using DataStructures
              graph.adj_matrix[5,6], graph.adj_matrix[6,7], graph.adj_matrix[7,8],
              graph.adj_matrix[1,5], graph.adj_matrix[2,6], graph.adj_matrix[3,7],
              graph.adj_matrix[4,8]]
-    weights = rand(rng, length(edges))
-    mst = weighted_kruskal_mst(graph, edges, nodes, weights, rng)
+
+    mst = random_kruskal_mst(graph, edges, nodes, rng)
     @test length(mst) == length(nodes) - 1
     @test begin # are there loops in the tree?
         # find by union-find algorithm

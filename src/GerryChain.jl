@@ -58,6 +58,7 @@ score_boxplot, score_histogram
 
 include("./graph.jl")
 include("./partition.jl")
+include("./balance_edges.jl")
 include("./geo.jl")
 include("./proposals.jl")
 include("./constraints.jl")

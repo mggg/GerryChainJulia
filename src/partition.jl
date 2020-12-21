@@ -7,6 +7,8 @@ mutable struct Partition
     dist_adj::SparseMatrixCSC{Int, Int}
     dist_nodes::Array{BitSet}
     parent::Union{Partition, Nothing}           # optional parent partition
+    weight::Float64
+    chain_meta::Union{Dict, Nothing}
 end
 
 """
@@ -40,8 +42,8 @@ function Partition(graph::BaseGraph,
     dist_nodes = get_district_nodes(assignments, graph.num_nodes, num_districts)
 
     # return Partition with no parent by default
-    return Partition(num_districts, num_cut_edges, assignments, dist_populations,
-                     cut_edges, dist_adj, dist_nodes, nothing)
+    return Partition(num_districts, num_cut_edges, assignments, dist_populations, cut_edges,
+                     dist_adj, dist_nodes, nothing, 1, nothing)
 end
 
 """
@@ -172,14 +174,14 @@ function sample_adjacent_districts_randomly(partition::Partition,
 end
 
 """
-    update_partition_adjacency(partition::Partition,
-                               graph::BaseGraph)
+    update_partition_adjacency!(partition::Partition,
+                                graph::BaseGraph)
 
 Updates the district adjacency matrix and cut edges
 to reflect the partition's assignments for each node.
 """
-function update_partition_adjacency(partition::Partition,
-                                    graph::BaseGraph)
+function update_partition_adjacency!(partition::Partition,
+                                     graph::BaseGraph)
     partition.dist_adj = spzeros(Int, partition.num_dists, partition.num_dists)
     partition.num_cut_edges = 0
 
@@ -198,3 +200,10 @@ function update_partition_adjacency(partition::Partition,
         end
     end
 end
+
+function update_partition_weight!(partition::Partition,
+                                  weight::Float64)
+    """Updates a partition's weight (1 by default)."""
+    partition.weight = weight
+end
+

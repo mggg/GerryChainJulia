@@ -27,8 +27,7 @@ The `graph` represents the entire graph of the plan, where as `edges` and
 function kruskal_mst(graph::BaseGraph,
                      edges::Array{Int, 1},
                      nodes::Array{Int, 1},
-                     weights::Array{Float64, 1},
-                     rng=MersenneTwister(1234))::BitSet
+                     weights::Array{Float64, 1})::BitSet
     num_nodes = length(nodes)
 
     # sort the edges arr by their weights

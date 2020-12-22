@@ -1,6 +1,3 @@
-using LightGraphs
-using Random
-using DataStructures
 
 """ Refer to test/graph.jl to see the test graph being loaded
 """
@@ -32,4 +29,33 @@ using DataStructures
         end
         !cycle_found
     end
+
+
+
+end
+
+@testset "Correctness of MST" begin
+    graph = BaseGraph(square_grid_filepath, "population")
+
+    nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    heavy_edges = [Edge(1, 2), Edge(2, 3), Edge(3, 4), Edge(4, 8),
+                   Edge(7, 8), Edge(6, 7), Edge(5, 6), Edge(5, 9),
+                   Edge(9, 10), Edge(10, 11), Edge(11, 12), Edge(12, 16),
+                   Edge(15, 16), Edge(14, 15), Edge(13, 14)]
+
+    is = Array{Int}([]) # store edge indices
+    weights = Array{Float64}([])
+    correct_mst = BitSet()
+
+    for (i, e) in enumerate(LightGraphs.edges(graph.simple_graph))
+        push!(is, i)
+        if e in heavy_edges
+            push!(weights, 0.0)
+            push!(correct_mst, i)
+        else
+            push!(weights, 1.0)
+        end
+    end
+
+    @test correct_mst == GerryChain.kruskal_mst(graph, is, nodes, weights)
 end

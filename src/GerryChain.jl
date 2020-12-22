@@ -18,8 +18,11 @@ AbstractGraph, BaseGraph, Partition,
 
 get_attributes, get_populations_and_assignments, get_district_nodes,
 get_district_populations, get_district_adj_and_cut_edges,
-weighted_kruskal_mst, get_subgraph_population,
+get_subgraph_population,
 induced_subgraph_edges, update_partition_adjacency,
+
+# balance edges
+random_kruskal_mst, 
 
 # proposals
 RecomProposal, FlipProposal, DummyProposal,
@@ -58,6 +61,7 @@ score_boxplot, score_histogram
 
 include("./graph.jl")
 include("./partition.jl")
+include("./balance_edges.jl")
 include("./geo.jl")
 include("./proposals.jl")
 include("./constraints.jl")

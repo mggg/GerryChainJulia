@@ -1,5 +1,6 @@
 module GerryChain
 using JSON
+using HDF5
 using SparseArrays
 using LightGraphs
 using Random

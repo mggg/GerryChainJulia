@@ -24,14 +24,16 @@ a district in a `partition` could have within `tolerance`.
 
 *Returns* the PopulationConstraint object.
 """
-function PopulationConstraint(graph::BaseGraph,
-                              partition::Partition,
-                              tolerance::Float64)::PopulationConstraint
+function PopulationConstraint(
+    graph::BaseGraph,
+    partition::Partition,
+    tolerance::Float64,
+)::PopulationConstraint
     ideal_pop = graph.total_pop / partition.num_dists
 
     # no particular reason to not use floor() instead of ceil()
-    min_pop = Int(ceil((1-tolerance) * ideal_pop))
-    max_pop = Int(floor((1+tolerance) * ideal_pop))
+    min_pop = Int(ceil((1 - tolerance) * ideal_pop))
+    max_pop = Int(floor((1 + tolerance) * ideal_pop))
     return PopulationConstraint(min_pop, max_pop)
 end
 
@@ -41,10 +43,14 @@ end
 
 Test whether a RecomProposal satisfies a population constraint.
 """
-function satisfy_constraint(constraint::PopulationConstraint,
-                            proposal::RecomProposal)
-    if proposal.D₁_pop >= constraint.min_pop && proposal.D₁_pop <= constraint.max_pop
-        if proposal.D₂_pop >= constraint.min_pop && proposal.D₂_pop <= constraint.max_pop
+function satisfy_constraint(
+    constraint::PopulationConstraint,
+    proposal::RecomProposal,
+)
+    if proposal.D₁_pop >= constraint.min_pop &&
+       proposal.D₁_pop <= constraint.max_pop
+        if proposal.D₂_pop >= constraint.min_pop &&
+           proposal.D₂_pop <= constraint.max_pop
             return true
         end
     end
@@ -58,9 +64,11 @@ end
 
 Test whether two population counts satisfy a PopulationConstraint.
 """
-function satisfy_constraint(constraint::PopulationConstraint,
-                            D₁_pop::Int,
-                            D₂_pop::Int)
+function satisfy_constraint(
+    constraint::PopulationConstraint,
+    D₁_pop::Int,
+    D₂_pop::Int,
+)
     if D₁_pop >= constraint.min_pop && D₁_pop <= constraint.max_pop
         if D₂_pop >= constraint.min_pop && D₂_pop <= constraint.max_pop
             return true
@@ -79,13 +87,18 @@ Test whether a FlipProposal satisfies the contiguity constraint.
 Based on Parker's implementation on GitHub, located in the Flips.jl
 repository at src/constraints.jl.
 """
-function satisfy_constraint(constraint::ContiguityConstraint,
-                            graph::BaseGraph,
-                            partition::Partition,
-                            flip::FlipProposal)
+function satisfy_constraint(
+    constraint::ContiguityConstraint,
+    graph::BaseGraph,
+    partition::Partition,
+    flip::FlipProposal,
+)
     # get node's neighbors who were in its old district
-    neighbors = [n for n in graph.neighbors[flip.node]
-                 if partition.assignments[n] == flip.D₁]
+    neighbors = [
+        n
+        for
+        n in graph.neighbors[flip.node] if partition.assignments[n] == flip.D₁
+    ]
     if isempty(neighbors) # this is the only node of this district left!
         return false
     end
@@ -105,9 +118,11 @@ function satisfy_constraint(constraint::ContiguityConstraint,
                 break
             end
             for neighbor in graph.neighbors[curr_node]
-                if (!visited[neighbor] &&
+                if (
+                    !visited[neighbor] &&
                     partition.assignments[neighbor] == flip.D₁ &&
-                    neighbor != flip.node)
+                    neighbor != flip.node
+                )
                     visited[neighbor] = true
                     enqueue!(queue, neighbor)
                 end

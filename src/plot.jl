@@ -39,36 +39,59 @@ scores throughout the chain. Intended for use with district-level scores
 
 *Returns* a MatPlotLib Axis object with the boxplot.
 """
-function score_boxplot(score_values::Array{S, 2};
-                       sort_by_score::Bool=true,
-                       label::String="GerryChain",
-                       comparison_scores::Array=[],
-                       ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number}
+function score_boxplot(
+    score_values::Array{S,2};
+    sort_by_score::Bool = true,
+    label::String = "GerryChain",
+    comparison_scores::Array = [],
+    ax::Union{Nothing,PyPlot.PyObject} = nothing,
+) where {S<:Number}
     if isnothing(ax)
         _, ax = plt.subplots()
     end
     if sort_by_score
         # within every step of the chain (i.e., within each row),
         # sort districts by value of the score
-        score_values = sort(score_values, dims=2)
+        score_values = sort(score_values, dims = 2)
         # sort columns by median value of score
-        score_values = sortslices(score_values, dims=2, lt=(x,y) -> isless(median(x), median(y)))
+        score_values = sortslices(
+            score_values,
+            dims = 2,
+            lt = (x, y) -> isless(median(x), median(y)),
+        )
     end
     # plot GerryChain boxplots
-    medianprops=Dict("color" => "black") # make sure median line is black
-    ax.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
+    medianprops = Dict("color" => "black") # make sure median line is black
+    ax.boxplot(
+        score_values,
+        showcaps = true,
+        showbox = true,
+        showfliers = false,
+        medianprops = medianprops,
+    )
     ax.set_xlabel("Indexed districts")
     if length(comparison_scores) > 0
         # inserts a legend entry that shows the "GerryChain" label next to a
         # marker that looks like a boxplot
-        ax.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
+        ax.plot(
+            [],
+            [],
+            color = "k",
+            marker = "s",
+            markerfacecolor = "white",
+            markersize = 15,
+            label = label,
+        )
         # iterate through the comparison scores and plot them one by one
         for p in comparison_scores
-            if !(p isa Tuple) || length(p) != 2 || !(p[1] isa String) || !(typeof(p[2]) <: AbstractArray)
+            if !(p isa Tuple) ||
+               length(p) != 2 ||
+               !(p[1] isa String) ||
+               !(typeof(p[2]) <: AbstractArray)
                 throw(ArgumentError("Scores of comparison plans must be passed as tuples with structure (name of plan, [scores for each district])."))
             end
             plan_score_vals = sort_by_score ? sort(p[2]) : p[2]
-            ax.scatter(1:length(p[2]), plan_score_vals, label=p[1])
+            ax.scatter(1:length(p[2]), plan_score_vals, label = p[1])
         end
         ax.legend()
     end
@@ -104,25 +127,44 @@ chain. Intended for use with plan-level scores.
 
 *Returns* a MatPlotLib Axis object with the boxplot.
 """
-function score_boxplot(score_values::Array{S, 1};
-                       label::String="GerryChain",
-                       comparison_scores::Array=[],
-                       ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number}
+function score_boxplot(
+    score_values::Array{S,1};
+    label::String = "GerryChain",
+    comparison_scores::Array = [],
+    ax::Union{Nothing,PyPlot.PyObject} = nothing,
+) where {S<:Number}
     if isnothing(ax)
         _, ax = plt.subplots()
     end
-    medianprops=Dict("color" => "black") # make sure median line is black
-    ax.boxplot(score_values, showcaps=true, showbox=true, showfliers=false, medianprops=medianprops)
+    medianprops = Dict("color" => "black") # make sure median line is black
+    ax.boxplot(
+        score_values,
+        showcaps = true,
+        showbox = true,
+        showfliers = false,
+        medianprops = medianprops,
+    )
     if length(comparison_scores) > 0
         # inserts a legend entry that shows the "GerryChain" label next to a
         # marker that looks like a boxplot
-        ax.plot([], [], color="k", marker="s", markerfacecolor="white", markersize=15, label=label)
+        ax.plot(
+            [],
+            [],
+            color = "k",
+            marker = "s",
+            markerfacecolor = "white",
+            markersize = 15,
+            label = label,
+        )
         # iterate through the comparison scores and plot them one by one
         for p in comparison_scores
-            if !(p isa Tuple) || length(p) != 2 || !(p[1] isa String) || !(typeof(p[2]) <: Number)
+            if !(p isa Tuple) ||
+               length(p) != 2 ||
+               !(p[1] isa String) ||
+               !(typeof(p[2]) <: Number)
                 throw(ArgumentError("Scores of comparison plans must be passed as tuples with structure (name of plan, score of plan)."))
             end
-            ax.scatter(1, p[2], label=p[1])
+            ax.scatter(1, p[2], label = p[1])
         end
         ax.legend()
     end
@@ -147,13 +189,17 @@ the chain.
 
 *Returns* a MatPlotLib Axis object with the boxplot.
 """
-function score_boxplot(chain_data::ChainScoreData,
-                       score_name::String; kwargs...)
+function score_boxplot(
+    chain_data::ChainScoreData,
+    score_name::String;
+    kwargs...,
+)
     score, nested_key = get_score_by_name(chain_data, score_name)
     if score isa CompositeScore
         throw(ArgumentError("Cannot make a boxplot of a CompositeScore"))
     end
-    score_vals = get_score_values(chain_data.step_values, score, nested_key=nested_key)
+    score_vals =
+        get_score_values(chain_data.step_values, score, nested_key = nested_key)
     ax = score_boxplot(score_vals; kwargs...)
     ax.set_ylabel(score_name)
     return ax
@@ -187,25 +233,33 @@ Only applicable for scores of type PlanScore.
 
 *Returns* a MatPlotLib Axis object with the histogram.
 """
-function score_histogram(score_values::Array{S, 1};
-                         comparison_scores::Array=[],
-                         bins::Union{Nothing, Int, Vector}=nothing,
-                         range::Union{Nothing, Tuple}=nothing,
-                         density::Bool=false,
-                         rwidth::Union{Nothing, T}=nothing,
-                         ax::Union{Nothing, PyPlot.PyObject}=nothing) where {S<:Number, T<:Number}
+function score_histogram(
+    score_values::Array{S,1};
+    comparison_scores::Array = [],
+    bins::Union{Nothing,Int,Vector} = nothing,
+    range::Union{Nothing,Tuple} = nothing,
+    density::Bool = false,
+    rwidth::Union{Nothing,T} = nothing,
+    ax::Union{Nothing,PyPlot.PyObject} = nothing,
+) where {S<:Number,T<:Number}
     # plot GerryChain histogram
     if isnothing(ax)
         _, ax = plt.subplots()
     end
-    ax.hist(score_values, bins=bins, range=range, density=density, rwidth=rwidth)
+    ax.hist(
+        score_values,
+        bins = bins,
+        range = range,
+        density = density,
+        rwidth = rwidth,
+    )
     if length(comparison_scores) > 0
         # cycle through colors so vertical lines do not appear all blue
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         color_index = 1
         for p in comparison_scores
-            color = colors[color_index % length(colors) + 1] # ensure that we don't go out of bounds
-            ax.axvline(p[2], color=color, label=p[1])
+            color = colors[color_index%length(colors)+1] # ensure that we don't go out of bounds
+            ax.axvline(p[2], color = color, label = p[1])
             color_index += 1
         end
         ax.legend()
@@ -230,14 +284,18 @@ Only applicable for scores of type PlanScore.
 
 *Returns* a MatPlotLib Axis object with the histogram.
 """
-function score_histogram(chain_data::ChainScoreData,
-                         score_name::String; kwargs...)
+function score_histogram(
+    chain_data::ChainScoreData,
+    score_name::String;
+    kwargs...,
+)
     score, nested_key = get_score_by_name(chain_data, score_name)
     # throw argument error if score passed was not a PlanScore
     if !(score isa PlanScore)
         throw(ArgumentError("Can only create histogram plot of a PlanScore"))
     end
-    score_vals = get_score_values(chain_data.step_values, score, nested_key=nested_key)
+    score_vals =
+        get_score_values(chain_data.step_values, score, nested_key = nested_key)
     ax = score_histogram(score_vals; kwargs...)
     ax.set_ylabel("Frequency")
     ax.set_xlabel(score_name)

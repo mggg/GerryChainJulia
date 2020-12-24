@@ -705,6 +705,20 @@ end
 
 
 """
+    save_scores_to_hdf5(filename::String,
+                        chain_data::ChainScoreData,
+                        score_names::Array{String,1}=String[])
+
+Save the `scores` in a hdf5 file named `filename`.
+"""
+function save_scores_to_hdf5(filename::String,
+                             chain_data::ChainScoreData,
+                             score_names::Array{String,1}=String[])
+    
+end
+
+
+"""
     num_cut_edges(name::String)::PlanScore
 
 Returns a `PlanScore` that tracks the number of cut edges in a particular plan.

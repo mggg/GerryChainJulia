@@ -673,34 +673,34 @@ function save_scores_to_csv(filename::String,
  end
 
 
- """
-     save_scores_to_json(filename::String,
-                         chain_data::ChainScoreData,
-                         score_names::Array{String,1}=String[])
+"""
+    save_scores_to_json(filename::String,
+                        chain_data::ChainScoreData,
+                        score_names::Array{String,1}=String[])
 
- Save the `scores` in a JSON file named `filename`.
- """
- function save_scores_to_json(filename::String,
-                              chain_data::ChainScoreData,
-                              score_names::Array{String,1}=String[])
-     open(filename, "w") do f
-         if isempty(score_names) # by default, export all scores from chain
-             score_names = flattened_score_names(chain_data)
-         end
+Save the `scores` in a JSON file named `filename`.
+"""
+function save_scores_to_json(filename::String,
+                             chain_data::ChainScoreData,
+                             score_names::Array{String,1}=String[])
+    open(filename, "w") do f
+        if isempty(score_names) # by default, export all scores from chain
+            score_names = flattened_score_names(chain_data)
+        end
 
-         # iterate through all steps of chain
-         query = ChainScoreQuery(score_names, chain_data)
-         first_entry = true
-         # note that we manually write the brackets and commas because the point
-         # of writing the scores to the file row-by-row is that we never hold
-         # the entire array of scores in main memory. this may be brittle!
-         println(f, "[")
-         for step_values in query
-             first_entry ? first_entry = false : print(f, ",\n")
-             print(f, JSON.json(step_values))
-         end
-         print(f, "\n]")
-     end
+        # iterate through all steps of chain
+        query = ChainScoreQuery(score_names, chain_data)
+        first_entry = true
+        # note that we manually write the brackets and commas because the point
+        # of writing the scores to the file row-by-row is that we never hold
+        # the entire array of scores in main memory. this may be brittle!
+        println(f, "[")
+        for step_values in query
+            first_entry ? first_entry = false : print(f, ",\n")
+            print(f, JSON.json(step_values))
+        end
+        print(f, "\n]")
+    end
 end
 
 

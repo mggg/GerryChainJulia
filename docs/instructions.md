@@ -6,6 +6,7 @@ a doc-string, you should add the doc-string _before_ the function. Lets say you
 have a function that adds two numbers. You would want to add documentation in the
 following way:
 
+````
 """
     MyAdd(arg₁::Int,
           arg₂::Int)::Int
@@ -16,7 +17,7 @@ MyAdd(arg₁::Int,
       arg₂::Int)::Int
     arg₁ + arg₂
 end
-
+````
 The doc-string inside the tripe quotation marks will render as MarkDown, so you
 can also use other MarkDown styles like _italics_ or **bold** there if you want.
 
@@ -26,9 +27,11 @@ want to add documentation of `your_function()` to `doc_file.md`. Then, you would
 go to `docs/src/doc_file.md` and add the documentation where you would want it
 to appear like this:
 
+````
 ```@docs
 save_scores_to_json
 ```
+````
 
 That's it! You might want to add something more about this function, which you
 could add simply as MarkDown text underneath it. Please check out any of the

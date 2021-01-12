@@ -4,6 +4,7 @@ import LibSpatialIndex
 using Test
 using LightGraphs
 using JSON
+using HDF5
 using Logging
 
 const testdir = dirname(@__FILE__)

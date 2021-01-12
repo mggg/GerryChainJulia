@@ -673,34 +673,91 @@ function save_scores_to_csv(filename::String,
  end
 
 
- """
-     save_scores_to_json(filename::String,
-                         chain_data::ChainScoreData,
-                         score_names::Array{String,1}=String[])
+"""
+    save_scores_to_json(filename::String,
+                        chain_data::ChainScoreData,
+                        score_names::Array{String,1}=String[])
 
- Save the `scores` in a JSON file named `filename`.
- """
- function save_scores_to_json(filename::String,
-                              chain_data::ChainScoreData,
-                              score_names::Array{String,1}=String[])
-     open(filename, "w") do f
-         if isempty(score_names) # by default, export all scores from chain
-             score_names = flattened_score_names(chain_data)
-         end
+Save the `scores` in a JSON file named `filename`.
+"""
+function save_scores_to_json(filename::String,
+                             chain_data::ChainScoreData,
+                             score_names::Array{String,1}=String[])
+    open(filename, "w") do f
+        if isempty(score_names) # by default, export all scores from chain
+            score_names = flattened_score_names(chain_data)
+        end
 
-         # iterate through all steps of chain
-         query = ChainScoreQuery(score_names, chain_data)
-         first_entry = true
-         # note that we manually write the brackets and commas because the point
-         # of writing the scores to the file row-by-row is that we never hold
-         # the entire array of scores in main memory. this may be brittle!
-         println(f, "[")
-         for step_values in query
-             first_entry ? first_entry = false : print(f, ",\n")
-             print(f, JSON.json(step_values))
-         end
-         print(f, "\n]")
-     end
+        # iterate through all steps of chain
+        query = ChainScoreQuery(score_names, chain_data)
+        first_entry = true
+        # note that we manually write the brackets and commas because the point
+        # of writing the scores to the file row-by-row is that we never hold
+        # the entire array of scores in main memory. this may be brittle!
+        println(f, "[")
+        for step_values in query
+            first_entry ? first_entry = false : print(f, ",\n")
+            print(f, JSON.json(step_values))
+        end
+        print(f, "\n]")
+    end
+end
+
+
+"""
+    save_scores_to_hdf5(filename::String,
+                        chain_data::ChainScoreData,
+                        score_names::Array{String,1}=String[])
+
+Save the `scores` in a hdf5 file named `filename`.
+"""
+function save_scores_to_hdf5(filename::String,
+                             chain_data::ChainScoreData,
+                             score_names::Array{String,1}=String[])
+    h5open(filename, "w") do f
+        if isempty(score_names) # by default, export all scores from chain
+            score_names = flattened_score_names(chain_data)
+        end
+
+        nested_keys = Dict{String, String}() # map score key to nested key, if any
+        # check for CompositeScores, which can't be saved to HDF5
+        for score_name in score_names
+            score, nested_key = get_score_by_name(chain_data, score_name)
+            if score isa CompositeScore
+                throw(ArgumentError("Cannot automatically save a CompositeScore to HDF5. You may save a CompositeScore's child score."))
+            end
+            if !isnothing(nested_key)
+                nested_keys[score_name] = nested_key
+            end
+        end
+
+        query = ChainScoreQuery(score_names, chain_data)
+        scores_datasets = Dict{String, Any}()
+        num_steps = length(chain_data.step_values)
+        for (idx, step_values) in enumerate(query)
+            for key in score_names
+                # fetch the data
+                data = nothing
+                if haskey(nested_keys, key)
+                    nested_key = nested_keys[key]
+                    data = step_values[nested_key][key]
+                else
+                    data = step_values[key]
+                end
+                # create the initial datasets
+                if idx == 1
+                    scores_datasets[key] = d_create(
+                        f,
+                        key,
+                        datatype(data),
+                        dataspace(num_steps, length(data)),
+                    )
+                end
+                # write the data to the hdf5 file
+                scores_datasets[key][idx, :] = data
+            end
+        end
+    end
 end
 
 

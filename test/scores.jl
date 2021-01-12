@@ -312,6 +312,44 @@
         close(tio)
     end
 
+    @testset "save_scores_to_hdf5()" begin
+        partition = Partition(graph, "assignment")
+        # initialize scores
+        all_scores = Array{Dict{String, Any}, 1}()
+        votes_d = DistrictAggregate("electionD")
+        votes_r = DistrictAggregate("electionR")
+        scores = [
+            DistrictAggregate("purple"),
+            num_cut_edges("cut_edges"),
+            CompositeScore("votes", [votes_d, votes_r])
+        ]
+        chain_data = ChainScoreData(scores, [])
+        # get scores for initial plan
+        init_score_vals = score_initial_partition(graph, partition, scores)
+        push!(chain_data.step_values, init_score_vals)
+
+        # generate RecomProposal, update partition, and generate new set of scores
+        proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
+        update_partition!(partition, graph, proposal)
+        step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+        push!(chain_data.step_values, step_score_vals)
+
+        # get complete score dictionaries
+        complete_score_vals = [init_score_vals, score_initial_partition(graph, partition, scores)]
+        (fname, tio) = mktemp()
+        # check that return values look correct
+        save_scores_to_hdf5(fname, chain_data)
+        HDF5.h5open(fname, "r") do f
+            for i in 1:length(chain_data.step_values)
+                @test read(f["purple"])[i, :] == complete_score_vals[i]["purple"]
+                @test read(f["cut_edges"])[i] == complete_score_vals[i]["cut_edges"]
+                @test read(f["electionD"])[i, :] == complete_score_vals[i]["votes"]["electionD"]
+                @test read(f["electionR"])[i, :] == complete_score_vals[i]["votes"]["electionR"]
+            end
+        end
+        close(tio)
+    end
+
     @testset "Type Coercions" begin
         graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")

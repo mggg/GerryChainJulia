@@ -1,5 +1,6 @@
 module GerryChain
 using JSON
+using HDF5
 using SparseArrays
 using LightGraphs
 using Random
@@ -22,7 +23,7 @@ get_subgraph_population,
 induced_subgraph_edges, update_partition_adjacency,
 
 # balance edges
-random_kruskal_mst, 
+random_kruskal_mst,
 
 # proposals
 RecomProposal, FlipProposal, DummyProposal,
@@ -47,7 +48,8 @@ AbstractScore,
 ChainScoreData,
 score_initial_partition, score_partition_from_proposal, eval_score_on_district,
 get_scores_at_step, eval_score_on_partition, save_scores_to_csv,
-save_scores_to_json, get_score_values, num_cut_edges, coerce_aggregated_attributes!,
+save_scores_to_json, save_scores_to_hdf5, get_score_values, num_cut_edges,
+coerce_aggregated_attributes!,
 
 # acceptance functions
 always_accept, satisfies_acceptance_fn,

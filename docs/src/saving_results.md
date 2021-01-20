@@ -55,3 +55,16 @@ chain_data = recom_chain(graph, partition, pop_constraint, 10, scores)
 save_scores_to_json("test.json", chain_data) # by default will save all scores in the chain
 # alternatively, save_scores_to_json("test.json", chain_data, ["names", "of", "desired", "scores"])
 ```
+
+## Saving scores to HDF5
+```@docs
+save_scores_to_hdf5
+```
+
+**Usage**
+
+```
+chain_data = recom_chain(...)
+save_scores_to_hdf5("scores.hdf5", chain_data) # by default will save all scores in the chain
+# alternatively, save_scores_to_hdf5("scores.hdf5", chain_data, ["names", "of", "desired", "scores"])
+```

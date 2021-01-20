@@ -18,7 +18,7 @@ MyAdd(arg₁::Int,
     arg₁ + arg₂
 end
 ````
-The doc-string inside the tripe quotation marks will render as MarkDown, so you
+The doc-string inside the triple quotation marks will render as MarkDown, so you
 can also use other MarkDown styles like _italics_ or **bold** there if you want.
 
 ### Rendering the doc-string in the documentation page
@@ -46,7 +46,7 @@ make a Pull Request. To do that:
 3. Enter `python -m http.server --bind localhost` . This will run a local server
    that hosts the documentation.
 4. The terminal should say that the documentation is being served at some port number.
-   Use your favorite browser to go to that port (for eg, it looks like `localhost:8000`.
+   Use your favorite browser to go to that port (e.g., `localhost:8000`.
    Enter that into the url.)
 5. Go to `docs/build/`. You should be able to see what the updated documentation looks like!
 

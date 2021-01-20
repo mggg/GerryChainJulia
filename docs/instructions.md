@@ -29,7 +29,7 @@ to appear like this:
 
 ````
 ```@docs
-save_scores_to_json
+your_function()
 ```
 ````
 

@@ -746,7 +746,7 @@ function save_scores_to_hdf5(filename::String,
                 end
                 # create the initial datasets
                 if idx == 1
-                    scores_datasets[key] = d_create(
+                    scores_datasets[key] = create_dataset(
                         f,
                         key,
                         datatype(data),

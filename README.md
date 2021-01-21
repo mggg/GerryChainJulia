@@ -1,6 +1,6 @@
 # GerryChain
 
-[![Build Status](https://api.travis-ci.com/mggg/GerryChainJulia.svg?branch=main)](https://travis-ci.com/mggg/GerryChainJulia)
+![Build and Test status](https://github.com/mggg/GerryChainJulia/workflows/Build%20and%20Test/badge.svg)
 [![Code Coverage](https://codecov.io/gh/mggg/GerryChainJulia/branch/main/graph/badge.svg)](https://codecov.io/gh/mggg/GerryChainJulia/branch/main)
 [![DOI](https://zenodo.org/badge/239854101.svg)](https://zenodo.org/badge/latestdoi/239854101)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mggg.github.io/GerryChainJulia/stable)

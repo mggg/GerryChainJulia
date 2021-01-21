@@ -23,7 +23,7 @@ tests = [
     "scores",
     "accept",
     "election",
-    "plot"
+    "plot",
 ]
 
 @testset "GerryChainJulia" begin

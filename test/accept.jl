@@ -4,7 +4,7 @@
 
     inval_acc_fn_1(p) = "hi"
     inval_acc_fn_2(p) = -3
-    inval_acc_fn_3(x,y) = x*y
+    inval_acc_fn_3(x, y) = x * y
     always_pass(p) = 1.0
     always_fail(p) = 0.0
 

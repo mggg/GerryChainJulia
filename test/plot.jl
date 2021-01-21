@@ -9,15 +9,15 @@
     scores = [
         DistrictAggregate("electionD"),
         DistrictAggregate("electionR"),
-        ElectionTracker(election, [efficiency_gap("e_gap", election, "electionD")])
+        ElectionTracker(election, [efficiency_gap("e_gap", election, "electionD")]),
     ]
     num_steps = 10
     chain_data = recom_chain(graph, partition, pop_constraint, num_steps, scores)
 
     @testset "score_boxplot()" begin
-        function boxplot_district_score(ax=nothing)
+        function boxplot_district_score(ax = nothing)
             try
-                score_boxplot(chain_data, "electionD", ax=ax)
+                score_boxplot(chain_data, "electionD", ax = ax)
             catch ex
                 return ex
             end
@@ -38,9 +38,9 @@
     end
 
     @testset "score_histogram()" begin
-        function histogram_no_comparison(ax=nothing)
+        function histogram_no_comparison(ax = nothing)
             try
-                score_histogram(chain_data, "e_gap", ax=ax)
+                score_histogram(chain_data, "e_gap", ax = ax)
             catch ex
                 return ex
             end
@@ -48,7 +48,7 @@
 
         function histogram_with_comparison()
             try
-                score_histogram(chain_data, "e_gap", comparison_scores=[("abc", 0.05)])
+                score_histogram(chain_data, "e_gap", comparison_scores = [("abc", 0.05)])
             catch ex
                 return ex
             end

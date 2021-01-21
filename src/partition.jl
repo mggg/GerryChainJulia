@@ -1,12 +1,12 @@
 mutable struct Partition
     num_dists::Int
     num_cut_edges::Int
-    assignments::Array{Int, 1}                  # of length(num_nodes)
-    dist_populations::Array{Int, 1}             # of length(num_districts)
-    cut_edges::Array{Int, 1}                    # of length(num_edges)
-    dist_adj::SparseMatrixCSC{Int, Int}
+    assignments::Array{Int,1}                  # of length(num_nodes)
+    dist_populations::Array{Int,1}             # of length(num_districts)
+    cut_edges::Array{Int,1}                    # of length(num_edges)
+    dist_adj::SparseMatrixCSC{Int,Int}
     dist_nodes::Array{BitSet}
-    parent::Union{Partition, Nothing}           # optional parent partition
+    parent::Union{Partition,Nothing}           # optional parent partition
 end
 
 """
@@ -23,9 +23,8 @@ change our plan.
 - assignment_col: the key denoting the district assignment at the
                   node level
 """
-function Partition(graph::BaseGraph,
-                   assignment_col::AbstractString)::Partition
-    populations =  graph.populations
+function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
+    populations = graph.populations
     assignments = get_assignments(graph.attributes, assignment_col)
     num_districts = length(Set(assignments))
 
@@ -34,14 +33,23 @@ function Partition(graph::BaseGraph,
     num_cut_edges = sum(cut_edges)
 
     # get district populations
-    dist_populations = get_district_populations(assignments, populations, graph.num_nodes, num_districts)
+    dist_populations =
+        get_district_populations(assignments, populations, graph.num_nodes, num_districts)
 
     # get district_nodes
     dist_nodes = get_district_nodes(assignments, graph.num_nodes, num_districts)
 
     # return Partition with no parent by default
-    return Partition(num_districts, num_cut_edges, assignments, dist_populations,
-                     cut_edges, dist_adj, dist_nodes, nothing)
+    return Partition(
+        num_districts,
+        num_cut_edges,
+        assignments,
+        dist_populations,
+        cut_edges,
+        dist_adj,
+        dist_nodes,
+        nothing,
+    )
 end
 
 """
@@ -54,9 +62,11 @@ it assumes every unique string assignment corresponds to to a unique
 district.
 *Returns* an Int Array of length `length(node_attributes)`.
 """
-function get_assignments(node_attributes::Array,
-                         assignment_col::AbstractString)::Array{Int, 1}
-    assignment_to_num = Dict{String, Int}() # map unique strings to integers
+function get_assignments(
+    node_attributes::Array,
+    assignment_col::AbstractString,
+)::Array{Int,1}
+    assignment_to_num = Dict{String,Int}() # map unique strings to integers
     raw_assignments = get_attribute_by_key(node_attributes, assignment_col)
     processed_assignments = zeros(length(raw_assignments))
     for (i, raw_value) in enumerate(raw_assignments)
@@ -90,11 +100,13 @@ end
 *Returns* an Array of Sets `district_nodes` where the nodes of the i'th
 district will be at `district_nodes[i]` as a Set.
 """
-function get_district_nodes(assignments::Array{Int, 1},
-                            num_nodes::Int,
-                            num_districts::Int)::Array{Set{Int}, 1}
-    district_nodes = [BitSet([]) for _ in 1:num_districts]
-    for i in 1:num_nodes
+function get_district_nodes(
+    assignments::Array{Int,1},
+    num_nodes::Int,
+    num_districts::Int,
+)::Array{Set{Int},1}
+    district_nodes = [BitSet([]) for _ = 1:num_districts]
+    for i = 1:num_nodes
         push!(district_nodes[assignments[i]], i)
     end
     return district_nodes
@@ -109,12 +121,14 @@ end
 *Returns* an Array of populations `dist_pops` where the population of
 the i'th district is at `dist_pops[i]`.
 """
-function get_district_populations(assignments::Array{Int, 1},
-                                  populations::Array{Int, 1},
-                                  num_nodes::Int,
-                                  num_districts::Int)::Array{Int, 1}
+function get_district_populations(
+    assignments::Array{Int,1},
+    populations::Array{Int,1},
+    num_nodes::Int,
+    num_districts::Int,
+)::Array{Int,1}
     district_populations = zeros(Int, num_districts)
-    for i in 1:num_nodes
+    for i = 1:num_nodes
         district_populations[assignments[i]] += populations[i]
     end
     return district_populations
@@ -131,9 +145,11 @@ end
 - cut\\_edges:    an Array of size(num\\_edges) where i'th element is 1
                 if edge `i` is a cut\\_edge, 0 otherwise
 """
-function get_district_adj_and_cut_edges(graph::BaseGraph,
-                                        assignments::Array{Int, 1},
-                                        num_districts::Int)
+function get_district_adj_and_cut_edges(
+    graph::BaseGraph,
+    assignments::Array{Int,1},
+    num_districts::Int,
+)
     district_adj = zeros(Int, num_districts, num_districts)
     num_edges = ne(graph.simple_graph)
     cut_edges = zeros(Int, graph.num_edges)
@@ -160,8 +176,7 @@ end
 
 Randomly sample two adjacent districts and return them.
 """
-function sample_adjacent_districts_randomly(partition::Partition,
-                                            rng::AbstractRNG)
+function sample_adjacent_districts_randomly(partition::Partition, rng::AbstractRNG)
     while true
         D₁ = rand(rng, 1:partition.num_dists)
         D₂ = rand(rng, 1:partition.num_dists)
@@ -178,12 +193,11 @@ end
 Updates the district adjacency matrix and cut edges
 to reflect the partition's assignments for each node.
 """
-function update_partition_adjacency(partition::Partition,
-                                    graph::BaseGraph)
+function update_partition_adjacency(partition::Partition, graph::BaseGraph)
     partition.dist_adj = spzeros(Int, partition.num_dists, partition.num_dists)
     partition.num_cut_edges = 0
 
-    for i=1:graph.num_edges
+    for i = 1:graph.num_edges
         src_assignment = partition.assignments[graph.edge_src[i]]
         dst_assignment = partition.assignments[graph.edge_dst[i]]
 

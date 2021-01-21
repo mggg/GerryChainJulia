@@ -1,17 +1,15 @@
 @testset "Population Constraint" begin
     graph = BaseGraph(square_grid_filepath, "population")
     partition = Partition(graph, "assignment")
-    pop_constraint = PopulationConstraint(graph, partition,  0.1)
+    pop_constraint = PopulationConstraint(graph, partition, 0.1)
 
-    balanced_proposal = RecomProposal(1, 3, 40, 42,
-                                      BitSet([1, 2, 6]),
-                                      BitSet([5, 9, 10, 13, 14]))
+    balanced_proposal =
+        RecomProposal(1, 3, 40, 42, BitSet([1, 2, 6]), BitSet([5, 9, 10, 13, 14]))
 
     @test satisfy_constraint(pop_constraint, balanced_proposal)
 
-    unbalanced_proposal = RecomProposal(1, 3, 61, 21,
-                                        BitSet([1, 2, 5, 6, 9]),
-                                        BitSet([10, 13, 14]))
+    unbalanced_proposal =
+        RecomProposal(1, 3, 61, 21, BitSet([1, 2, 5, 6, 9]), BitSet([10, 13, 14]))
 
     @test !satisfy_constraint(pop_constraint, unbalanced_proposal)
 
@@ -23,15 +21,13 @@ end
     graph = BaseGraph(cols_grid_filepath, "population")
     partition = Partition(graph, "assignment")
     cont_constraint = ContiguityConstraint()
-    discont_proposal = FlipProposal(5, 1, 0, 30, 42,
-                                    BitSet([1, 9, 13]),
-                                    BitSet([0, 4, 5, 8, 12]))
+    discont_proposal =
+        FlipProposal(5, 1, 0, 30, 42, BitSet([1, 9, 13]), BitSet([0, 4, 5, 8, 12]))
 
     @test !satisfy_constraint(cont_constraint, graph, partition, discont_proposal)
 
-    cont_proposal = FlipProposal(1, 1, 0, 30, 42,
-                                 BitSet([5, 9, 13]),
-                                 BitSet([0, 1, 4, 8, 12]))
+    cont_proposal =
+        FlipProposal(1, 1, 0, 30, 42, BitSet([5, 9, 13]), BitSet([0, 1, 4, 8, 12]))
 
     @test satisfy_constraint(cont_constraint, graph, partition, cont_proposal)
 end

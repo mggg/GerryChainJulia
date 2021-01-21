@@ -8,10 +8,18 @@
 
     rng = MersenneTwister(1234)
     nodes = [1, 2, 3, 4, 5, 6, 7, 8]
-    edges = [graph.adj_matrix[1,2], graph.adj_matrix[2,3], graph.adj_matrix[3,4],
-             graph.adj_matrix[5,6], graph.adj_matrix[6,7], graph.adj_matrix[7,8],
-             graph.adj_matrix[1,5], graph.adj_matrix[2,6], graph.adj_matrix[3,7],
-             graph.adj_matrix[4,8]]
+    edges = [
+        graph.adj_matrix[1, 2],
+        graph.adj_matrix[2, 3],
+        graph.adj_matrix[3, 4],
+        graph.adj_matrix[5, 6],
+        graph.adj_matrix[6, 7],
+        graph.adj_matrix[7, 8],
+        graph.adj_matrix[1, 5],
+        graph.adj_matrix[2, 6],
+        graph.adj_matrix[3, 7],
+        graph.adj_matrix[4, 8],
+    ]
 
     mst = random_kruskal_mst(graph, edges, nodes, rng)
     @test length(mst) == length(nodes) - 1
@@ -38,10 +46,23 @@ end
     graph = BaseGraph(square_grid_filepath, "population")
 
     nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    heavy_edges = [Edge(1, 2), Edge(2, 3), Edge(3, 4), Edge(4, 8),
-                   Edge(7, 8), Edge(6, 7), Edge(5, 6), Edge(5, 9),
-                   Edge(9, 10), Edge(10, 11), Edge(11, 12), Edge(12, 16),
-                   Edge(15, 16), Edge(14, 15), Edge(13, 14)]
+    heavy_edges = [
+        Edge(1, 2),
+        Edge(2, 3),
+        Edge(3, 4),
+        Edge(4, 8),
+        Edge(7, 8),
+        Edge(6, 7),
+        Edge(5, 6),
+        Edge(5, 9),
+        Edge(9, 10),
+        Edge(10, 11),
+        Edge(11, 12),
+        Edge(12, 16),
+        Edge(15, 16),
+        Edge(14, 15),
+        Edge(13, 14),
+    ]
 
     is = Array{Int}([]) # store edge indices
     weights = Array{Float64}([])

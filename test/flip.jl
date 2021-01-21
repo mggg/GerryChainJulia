@@ -35,7 +35,14 @@
 
         function run_chain()
             try
-                flip_chain(graph, partition, pop_constraint, cont_constraint, num_steps, scores)
+                flip_chain(
+                    graph,
+                    partition,
+                    pop_constraint,
+                    cont_constraint,
+                    num_steps,
+                    scores,
+                )
             catch ex
                 return ex
             end
@@ -57,14 +64,31 @@
         ]
         num_steps = 1 # test 1 step (2 states) for now
         f = accept_on_third_try()
-        chain_data = flip_chain(graph, partition, pop_constraint, cont_constraint, num_steps, scores, acceptance_fn=f)
+        chain_data = flip_chain(
+            graph,
+            partition,
+            pop_constraint,
+            cont_constraint,
+            num_steps,
+            scores,
+            acceptance_fn = f,
+        )
         @test get_scores_at_step(chain_data, 0) == get_scores_at_step(chain_data, 1)
         # acceptance function should still return 0, because the acceptance function
         # should only have been called once
         @test f(nothing) == 0.0
 
         f = accept_on_third_try() # reset f
-        chain_data = flip_chain(graph, partition, pop_constraint, cont_constraint, num_steps, scores, acceptance_fn=f, no_self_loops=true)
+        chain_data = flip_chain(
+            graph,
+            partition,
+            pop_constraint,
+            cont_constraint,
+            num_steps,
+            scores,
+            acceptance_fn = f,
+            no_self_loops = true,
+        )
         # acceptance function should now return 1, because the acceptance function
         # should have been called until it started returning 1.0
         @test f(nothing) == 1.0

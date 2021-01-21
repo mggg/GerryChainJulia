@@ -66,7 +66,7 @@ using DataStructures
     end
 
     @testset "BaseGraph from shp() - queen adjacency" begin
-        graph = BaseGraph(square_shp_filepath, "population", adjacency="queen")
+        graph = BaseGraph(square_shp_filepath, "population", adjacency = "queen")
         @test graph.num_nodes == 4
         @test graph.num_edges == 6 # queen adjacency means all 6 edges
         @test graph.total_pop == 20
@@ -100,14 +100,14 @@ using DataStructures
     end
 
     # test adjacencies
-    @test graph.adj_matrix[1,2] != 0
-    @test graph.adj_matrix[1,5] != 0
-    @test graph.adj_matrix[1,6] == 0
+    @test graph.adj_matrix[1, 2] != 0
+    @test graph.adj_matrix[1, 5] != 0
+    @test graph.adj_matrix[1, 6] == 0
 
     @testset "Graph Adjacency Symmetry" begin
-        for i in 1:graph.num_nodes
-            for j in 1:graph.num_nodes
-                @test graph.adj_matrix[i,j] == graph.adj_matrix[j,i]
+        for i = 1:graph.num_nodes
+            for j = 1:graph.num_nodes
+                @test graph.adj_matrix[i, j] == graph.adj_matrix[j, i]
             end
         end
     end
@@ -120,16 +120,16 @@ using DataStructures
     end
 
     # test the edge arrays
-    @test graph.edge_src[graph.adj_matrix[10,11]] in (10,11)
-    @test graph.edge_dst[graph.adj_matrix[11,10]] in (10,11)
-    @test graph.edge_src[graph.adj_matrix[9,13]] in (9,13)
-    @test graph.edge_dst[graph.adj_matrix[13,9]] in (13,9)
+    @test graph.edge_src[graph.adj_matrix[10, 11]] in (10, 11)
+    @test graph.edge_dst[graph.adj_matrix[11, 10]] in (10, 11)
+    @test graph.edge_src[graph.adj_matrix[9, 13]] in (9, 13)
+    @test graph.edge_dst[graph.adj_matrix[13, 9]] in (13, 9)
     @test length(graph.edge_src) == graph.num_edges
     @test length(graph.edge_dst) == graph.num_edges
 
     # test the node neighbors
-    @test sort(graph.neighbors[1]) == [2,5]
-    @test sort(graph.neighbors[6]) == [2,5, 7, 10]
+    @test sort(graph.neighbors[1]) == [2, 5]
+    @test sort(graph.neighbors[6]) == [2, 5, 7, 10]
     @test sort(graph.neighbors[14]) == [10, 13, 15]
 
     # test the simple graph

@@ -23,10 +23,12 @@ The `graph` represents the entire graph of the plan, where as `edges` and
 
 *Returns* a BitSet of edges that form a mst.
 """
-function kruskal_mst(graph::BaseGraph,
-                     edges::Array{Int, 1},
-                     nodes::Array{Int, 1},
-                     weights::Array{Float64, 1})::BitSet
+function kruskal_mst(
+    graph::BaseGraph,
+    edges::Array{Int,1},
+    nodes::Array{Int,1},
+    weights::Array{Float64,1},
+)::BitSet
     num_nodes = length(nodes)
 
     # sort the edges arr by their weights
@@ -66,10 +68,12 @@ The `graph` represents the entire graph of the plan, where as `edges` and
 
 *Returns* a BitSet of edges that form a mst.
 """
-function random_kruskal_mst(graph::BaseGraph,
-                            edges::Array{Int, 1},
-                            nodes::Array{Int, 1},
-                            rng=MersenneTwister(1234))::BitSet
+function random_kruskal_mst(
+    graph::BaseGraph,
+    edges::Array{Int,1},
+    nodes::Array{Int,1},
+    rng = MersenneTwister(1234),
+)::BitSet
     weights = rand(rng, length(edges))
     return kruskal_mst(graph, edges, nodes, weights)
 end

@@ -1,16 +1,16 @@
 abstract type AbstractGraph end
 
-struct BaseGraph<:AbstractGraph
+struct BaseGraph <: AbstractGraph
     num_nodes::Int
     num_edges::Int
     total_pop::Int
-    populations::Array{Int, 1}             # of length(num_nodes)
-    adj_matrix::SparseMatrixCSC{Int, Int}
-    edge_src::Array{Int, 1}                # of length(num_edges)
-    edge_dst::Array{Int, 1}                # of length(num_edges)
+    populations::Array{Int,1}             # of length(num_nodes)
+    adj_matrix::SparseMatrixCSC{Int,Int}
+    edge_src::Array{Int,1}                # of length(num_edges)
+    edge_dst::Array{Int,1}                # of length(num_edges)
     neighbors::Array{Array{Int64,1},1}
     simple_graph::SimpleGraph              # the base SimpleGraph, if we need it
-    attributes::Array{Dict{String, Any}}
+    attributes::Array{Dict{String,Any}}
 end
 
 """
@@ -21,8 +21,13 @@ are not found, then we throw an error.
 """
 function read_table(filepath::AbstractString)::Shapefile.Table
     prefix = splitext(filepath)[1]
-    if !(isfile(prefix * ".shp") || isfile(prefix * ".SHP")) || !(isfile(prefix * ".dbf") || isfile(prefix * ".DBF"))
-        throw(ArgumentError("Error when processing filepath as shapefile: to read a graph from a shapefile, we require a .shp and .dbf file of the same name in the same folder."))
+    if !(isfile(prefix * ".shp") || isfile(prefix * ".SHP")) ||
+       !(isfile(prefix * ".dbf") || isfile(prefix * ".DBF"))
+        throw(
+            ArgumentError(
+                "Error when processing filepath as shapefile: to read a graph from a shapefile, we require a .shp and .dbf file of the same name in the same folder.",
+            ),
+        )
     end
     return Shapefile.Table(prefix)
 end
@@ -33,7 +38,7 @@ end
 *Returns* an Array of Dictionaries. Each dictionary corresponds to one
 node in the graph.
 """
-function all_node_properties(table::Shapefile.Table)::Array{Dict{String, Any}}
+function all_node_properties(table::Shapefile.Table)::Array{Dict{String,Any}}
     properties = propertynames(table) # returns array of symbols
     string_keys = String.(properties) # convert by broadcasting
 
@@ -63,9 +68,11 @@ for each node.
                       attribute in the dictionaries)
 - process_value   :   An optional argument that processes the raw value
 """
-function get_attribute_by_key(node_attributes::Array,
-                              column_name::String,
-                              process_value::Function=identity)::Array
+function get_attribute_by_key(
+    node_attributes::Array,
+    column_name::String,
+    process_value::Function = identity,
+)::Array
     return [process_value(n[column_name]) for n in node_attributes]
 end
 
@@ -115,9 +122,11 @@ end
 
 Constructs BaseGraph from .shp file.
 """
-function graph_from_shp(filepath::AbstractString,
-                        pop_col::AbstractString,
-                        adjacency::String="rook")::BaseGraph
+function graph_from_shp(
+    filepath::AbstractString,
+    pop_col::AbstractString,
+    adjacency::String = "rook",
+)::BaseGraph
     table = read_table(filepath)
 
     attributes = all_node_properties(table)
@@ -134,12 +143,21 @@ function graph_from_shp(filepath::AbstractString,
     adj_matrix = adjacency_matrix_from_graph(graph)
     neighbors = neighbors_from_graph(graph)
 
-    populations =  get_attribute_by_key(attributes, pop_col, population_to_int)
+    populations = get_attribute_by_key(attributes, pop_col, population_to_int)
     total_pop = sum(populations)
 
-    return BaseGraph(nv(graph), ne(graph), total_pop, populations,
-                     adj_matrix, edge_src, edge_dst, neighbors,
-                     graph, attributes)
+    return BaseGraph(
+        nv(graph),
+        ne(graph),
+        total_pop,
+        populations,
+        adj_matrix,
+        edge_src,
+        edge_dst,
+        neighbors,
+        graph,
+        attributes,
+    )
 end
 
 """
@@ -186,7 +204,7 @@ Extract each node's neighbors from graph.
 """
 function neighbors_from_graph(graph::SimpleGraph)
     # each entry in adj_matrix is the edge id that connects the two nodes.
-    neighbors = [ Int[] for n in 1:nv(graph) ]
+    neighbors = [Int[] for n = 1:nv(graph)]
     for (index, edge) in enumerate(edges(graph))
         push!(neighbors[src(edge)], dst(edge))
         push!(neighbors[dst(edge)], src(edge))
@@ -213,14 +231,13 @@ end
 
 [1]: https://github.com/mggg/GerryChain/blob/c87da7e69967880abc99b781cd37468b8cb18815/gerrychain/graph/graph.py#L38
 """
-function graph_from_json(filepath::AbstractString,
-                         pop_col::AbstractString)::BaseGraph
+function graph_from_json(filepath::AbstractString, pop_col::AbstractString)::BaseGraph
     raw_graph = JSON.parsefile(filepath)
     nodes = raw_graph["nodes"]
     num_nodes = length(nodes)
 
     # get populations
-    populations =  get_attribute_by_key(nodes, pop_col, population_to_int)
+    populations = get_attribute_by_key(nodes, pop_col, population_to_int)
     total_pop = sum(populations)
 
     # Generate the base SimpleGraph.
@@ -244,9 +261,18 @@ function graph_from_json(filepath::AbstractString,
     # get attributes
     attributes = get_attributes(nodes)
 
-    return BaseGraph(num_nodes, num_edges, total_pop, populations,
-                     adj_matrix, edge_src, edge_dst, neighbors,
-                     simple_graph, attributes)
+    return BaseGraph(
+        num_nodes,
+        num_edges,
+        total_pop,
+        populations,
+        adj_matrix,
+        edge_src,
+        edge_dst,
+        neighbors,
+        simple_graph,
+        attributes,
+    )
 end
 
 """
@@ -266,16 +292,23 @@ from step to step in our Markov Chains.
 - adjacency:      (Only used if the user specifies a filepath to a .shp
                   file.) Should be either "queen" or "rook"; "rook" by default.
 """
-function BaseGraph(filepath::AbstractString,
-                   pop_col::AbstractString;
-                   adjacency::String="rook")::BaseGraph
+function BaseGraph(
+    filepath::AbstractString,
+    pop_col::AbstractString;
+    adjacency::String = "rook",
+)::BaseGraph
     extension = uppercase(splitext(filepath)[2])
     if uppercase(extension) == ".JSON"
         return graph_from_json(filepath, pop_col)
     elseif uppercase(extension) == ".SHP"
         return graph_from_shp(filepath, pop_col, adjacency)
     else
-        throw(DomainError(filepath, "Filepath must lead to valid JSON file or valid .shp/.dbf file."))
+        throw(
+            DomainError(
+                filepath,
+                "Filepath must lead to valid JSON file or valid .shp/.dbf file.",
+            ),
+        )
     end
 end
 
@@ -285,8 +318,8 @@ end
 *Returns* an array of dicts `attributes` of length `length(nodes)` where
 the attributes of the `nodes[i]` is at `attributes[i]` as a dictionary.
 """
-function get_attributes(nodes::Array{Any, 1})
-    attributes = Array{Dict{String, Any}}(undef, length(nodes))
+function get_attributes(nodes::Array{Any,1})
+    attributes = Array{Dict{String,Any}}(undef, length(nodes))
     for (index, node) in enumerate(nodes)
         attributes[index] = node
     end
@@ -300,8 +333,7 @@ end
 *Returns* a list of edges of the subgraph induced by `vlist`, which is an array
 of vertices.
 """
-function induced_subgraph_edges(graph::BaseGraph,
-                                vlist::Array{Int, 1})::Array{Int, 1}
+function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int,1})::Array{Int,1}
     allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
     induced_edges = Set{Int}()
 
@@ -326,8 +358,7 @@ end
 
 *Returns* the population of the subgraph induced by `nodes`.
 """
-function get_subgraph_population(graph::BaseGraph,
-                                 nodes::BitSet)::Int
+function get_subgraph_population(graph::BaseGraph, nodes::BitSet)::Int
     total_pop = 0
     for node in nodes
         total_pop += graph.populations[node]

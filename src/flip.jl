@@ -9,8 +9,7 @@ Proposes a random boundary flip from the partition.
 - graph:      BaseGraph
 - partition:  Partition
 """
-function propose_random_flip(graph::BaseGraph,
-                             partition::Partition)
+function propose_random_flip(graph::BaseGraph, partition::Partition)
     if partition.num_cut_edges == 0
         throw(ArgumentError("No cut edges in the districting plan"))
     end
@@ -20,7 +19,7 @@ function propose_random_flip(graph::BaseGraph,
     edge_idx = 0
     # iterate through array of bools indicating cut edge, stop at the
     # randomly chosen index-th edge
-    for i in 1:graph.num_edges
+    for i = 1:graph.num_edges
         cut_edge_tracker += partition.cut_edges[i]
         if cut_edge_tracker == cut_edge_idx
             edge_idx = i
@@ -30,7 +29,7 @@ function propose_random_flip(graph::BaseGraph,
     # randomly choose which of the nodes from the edge get flipped
     edge = (graph.edge_src[edge_idx], graph.edge_dst[edge_idx])
     index = rand((0, 1))
-    flipped_node, other_node = edge[index + 1], edge[2 - index]
+    flipped_node, other_node = edge[index+1], edge[2-index]
     node_pop = graph.populations[flipped_node]
     # old district
     D₁ = partition.assignments[flipped_node]
@@ -53,18 +52,15 @@ end
 Helper function that checks whether a proposal both (a) is population
 balanced and (b) does not break contiguity.
 """
-function is_valid(graph::BaseGraph,
-                  partition::Partition,
-                  pop_constraint::PopulationConstraint,
-                  cont_constraint::ContiguityConstraint,
-                  proposal::FlipProposal)
-    return satisfy_constraint(pop_constraint,
-                              proposal.D₂_pop,
-                              proposal.D₁_pop) &&
-           satisfy_constraint(cont_constraint,
-                              graph,
-                              partition,
-                              proposal)
+function is_valid(
+    graph::BaseGraph,
+    partition::Partition,
+    pop_constraint::PopulationConstraint,
+    cont_constraint::ContiguityConstraint,
+    proposal::FlipProposal,
+)
+    return satisfy_constraint(pop_constraint, proposal.D₂_pop, proposal.D₁_pop) &&
+           satisfy_constraint(cont_constraint, graph, partition, proposal)
 end
 
 """
@@ -76,10 +72,12 @@ end
 Returns a population balanced FlipProposal subject to a contiguity
 constraint.
 """
-function get_valid_proposal(graph::BaseGraph,
-                            partition::Partition,
-                            pop_constraint::PopulationConstraint,
-                            cont_constraint::ContiguityConstraint)
+function get_valid_proposal(
+    graph::BaseGraph,
+    partition::Partition,
+    pop_constraint::PopulationConstraint,
+    cont_constraint::ContiguityConstraint,
+)
     proposal = propose_random_flip(graph, partition)
     # continuously generate new proposals until one satisfies our constraints
     while !is_valid(graph, partition, pop_constraint, cont_constraint, proposal)
@@ -96,10 +94,12 @@ end
 
 Updates the `Partition` with the `FlipProposal`.
 """
-function update_partition!(partition::Partition,
-                           graph::BaseGraph,
-                           proposal::FlipProposal,
-                           copy_parent::Bool=false)
+function update_partition!(
+    partition::Partition,
+    graph::BaseGraph,
+    proposal::FlipProposal,
+    copy_parent::Bool = false,
+)
     if copy_parent
         partition.parent = nothing
         old_partition = deepcopy(partition)
@@ -150,22 +150,22 @@ every score at each step of the chain.
                       infinite loops if the acceptance function is never
                       satisfied!
 """
-function flip_chain(graph::BaseGraph,
-                    partition::Partition,
-                    pop_constraint::PopulationConstraint,
-                    cont_constraint::ContiguityConstraint,
-                    num_steps::Int,
-                    scores::Array{S, 1};
-                    acceptance_fn::F=always_accept,
-                    no_self_loops::Bool=false)::ChainScoreData where
-                    {F<:Function, S<:AbstractScore}
+function flip_chain(
+    graph::BaseGraph,
+    partition::Partition,
+    pop_constraint::PopulationConstraint,
+    cont_constraint::ContiguityConstraint,
+    num_steps::Int,
+    scores::Array{S,1};
+    acceptance_fn::F = always_accept,
+    no_self_loops::Bool = false,
+)::ChainScoreData where {F<:Function,S<:AbstractScore}
     steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
     chain_scores = ChainScoreData(deepcopy(scores), [first_scores])
 
     while steps_taken < num_steps
-        proposal = get_valid_proposal(graph, partition, pop_constraint,
-                                      cont_constraint)
+        proposal = get_valid_proposal(graph, partition, pop_constraint, cont_constraint)
         custom_acceptance = acceptance_fn !== always_accept
         update_partition!(partition, graph, proposal, custom_acceptance)
         if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
@@ -173,7 +173,9 @@ function flip_chain(graph::BaseGraph,
             partition = partition.parent
             # if user specifies this behavior, we do not increment the steps
             # taken if the acceptance function fails.
-            if no_self_loops continue end
+            if no_self_loops
+                continue
+            end
         end
         score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
         push!(chain_scores.step_values, score_vals)

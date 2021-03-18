@@ -210,7 +210,7 @@ function eval_score_on_district(
     try
         return score.score_fn(graph, partition.dist_nodes[district], district)
     catch e # Check if the user-specified method was constructed incorrectly
-        if !applicable(score.score_fn, graph, partition)
+        if !applicable(score.score_fn, graph, partition.dist_nodes[district], district)
             error_msg = "DistrictScore function must accept graph, array of nodes, and district index."
             throw(ArgumentError(error_msg))
         end

@@ -135,8 +135,8 @@
 
     @testset "wasted_votes()" begin
         party₁_waste, party₂_waste = wasted_votes(52.0, 50.0)
-        @test party₁_waste == 1.
-        @test party₂_waste == 50.
+        @test party₁_waste == 1.0
+        @test party₂_waste == 50.0
     end
 
     @testset "efficiency_gap()" begin

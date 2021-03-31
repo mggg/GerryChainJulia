@@ -22,7 +22,7 @@
         update_vote_counts(graph, partition, election_tracker)
 
         # just test vote counts / shares on district 1
-        @test election.vote_counts[1, 1] == 6 # votes for electionD
+        @test election.vote_counts[1, 1] == 6.0 # votes for electionD
         @test election.vote_shares[1, 2] == 0.5 # votes for electionR
     end
 
@@ -134,9 +134,9 @@
     end
 
     @testset "wasted_votes()" begin
-        party₁_waste, party₂_waste = wasted_votes(52, 50)
-        @test party₁_waste == 1
-        @test party₂_waste == 50
+        party₁_waste, party₂_waste = wasted_votes(52.0, 50.0)
+        @test party₁_waste == 1.0
+        @test party₂_waste == 50.0
     end
 
     @testset "efficiency_gap()" begin

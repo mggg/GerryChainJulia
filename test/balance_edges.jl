@@ -80,3 +80,9 @@ end
 
     @test correct_mst == GerryChain.kruskal_mst(graph, is, nodes, weights)
 end
+
+
+@testset "Memoization algorithm for finding balance edges" begin
+    graph = BaseGraph(square_grid_filepath, "population")
+
+end

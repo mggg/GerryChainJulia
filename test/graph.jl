@@ -66,7 +66,7 @@ using DataStructures
     end
 
     @testset "BaseGraph from shp() - queen adjacency" begin
-        graph = BaseGraph(square_shp_filepath, "population", adjacency="queen")
+        graph = BaseGraph(square_shp_filepath, "population", adjacency = "queen")
         @test graph.num_nodes == 4
         @test graph.num_edges == 6 # queen adjacency means all 6 edges
         @test graph.total_pop == 20
@@ -100,14 +100,14 @@ using DataStructures
     end
 
     # test adjacencies
-    @test graph.adj_matrix[1,2] != 0
-    @test graph.adj_matrix[1,5] != 0
-    @test graph.adj_matrix[1,6] == 0
+    @test graph.adj_matrix[1, 2] != 0
+    @test graph.adj_matrix[1, 5] != 0
+    @test graph.adj_matrix[1, 6] == 0
 
     @testset "Graph Adjacency Symmetry" begin
-        for i in 1:graph.num_nodes
-            for j in 1:graph.num_nodes
-                @test graph.adj_matrix[i,j] == graph.adj_matrix[j,i]
+        for i = 1:graph.num_nodes
+            for j = 1:graph.num_nodes
+                @test graph.adj_matrix[i, j] == graph.adj_matrix[j, i]
             end
         end
     end
@@ -120,16 +120,16 @@ using DataStructures
     end
 
     # test the edge arrays
-    @test graph.edge_src[graph.adj_matrix[10,11]] in (10,11)
-    @test graph.edge_dst[graph.adj_matrix[11,10]] in (10,11)
-    @test graph.edge_src[graph.adj_matrix[9,13]] in (9,13)
-    @test graph.edge_dst[graph.adj_matrix[13,9]] in (13,9)
+    @test graph.edge_src[graph.adj_matrix[10, 11]] in (10, 11)
+    @test graph.edge_dst[graph.adj_matrix[11, 10]] in (10, 11)
+    @test graph.edge_src[graph.adj_matrix[9, 13]] in (9, 13)
+    @test graph.edge_dst[graph.adj_matrix[13, 9]] in (13, 9)
     @test length(graph.edge_src) == graph.num_edges
     @test length(graph.edge_dst) == graph.num_edges
 
     # test the node neighbors
-    @test sort(graph.neighbors[1]) == [2,5]
-    @test sort(graph.neighbors[6]) == [2,5, 7, 10]
+    @test sort(graph.neighbors[1]) == [2, 5]
+    @test sort(graph.neighbors[6]) == [2, 5, 7, 10]
     @test sort(graph.neighbors[14]) == [10, 13, 15]
 
     # test the simple graph
@@ -153,33 +153,6 @@ using DataStructures
     @test get_subgraph_population(graph, BitSet([1, 2, 3, 4])) == 50
     @test get_subgraph_population(graph, BitSet([5])) == 1
     @test get_subgraph_population(graph, BitSet([1, 6, 11, 16])) == 60
-
-    # test random_weighted_kruskal_mst
-    @testset "Kruskal MST" begin
-        rng = MersenneTwister(1234)
-        nodes = [1, 2, 3, 4, 5, 6, 7, 8]
-        edges = [graph.adj_matrix[1,2], graph.adj_matrix[2,3], graph.adj_matrix[3,4],
-                 graph.adj_matrix[5,6], graph.adj_matrix[6,7], graph.adj_matrix[7,8],
-                 graph.adj_matrix[1,5], graph.adj_matrix[2,6], graph.adj_matrix[3,7],
-                 graph.adj_matrix[4,8]]
-        weights = rand(rng, length(edges))
-        mst = weighted_kruskal_mst(graph, edges, nodes, weights, rng)
-        @test length(mst) == length(nodes) - 1
-        @test begin # are there loops in the tree?
-            # find by union-find algorithm
-            connected_vs = DisjointSets{Int}(nodes)
-            cycle_found = false
-            for edge in mst
-                if in_same_set(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
-                    cycle_found = true
-                    break
-                else
-                    union!(connected_vs, graph.edge_src[edge], graph.edge_dst[edge])
-                end
-            end
-            !cycle_found
-        end
-    end
 
     # test that attributes can be accessed
     @test graph.attributes[1]["purple"] == 15

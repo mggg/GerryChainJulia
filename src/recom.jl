@@ -13,14 +13,11 @@ Randomly sample two adjacent districts D₁ and D₂ and return a tuple
 (D₁, D₂, edges, nodes) where D₁ and D₂ are Ints, `edges` and `nodes` are Sets
 containing the Int edges and Int nodes of the induced subgraph.
 """
-function sample_subgraph(graph::BaseGraph,
-                         partition::Partition,
-                         rng::AbstractRNG)
+function sample_subgraph(graph::BaseGraph, partition::Partition, rng::AbstractRNG)
     D₁, D₂ = sample_adjacent_districts_randomly(partition, rng)
 
     # take all their nodes
-    nodes = union(partition.dist_nodes[D₁],
-                  partition.dist_nodes[D₂])
+    nodes = union(partition.dist_nodes[D₁], partition.dist_nodes[D₂])
 
     # get a subgraph of these two districts
     edges = induced_subgraph_edges(graph, collect(nodes))
@@ -52,9 +49,7 @@ function bfs_traverse(mst::Dict{Int, Array{Int, 1}},
             end
         end
     end
-    return predecessors, successors
 end
-
 
 function memoized_balance_edges(graph::BaseGraph,
                                 mst::Dict{Int, Vector{Int}},
@@ -107,6 +102,13 @@ function memoized_balance_edges(graph::BaseGraph,
         end
     end
     return CutSet(balance_nodes, succ)
+end
+
+
+function component_nodes(cut_set::CutSet, root::Int)::BitSet
+    if !(root in keys(cut_set.balance_nodes))
+        throw("Node $(root) not a balance node.")
+    end
 end
 
 
@@ -163,22 +165,47 @@ function attempt_leaf_contraction(graph::BaseGraph,
     return DummyProposal("Could not find balanced cut.")
 end
 
+"""
+    get_balanced_proposal(graph::BaseGraph,
+                          mst_edges::BitSet,
+                          mst_nodes::BitSet,
+                          partition::Partition,
+                          pop_constraint::PopulationConstraint,
+                          D₁::Int,
+                          D₂::Int)
 
-function component_nodes(cut_set::CutSet, root::Int)::BitSet
-    if !(root in keys(cut_set.balance_nodes))
-        throw("Node $(root) not a balance node.")
-    end
+Tries to find a balanced cut on the subgraph induced by `mst_edges` and
+`mst_nodes` such that the population is balanced according to
+`pop_constraint`.
+This subgraph was formed by the combination of districts `D₁` and `D₂`.
+"""
+function get_balanced_proposal(
+    graph::BaseGraph,
+    mst_edges::BitSet,
+    mst_nodes::BitSet,
+    partition::Partition,
+    pop_constraint::PopulationConstraint,
+    D₁::Int,
+    D₂::Int,
+)
+    mst = build_mst(graph, mst_nodes, mst_edges)
+    subgraph_pop = partition.dist_populations[D₁] + partition.dist_populations[D₂]
 
-    component = BitSet()
-    queue = Queue{Int}()
-    enqueue!(queue, root)
-    while !isempty(queue)
-        next_node = dequeue!(queue)
-        push!(component, next_node)
-        if next_node in keys(cut_set.succ)
-            for c in cut_set.succ[next_node]
-                enqueue!(queue, c)
-            end
+
+    for edge in mst_edges
+        component₁ = traverse_mst(
+            mst,
+            graph.edge_src[edge],
+            graph.edge_dst[edge],
+            stack,
+            component_container,
+        )
+
+        if satisfy_constraint(pop_constraint, population₁, population₂)
+            component₂ = setdiff(mst_nodes, component₁)
+            proposal =
+                RecomProposal(D₁, D₂, population₁, population₂, component₁, component₂)
+            return proposal
         end
     end
     return component
@@ -286,7 +313,9 @@ end
             partition = partition.parent
             # if user specifies this behavior, we do not increment the steps
             # taken if the acceptance function fails.
-            if no_self_loops continue end
+            if no_self_loops
+                continue
+            end
         end
         @yield score_partition_from_proposal(graph, partition, proposal, scores)
         steps_taken += 1
@@ -303,7 +332,7 @@ function get_reversible_recom_proposal(
     tree_fn::Function=wilson_ust,
     balance_edge_fn::Function=memoized_balance_edges,
     node_repeats::Int=1)::Union{RecomProposal, String}
-    """TODO"""
+    """TODO: docstring"""
     D₁, D₂ = rand(1:partition.num_dists, 2)
     if D₁ == D₂ || partition.dist_adj[D₁, D₂] == 0
         return "non-adjacent district pair"

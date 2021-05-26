@@ -43,16 +43,16 @@
     @test partition.dist_populations[4] == 41
 
     @testset "District Adjacency" begin
-        for i in 1:partition.num_dists
-            for j in 1:partition.num_dists
-                @test partition.dist_adj[i,j] == partition.dist_adj[j,i]
+        for i = 1:partition.num_dists
+            for j = 1:partition.num_dists
+                @test partition.dist_adj[i, j] == partition.dist_adj[j, i]
             end
         end
     end
 
-    @test partition.dist_adj[1,2] == 2
-    @test partition.dist_adj[1,3] == 2
-    @test partition.dist_adj[1,4] == 0
+    @test partition.dist_adj[1, 2] == 2
+    @test partition.dist_adj[1, 3] == 2
+    @test partition.dist_adj[1, 4] == 0
 
     @test partition.dist_nodes[1] == Set{Int}([1, 2, 5, 6])
     @test partition.dist_nodes[2] == Set{Int}([3, 4, 7, 8])

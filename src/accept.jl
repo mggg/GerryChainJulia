@@ -25,8 +25,7 @@ accepted.
                   partition as an argument and return a probability
                   in the range [0, 1].
 """
-function satisfies_acceptance_fn(partition::Partition,
-                                 acceptance_fn::Function)::Bool
+function satisfies_acceptance_fn(partition::Partition, acceptance_fn::Function)::Bool
     # check that partition has a valid parent
     @assert partition.parent != nothing
     prob = 0.0

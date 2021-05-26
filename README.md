@@ -1,8 +1,9 @@
 # GerryChain
 
-[![Build Status](https://api.travis-ci.com/mggg/GerryChainJulia.svg?branch=main)](https://travis-ci.com/mggg/GerryChainJulia)
+![Build and Test status](https://github.com/mggg/GerryChainJulia/workflows/Build%20and%20Test/badge.svg)
 [![Code Coverage](https://codecov.io/gh/mggg/GerryChainJulia/branch/main/graph/badge.svg)](https://codecov.io/gh/mggg/GerryChainJulia/branch/main)
-[![DOI](https://zenodo.org/badge/239854101.svg)](https://zenodo.org/badge/latestdoi/239854101)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4649464.svg)](https://doi.org/10.5281/zenodo.4649464)
+
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mggg.github.io/GerryChainJulia/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://mggg.github.io/GerryChainJulia/dev)
 
@@ -41,16 +42,17 @@ You can cite the Recombination algorithm as
 ```
 The current version of the code can be cited as
 ```
-@software{gerrychain_julia_2020_4111000,
-  author       = {Bhushan Suwal and
+@software{gerrychain_julia_4649464,
+  author       = {Parker Rule and
                   Matthew Sun and
-                  Parker Rule},
-  title        = {mggg/GerryChainJulia: v0.1.2},
-  month        = oct,
-  year         = 2020,
+                  Bhushan Suwal
+                  },
+  title        = {mggg/GerryChainJulia: Minor fixes + Save as HDF5},
+  month        = mar,
+  year         = 2021,
   publisher    = {Zenodo},
-  version      = {v0.1.2},
-  doi          = {10.5281/zenodo.4111000},
-  url          = {https://doi.org/10.5281/zenodo.4111000}
+  version      = {v0.1.3},
+  doi          = {10.5281/zenodo.4649464},
+  url          = {https://doi.org/10.5281/zenodo.4649464}
 }
 ```

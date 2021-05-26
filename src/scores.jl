@@ -22,7 +22,7 @@ of `score_fn` should be as follows:
     `score_fn(graph::BaseGraph, district_nodes::BitSet, district::int)`
 """
 struct DistrictScore <: AbstractScore
-    name::Union{String, Missing}
+    name::Union{String,Missing}
     score_fn::Function
     DistrictScore(score_fn::Function) = new(missing, score_fn)
     DistrictScore(name::String, score_fn::Function) = new(name, score_fn)
@@ -39,7 +39,7 @@ The signature of `score_fn` should be as follows:
     `score_fn(graph::BaseGraph, partition::Partition)`
 """
 struct PlanScore <: AbstractScore
-    name::Union{String, Missing}
+    name::Union{String,Missing}
     score_fn::Function
     PlanScore(score_fn::Function) = new(missing, score_fn)
     PlanScore(name::String, score_fn::Function) = new(name, score_fn)
@@ -68,7 +68,7 @@ at every step of the chain as well as the scores themselves.
 """
 struct ChainScoreData
     scores::Array{S,1} where {S<:AbstractScore} # scores that were measured on a particular chain
-    step_values::Array{Dict{String, Any}} # array of Dicts which map {score name: score value}
+    step_values::Array{Dict{String,Any}} # array of Dicts which map {score name: score value}
 end
 
 
@@ -105,22 +105,29 @@ function Base.iterate(query::ChainScoreQuery)
         return nothing
     end
     # check that all requested scores are in the ChainScoreData object
-    score_vals = Dict{String, Any}()
-    nested_keys = Dict{String, String}() # maps scores to the name of parent CompositeScore, if any
-    score_names = isempty(query.requested_scores) ? collect(keys(chain_data.step_values[1])) : query.requested_scores
+    score_vals = Dict{String,Any}()
+    nested_keys = Dict{String,String}() # maps scores to the name of parent CompositeScore, if any
+    score_names =
+        isempty(query.requested_scores) ? collect(keys(chain_data.step_values[1])) :
+        query.requested_scores
     for score_name in score_names
         score, nested_key = get_score_by_name(chain_data, score_name)
         if isnothing(score)
-            throw(KeyError("No score in the ChainScoreData object matches the name: $score_name"))
+            throw(
+                KeyError(
+                    "No score in the ChainScoreData object matches the name: $score_name",
+                ),
+            )
         end
         # write value to initial dictionary
         if isnothing(nested_key)
             score_vals[score_name] = chain_data.step_values[1][score_name]
         else
             if !(haskey(score_vals, nested_key))
-                score_vals[nested_key] = Dict{String, Any}()
+                score_vals[nested_key] = Dict{String,Any}()
             end
-            score_vals[nested_key][score_name] = chain_data.step_values[1][nested_key][score_name]
+            score_vals[nested_key][score_name] =
+                chain_data.step_values[1][nested_key][score_name]
         end
     end
     # keep track of next index and current dictionary
@@ -156,10 +163,12 @@ end
 Evaluates a `DistrictAggregate` score on the nodes in a particular
 `district`.
 """
-function eval_score_on_district(graph::BaseGraph,
-                                partition::Partition,
-                                score::DistrictAggregate,
-                                district::Int)::Number
+function eval_score_on_district(
+    graph::BaseGraph,
+    partition::Partition,
+    score::DistrictAggregate,
+    district::Int,
+)::Number
     try
         sum = 0
         for node in partition.dist_nodes[district]
@@ -168,11 +177,14 @@ function eval_score_on_district(graph::BaseGraph,
         return sum
     catch e
         if isa(e, MethodError)
-            error_msg = string("The DistrictAggregate Score ", score.name,
-                               " seems to be of type String when a Number was ",
-                               "expected. Try calling the function ",
-                               "coerce_aggregated_attributes!(graph, scores_array) ",
-                               "before running the chain.")
+            error_msg = string(
+                "The DistrictAggregate Score ",
+                score.name,
+                " seems to be of type String when a Number was ",
+                "expected. Try calling the function ",
+                "coerce_aggregated_attributes!(graph, scores_array) ",
+                "before running the chain.",
+            )
             throw(ArgumentError(error_msg))
         end
         throw(e)
@@ -189,14 +201,16 @@ end
 Evaluates a user-supplied `DistrictScore` function on the nodes in a
 particular `district`.
 """
-function eval_score_on_district(graph::BaseGraph,
-                                partition::Partition,
-                                score::DistrictScore,
-                                district::Int)
+function eval_score_on_district(
+    graph::BaseGraph,
+    partition::Partition,
+    score::DistrictScore,
+    district::Int,
+)
     try
         return score.score_fn(graph, partition.dist_nodes[district], district)
     catch e # Check if the user-specified method was constructed incorrectly
-        if !applicable(score.score_fn, graph, partition)
+        if !applicable(score.score_fn, graph, partition.dist_nodes[district], district)
             error_msg = "DistrictScore function must accept graph, array of nodes, and district index."
             throw(ArgumentError(error_msg))
         end
@@ -218,10 +232,12 @@ Returns an array of the form [a₁, a₂, ..., aᵢ], where aᵢ corresponds to
 the value of the score for the district indexed by `i` in the `districts`
 array and `n` is the length of `districts`.
 """
-function eval_score_on_districts(graph::BaseGraph,
-                                 partition::Partition,
-                                 score::Union{DistrictScore,DistrictAggregate},
-                                 districts::Array{Int, 1})::Array
+function eval_score_on_districts(
+    graph::BaseGraph,
+    partition::Partition,
+    score::Union{DistrictScore,DistrictAggregate},
+    districts::Array{Int,1},
+)::Array
     return [eval_score_on_district(graph, partition, score, d) for d in districts]
 end
 
@@ -249,9 +265,11 @@ Returns an Dict of the form:
 }
 ```
 """
-function eval_score_on_partition(graph::BaseGraph,
-                                 partition::Partition,
-                                 composite::CompositeScore)
+function eval_score_on_partition(
+    graph::BaseGraph,
+    partition::Partition,
+    composite::CompositeScore,
+)
     return score_initial_partition(graph, partition, composite.scores)
 end
 
@@ -263,9 +281,11 @@ on  all districts in an entire plan.
 *Returns* an array of the form [a₁, a₂, ..., aᵢ], where `i` is the number
 of districts in the plan.
 """
-function eval_score_on_partition(graph::BaseGraph,
-                                 partition::Partition,
-                                 score::Union{DistrictScore,DistrictAggregate})::Array
+function eval_score_on_partition(
+    graph::BaseGraph,
+    partition::Partition,
+    score::Union{DistrictScore,DistrictAggregate},
+)::Array
     all_districts = Array(1:partition.num_dists)
     return eval_score_on_districts(graph, partition, score, all_districts)
 end
@@ -278,9 +298,7 @@ end
 
 Evaluates a user-supplied `PlanScore` function on the entire partition.
 """
-function eval_score_on_partition(graph::BaseGraph,
-                                 partition::Partition,
-                                 score::PlanScore)
+function eval_score_on_partition(graph::BaseGraph, partition::Partition, score::PlanScore)
     try
         return score.score_fn(graph, partition)
     catch e # Check if the user-specified method was constructed incorrectly
@@ -327,10 +345,12 @@ scores, and `i` is the number of composite scores):
 }
 ```
 """
-function score_initial_partition(graph::BaseGraph,
-                                 partition::Partition,
-                                 scores::Array{S, 1}) where {S<:AbstractScore}
-    score_values = Dict{String, Any}()
+function score_initial_partition(
+    graph::BaseGraph,
+    partition::Partition,
+    scores::Array{S,1},
+) where {S<:AbstractScore}
+    score_values = Dict{String,Any}()
     for s in scores
         value = eval_score_on_partition(graph, partition, s)
         if !ismissing(s.name) # nameless scores should not be stored
@@ -365,11 +385,13 @@ look like:
     }
 ```
 """
-function score_partition_from_proposal(graph::BaseGraph,
-                                       partition::Partition,
-                                       proposal::AbstractProposal,
-                                       scores::Array{S, 1}) where {S<:AbstractScore}
-    score_values = Dict{String, Any}()
+function score_partition_from_proposal(
+    graph::BaseGraph,
+    partition::Partition,
+    proposal::AbstractProposal,
+    scores::Array{S,1},
+) where {S<:AbstractScore}
+    score_values = Dict{String,Any}()
     Δ_districts = [proposal.D₁, proposal.D₂]
     score_values["dists"] = Δ_districts
     for s in scores
@@ -401,10 +423,12 @@ Modifies a Dict in-place by merging it with another Dict that contains
 `update` to the former Dict. Runs recursively when there are nested Dicts.
 Helper function for ChainScoreQuery iterator.
 """
-function update_dictionary!(original::Dict{String, Any},
-                            update::Dict{String, Any},
-                            D₁::Int,
-                            D₂::Int)
+function update_dictionary!(
+    original::Dict{String,Any},
+    update::Dict{String,Any},
+    D₁::Int,
+    D₂::Int,
+)
     for key in keys(original)
         if update[key] isa Array # district-level score
             original[key][D₁] = update[key][1]
@@ -435,13 +459,15 @@ t steps of the Markov chain.
 - score_names  : An optional array of Strings representing the scores
                  for which the user is requesting the values
 """
-function get_scores_at_step(chain_data::ChainScoreData,
-                            step::Int;
-                            score_names::Array{String,1}=String[])::Dict{String, Any}
+function get_scores_at_step(
+    chain_data::ChainScoreData,
+    step::Int;
+    score_names::Array{String,1} = String[],
+)::Dict{String,Any}
     # we don't want to alter the data in all_scores
     query = ChainScoreQuery(score_names, chain_data)
 
-    score_vals = Dict{String, Any}()
+    score_vals = Dict{String,Any}()
     for (i, step_scores) in enumerate(query)
         if i > step
             score_vals = step_scores
@@ -463,8 +489,7 @@ matches `score_name` from the `ChainScoreData` object.
 first, the `AbstractScore` object itself, and second, the name of the
 `CompositeScore` it is nested within (if it is nested within one at all.)
 """
-function get_score_by_name(chain_data::ChainScoreData,
-                           score_name::String)
+function get_score_by_name(chain_data::ChainScoreData, score_name::String)
     index = findfirst(s -> !ismissing(s.name) && s.name == score_name, chain_data.scores)
     if index == nothing
         # Check if score is nested inside a CompositeScore
@@ -496,20 +521,22 @@ Helper function that returns the value of specified
 - nested_key  : If the score is nested within a `CompositeScore`, this
                 argument provides the `CompositeScore`'s name
 """
-function get_score_values(all_scores::Array{Dict{String, Any}, 1},
-                          score::Union{DistrictAggregate, DistrictScore};
-                          nested_key::Union{String,Nothing}=nothing)::Array
+function get_score_values(
+    all_scores::Array{Dict{String,Any},1},
+    score::Union{DistrictAggregate,DistrictScore};
+    nested_key::Union{String,Nothing} = nothing,
+)::Array
     # check if score is nested inside a CompositeScore
     nested = nested_key != nothing
     init_vals = nested ? all_scores[1][nested_key][score.name] : all_scores[1][score.name]
     num_districts = length(init_vals)
     # create a matrix that is (num states of chain, num districts) to record
     # values of score
-    score_table = Array{typeof(init_vals[1]), 2}(undef, length(all_scores), num_districts)
+    score_table = Array{typeof(init_vals[1]),2}(undef, length(all_scores), num_districts)
     # we don't want to alter the data in all_scores
     score_table[1, :] = deepcopy(init_vals)
 
-    for i in 2:length(all_scores)
+    for i = 2:length(all_scores)
         score_table[i, :] = deepcopy(score_table[i-1, :])
         (D₁, D₂) = all_scores[i]["dists"]
         curr_scores = nested ? all_scores[i][nested_key] : all_scores[i]
@@ -536,14 +563,16 @@ the chain.
 - nested_key  : If the score is nested within a `CompositeScore`, this
                 argument provides the `CompositeScore`'s name
 """
-function get_score_values(all_scores::Array{Dict{String, Any}, 1},
-                          score::PlanScore;
-                          nested_key::Union{String,Nothing}=nothing)::Array
+function get_score_values(
+    all_scores::Array{Dict{String,Any},1},
+    score::PlanScore;
+    nested_key::Union{String,Nothing} = nothing,
+)::Array
     num_states = length(all_scores)
     if nested_key == nothing
-        return deepcopy([all_scores[i][score.name] for i in 1:num_states])
+        return deepcopy([all_scores[i][score.name] for i = 1:num_states])
     end
-    return deepcopy([all_scores[i][nested_key][score.name] for i in 1:num_states])
+    return deepcopy([all_scores[i][nested_key][score.name] for i = 1:num_states])
 end
 
 
@@ -559,8 +588,10 @@ every step of the chain.
                 the Markov Chain
 - composite   : `CompositeScore` of interest
 """
-function get_score_values(all_scores::Array{Dict{String, Any}, 1},
-                          composite::CompositeScore)::Dict{String, Array}
+function get_score_values(
+    all_scores::Array{Dict{String,Any},1},
+    composite::CompositeScore,
+)::Dict{String,Array}
     fetch_vals = s -> get_score_values(all_scores, s, nested_key = composite.name)
     return Dict(s.name => fetch_vals(s) for s in composite.scores)
 end
@@ -576,15 +607,14 @@ Returns the value of specified score at every step of the chain.
                  at each step of the Markov Chain
 - score_name   : Name of the score of interest
 """
-function get_score_values(chain_data::ChainScoreData,
-                          score_name::String)
+function get_score_values(chain_data::ChainScoreData, score_name::String)
     score, nested_key = get_score_by_name(chain_data, score_name)
     if score == nothing
         throw(ArgumentError("No score with requested name found."))
     elseif score isa CompositeScore
         return get_score_values(chain_data.step_values, score)
     end
-    return get_score_values(chain_data.step_values, score, nested_key=nested_key)
+    return get_score_values(chain_data.step_values, score, nested_key = nested_key)
 end
 
 
@@ -595,7 +625,7 @@ Simple helper function for `save_scores`. Extracts the names of all of
 the district/plan-level scores (including those nested within
 CompositeScores, hence the term "flattened").
 """
-function flattened_score_names(chain_data::ChainScoreData)::Array{String, 1}
+function flattened_score_names(chain_data::ChainScoreData)::Array{String,1}
     score_names = String[]
     for score in chain_data.scores
         if score isa CompositeScore # add children score names
@@ -616,91 +646,162 @@ end
 
 Save the `scores` in a CSV file named `filename`.
 """
-function save_scores_to_csv(filename::String,
-                            chain_data::ChainScoreData,
-                            score_names::Array{String,1}=String[])
-     open(filename, "w") do f
-         if isempty(score_names) # by default, export all scores from chain
-             score_names = flattened_score_names(chain_data)
-         end
+function save_scores_to_csv(
+    filename::String,
+    chain_data::ChainScoreData,
+    score_names::Array{String,1} = String[],
+)
+    open(filename, "w") do f
+        if isempty(score_names) # by default, export all scores from chain
+            score_names = flattened_score_names(chain_data)
+        end
 
-         column_names = String[] # column names of the CSV
-         nested_keys = Dict{String, String}() # map score key to nested key, if any
+        column_names = String[] # column names of the CSV
+        nested_keys = Dict{String,String}() # map score key to nested key, if any
 
-         num_districts = nothing
-         for score_name in score_names
-             score, nested_key = get_score_by_name(chain_data, score_name)
-             if score isa DistrictScore || score isa DistrictAggregate
-                 if isnothing(num_districts)
-                     initial_vals = chain_data.step_values[1]
-                     if !isnothing(nested_key)
-                         initial_vals = initial_vals[nested_key]
-                     end
-                     num_districts = length(initial_vals[score_name])
-                 end
-                 # add new column for each district
-                 district_columns = ["$(score_name)_$(i)" for i in 1:num_districts]
-                 append!(column_names, district_columns)
-             elseif score isa CompositeScore
-                 throw(ArgumentError("Cannot automatically save a CompositeScore to CSV. You may save a CompositeScore's child score."))
-             elseif score isa PlanScore
-                 push!(column_names, score_name)
-             end
-             if !isnothing(nested_key)
-                 nested_keys[score_name] = nested_key
-             end
-         end
-         # write column names
-         colname_row = hcat(column_names...) # turn into 1xn array
-         writedlm(f, colname_row, ',') # write intial row of column names
+        num_districts = nothing
+        for score_name in score_names
+            score, nested_key = get_score_by_name(chain_data, score_name)
+            if score isa DistrictScore || score isa DistrictAggregate
+                if isnothing(num_districts)
+                    initial_vals = chain_data.step_values[1]
+                    if !isnothing(nested_key)
+                        initial_vals = initial_vals[nested_key]
+                    end
+                    num_districts = length(initial_vals[score_name])
+                end
+                # add new column for each district
+                district_columns = ["$(score_name)_$(i)" for i = 1:num_districts]
+                append!(column_names, district_columns)
+            elseif score isa CompositeScore
+                throw(
+                    ArgumentError(
+                        "Cannot automatically save a CompositeScore to CSV. You may save a CompositeScore's child score.",
+                    ),
+                )
+            elseif score isa PlanScore
+                push!(column_names, score_name)
+            end
+            if !isnothing(nested_key)
+                nested_keys[score_name] = nested_key
+            end
+        end
+        # write column names
+        colname_row = hcat(column_names...) # turn into 1xn array
+        writedlm(f, colname_row, ',') # write intial row of column names
 
-         # iterate through all steps of chain
-         query = ChainScoreQuery(score_names, chain_data)
-         for step_values in query
-             row_values = []
-             for key in score_names
-                 if haskey(nested_keys, key)
-                     nested_key = nested_keys[key]
-                     append!(row_values, step_values[nested_key][key])
-                 else
-                     append!(row_values, step_values[key])
-                 end
-             end
-             # write one row for every state of the chain
-             writedlm(f, hcat(row_values...), ',')
-         end
-     end
- end
+        # iterate through all steps of chain
+        query = ChainScoreQuery(score_names, chain_data)
+        for step_values in query
+            row_values = []
+            for key in score_names
+                if haskey(nested_keys, key)
+                    nested_key = nested_keys[key]
+                    append!(row_values, step_values[nested_key][key])
+                else
+                    append!(row_values, step_values[key])
+                end
+            end
+            # write one row for every state of the chain
+            writedlm(f, hcat(row_values...), ',')
+        end
+    end
+end
 
 
- """
-     save_scores_to_json(filename::String,
-                         chain_data::ChainScoreData,
-                         score_names::Array{String,1}=String[])
+"""
+    save_scores_to_json(filename::String,
+                        chain_data::ChainScoreData,
+                        score_names::Array{String,1}=String[])
 
- Save the `scores` in a JSON file named `filename`.
- """
- function save_scores_to_json(filename::String,
-                              chain_data::ChainScoreData,
-                              score_names::Array{String,1}=String[])
-     open(filename, "w") do f
-         if isempty(score_names) # by default, export all scores from chain
-             score_names = flattened_score_names(chain_data)
-         end
+Save the `scores` in a JSON file named `filename`.
+"""
+function save_scores_to_json(
+    filename::String,
+    chain_data::ChainScoreData,
+    score_names::Array{String,1} = String[],
+)
+    open(filename, "w") do f
+        if isempty(score_names) # by default, export all scores from chain
+            score_names = flattened_score_names(chain_data)
+        end
 
-         # iterate through all steps of chain
-         query = ChainScoreQuery(score_names, chain_data)
-         first_entry = true
-         # note that we manually write the brackets and commas because the point
-         # of writing the scores to the file row-by-row is that we never hold
-         # the entire array of scores in main memory. this may be brittle!
-         println(f, "[")
-         for step_values in query
-             first_entry ? first_entry = false : print(f, ",\n")
-             print(f, JSON.json(step_values))
-         end
-         print(f, "\n]")
-     end
+        # iterate through all steps of chain
+        query = ChainScoreQuery(score_names, chain_data)
+        first_entry = true
+        # note that we manually write the brackets and commas because the point
+        # of writing the scores to the file row-by-row is that we never hold
+        # the entire array of scores in main memory. this may be brittle!
+        println(f, "[")
+        for step_values in query
+            first_entry ? first_entry = false : print(f, ",\n")
+            print(f, JSON.json(step_values))
+        end
+        print(f, "\n]")
+    end
+end
+
+
+"""
+    save_scores_to_hdf5(filename::String,
+                        chain_data::ChainScoreData,
+                        score_names::Array{String,1}=String[])
+
+Save the `scores` in a hdf5 file named `filename`.
+"""
+function save_scores_to_hdf5(
+    filename::String,
+    chain_data::ChainScoreData,
+    score_names::Array{String,1} = String[],
+)
+    h5open(filename, "w") do f
+        if isempty(score_names) # by default, export all scores from chain
+            score_names = flattened_score_names(chain_data)
+        end
+
+        nested_keys = Dict{String,String}() # map score key to nested key, if any
+        # check for CompositeScores, which can't be saved to HDF5
+        for score_name in score_names
+            score, nested_key = get_score_by_name(chain_data, score_name)
+            if score isa CompositeScore
+                throw(
+                    ArgumentError(
+                        "Cannot automatically save a CompositeScore to HDF5. You may save a CompositeScore's child score.",
+                    ),
+                )
+            end
+            if !isnothing(nested_key)
+                nested_keys[score_name] = nested_key
+            end
+        end
+
+        query = ChainScoreQuery(score_names, chain_data)
+        scores_datasets = Dict{String,Any}()
+        num_steps = length(chain_data.step_values)
+        for (idx, step_values) in enumerate(query)
+            for key in score_names
+                # fetch the data
+                data = nothing
+                if haskey(nested_keys, key)
+                    nested_key = nested_keys[key]
+                    data = step_values[nested_key][key]
+                else
+                    data = step_values[key]
+                end
+                # create the initial datasets
+                if idx == 1
+                    scores_datasets[key] = create_dataset(
+                        f,
+                        key,
+                        datatype(data),
+                        dataspace(num_steps, length(data)),
+                    )
+                end
+                # write the data to the hdf5 file
+                scores_datasets[key][idx, :] = data
+            end
+        end
+    end
 end
 
 
@@ -724,15 +825,17 @@ end
 Coerces attribute `key` in `graph` to be of type `new_type` if it is of
 type String.
 """
-function coerce_attribute_type!(graph::BaseGraph,
-                                key::String,
-                                new_type::DataType)
-    for node in 1:graph.num_nodes
+function coerce_attribute_type!(graph::BaseGraph, key::String, new_type::DataType)
+    for node = 1:graph.num_nodes
         if graph.attributes[node][key] isa String
-            graph.attributes[node][key] = parse(new_type,
-                                                graph.attributes[node][key])
-            @info string("Key ", key, " attribute was of type String, ",
-                         "but was converted to type ", new_type) maxlog=1
+            graph.attributes[node][key] = parse(new_type, graph.attributes[node][key])
+            @info string(
+                "Key ",
+                key,
+                " attribute was of type String, ",
+                "but was converted to type ",
+                new_type,
+            ) maxlog = 1
         end
     end
 end
@@ -744,8 +847,10 @@ end
 Coerces DistrictAggregate attributes in `scores` to be Floats if they are
 Strings.
 """
-function coerce_aggregated_attributes!(graph::BaseGraph,
-                                       scores::Array{S, 1}) where {S<:AbstractScore}
+function coerce_aggregated_attributes!(
+    graph::BaseGraph,
+    scores::Array{S,1},
+) where {S<:AbstractScore}
     for score in scores
         if score isa DistrictAggregate
             coerce_attribute_type!(graph, score.key, Float64)

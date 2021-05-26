@@ -4,6 +4,7 @@ import LibSpatialIndex
 using Test
 using LightGraphs
 using JSON
+using HDF5
 using Logging
 
 const testdir = dirname(@__FILE__)
@@ -14,6 +15,7 @@ square_shp_filepath = "./maps/simple_squares.shp"
 tests = [
     "graph",
     "partition",
+    "balance_edges",
     "geo",
     "constraints",
     "flip",
@@ -21,7 +23,7 @@ tests = [
     "scores",
     "accept",
     "election",
-    "plot"
+    "plot",
 ]
 
 @testset "GerryChainJulia" begin

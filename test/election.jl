@@ -6,7 +6,7 @@
             having this small helper function helps ensure that these tests
             are relatively isolated from other parts of the codebase.
         """
-        for d in 1:partition.num_dists
+        for d = 1:partition.num_dists
             # the first score should update all the vote counts
             election_tracker.scores[1].score_fn(graph, partition.dist_nodes[d], d)
         end
@@ -15,20 +15,22 @@
     @testset "vote_updater()" begin
         graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
+        election =
+            Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
 
         update_vote_counts(graph, partition, election_tracker)
 
         # just test vote counts / shares on district 1
-        @test election.vote_counts[1, 1] == 6 # votes for electionD
+        @test election.vote_counts[1, 1] == 6.0 # votes for electionD
         @test election.vote_shares[1, 2] == 0.5 # votes for electionR
     end
 
     @testset "vote_count()" begin
         graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
+        election =
+            Election("Test Election", ["electionD", "electionR"], partition.num_dists)
 
         d_count = vote_count("votes_d", election, "electionD")
         r_count = vote_count("votes_r", election, "electionR")
@@ -47,7 +49,8 @@
     @testset "vote_share()" begin
         graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
+        election =
+            Election("Test Election", ["electionD", "electionR"], partition.num_dists)
 
         d_share = vote_share("share_d", election, "electionD")
         r_share = vote_share("share_r", election, "electionR")
@@ -66,7 +69,8 @@
     @testset "seats_won()" begin
         graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
+        election =
+            Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
         # Count seats won
@@ -102,7 +106,8 @@
     @testset "mean_median()" begin
         graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
+        election =
+            Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
         # Measure mean median
@@ -111,7 +116,7 @@
         d_mm_score = d_mean_median.score_fn(graph, partition)
         @test d_mm_score == 0
 
-        r_mean_median  = mean_median("test", election, "electionR")
+        r_mean_median = mean_median("test", election, "electionR")
         @test r_mean_median isa PlanScore
         r_mm_score = r_mean_median.score_fn(graph, partition)
         @test r_mm_score == 0
@@ -122,16 +127,16 @@
 
         # Measure mean median
         d_mm_score = d_mean_median.score_fn(graph, partition)
-        @test d_mm_score ≈ 1/40 # we use ≈ because of floating point issues
+        @test d_mm_score ≈ 1 / 40 # we use ≈ because of floating point issues
 
         r_mm_score = r_mean_median.score_fn(graph, partition)
-        @test r_mm_score ≈ -1/40 # we use ≈ because of floating point issues
+        @test r_mm_score ≈ -1 / 40 # we use ≈ because of floating point issues
     end
 
     @testset "wasted_votes()" begin
-        party₁_waste, party₂_waste = wasted_votes(52, 50)
-        @test party₁_waste == 1
-        @test party₂_waste == 50
+        party₁_waste, party₂_waste = wasted_votes(52.0, 50.0)
+        @test party₁_waste == 1.0
+        @test party₂_waste == 50.0
     end
 
     @testset "efficiency_gap()" begin
@@ -145,7 +150,8 @@
         graph.attributes[11]["electionD"] = 4
 
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
+        election =
+            Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
 
@@ -167,7 +173,8 @@
     @testset "ElectionTracker updates votes" begin
         graph = BaseGraph(square_grid_filepath, "population")
         partition = Partition(graph, "assignment")
-        election = Election("Test Election", ["electionD", "electionR"], partition.num_dists)
+        election =
+            Election("Test Election", ["electionD", "electionR"], partition.num_dists)
         election_tracker = ElectionTracker(election)
         update_vote_counts(graph, partition, election_tracker)
 
@@ -177,7 +184,8 @@
         @test election.vote_shares[:, 2] == [0.5, 0.5, 0.5, 0.5] # vote share for election R
 
         # make a proposal
-        proposal₁ = RecomProposal(1, 2, 100, 100, BitSet([1, 5, 6, 7]), BitSet([2, 3, 4, 8]))
+        proposal₁ =
+            RecomProposal(1, 2, 100, 100, BitSet([1, 5, 6, 7]), BitSet([2, 3, 4, 8]))
         # update partition with proposal
         update_partition!(partition, graph, proposal₁, false) # no custom acceptance function
         # run the vote count / share update after proposal
@@ -185,17 +193,18 @@
 
         @test election.vote_counts[:, 1] == [5, 7, 6, 6]
         @test election.vote_counts[:, 2] == [9, 3, 6, 6]
-        @test election.vote_shares[:, 1] == [5/14, 7/10, 6/12, 6/12]
-        @test election.vote_shares[:, 2] == [9/14, 3/10, 6/12, 6/12]
+        @test election.vote_shares[:, 1] == [5 / 14, 7 / 10, 6 / 12, 6 / 12]
+        @test election.vote_shares[:, 2] == [9 / 14, 3 / 10, 6 / 12, 6 / 12]
 
-        proposal₂ = RecomProposal(3, 4, 100, 100, BitSet([9, 10, 11, 13]), BitSet([12, 14, 15, 16]))
+        proposal₂ =
+            RecomProposal(3, 4, 100, 100, BitSet([9, 10, 11, 13]), BitSet([12, 14, 15, 16]))
         update_partition!(partition, graph, proposal₂, false) # no custom acceptance function
         # run the vote count / share update after proposal
         update_vote_counts(graph, partition, election_tracker)
 
         @test election.vote_counts[:, 1] == [5, 7, 7, 5] # votes for electionD
         @test election.vote_counts[:, 2] == [9, 3, 3, 9] # votes for electionR
-        @test election.vote_shares[:, 1] == [5/14, 7/10, 7/10, 5/14] # vote share for electionD
-        @test election.vote_shares[:, 2] == [9/14, 3/10, 3/10, 9/14] # vote share for election R
+        @test election.vote_shares[:, 1] == [5 / 14, 7 / 10, 7 / 10, 5 / 14] # vote share for electionD
+        @test election.vote_shares[:, 2] == [9 / 14, 3 / 10, 3 / 10, 9 / 14] # vote share for election R
     end
 end

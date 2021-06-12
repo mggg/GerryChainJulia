@@ -335,7 +335,7 @@ of vertices.
 """
 function induced_subgraph_edges(graph::BaseGraph, vlist::Array{Int,1})::Array{Int,1}
     allunique(vlist) || throw(ArgumentError("Vertices in subgraph list must be unique"))
-    induced_edges = Set{Int}()
+    induced_edges = Vector{Int}()
 
     vset = Set(vlist)
     for src in vlist

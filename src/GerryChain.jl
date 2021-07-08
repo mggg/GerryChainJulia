@@ -12,6 +12,7 @@ import Shapefile
 import LibGEOS
 import LibSpatialIndex
 using Logging
+using ResumableFunctions
 
 export AbstractGraph,
     BaseGraph,
@@ -25,13 +26,18 @@ export AbstractGraph,
     induced_subgraph_edges,
     update_partition_adjacency,
 
-    # balance edges
+    # balance edges and spanning trees
     random_kruskal_mst,
+    kruskal_mst,
+    random_kruskal_mst,
+    wilson_ust,
 
     # proposals
     RecomProposal,
     FlipProposal,
     DummyProposal,
+    get_valid_proposal_contraction,
+    get_valid_proposal_memoization,
 
     # constraints
     PopulationConstraint,
@@ -41,6 +47,9 @@ export AbstractGraph,
     # recom
     update_partition!,
     recom_chain,
+    recom_iterator,
+    reversible_recom_chain,
+    reversible_recom_iterator, 
 
     # flip
     flip_chain,

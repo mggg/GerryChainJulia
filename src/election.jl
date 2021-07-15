@@ -1,7 +1,7 @@
 mutable struct Election
     name::String
     parties::Array{String,1}
-    vote_counts::Array{Int64,2} # row: district, col: votes by party
+    vote_counts::Array{Float64,2} # row: district, col: votes by party
     vote_shares::Array{Float64,2} # row: district, col: vote share by party
 end
 
@@ -155,15 +155,19 @@ function mean_median(name::String, election::Election, party::String)::PlanScore
 end
 
 """
-    wasted_votes(party₁_votes::Int,
-                 party₂_votes::Int)
+    wasted_votes(party₁_votes::Float64,
+                 party₂_votes::Float64)
 
 Computes the number of votes "wasted" by each party. Wasted votes are
 votes that are either more than necessary than the party needed to win
 a seat or votes in a race that party lost. In a tie, all votes are
 considered to have been wasted.
 """
+<<<<<<< HEAD
 function wasted_votes(party₁_votes::Int, party₂_votes::Int)
+=======
+function wasted_votes(party₁_votes::Float64, party₂_votes::Float64)
+>>>>>>> 64365dbf237112a52b1add1aeeefdc8358c69132
     total = party₁_votes + party₂_votes
 
     if party₁_votes > party₂_votes
@@ -226,7 +230,7 @@ end
 """
     ElectionTracker(election::Election,
                     scores::Array{S, 1}=AbstractScore[])::CompositeScore where {S <: AbstractScore}
-                    
+
 The ElectionTracker method returns a CompositeScore that first updates
 the vote count / share for changed districts and then proceeds to
 run other scores (such as vote count for a particular party, partisan

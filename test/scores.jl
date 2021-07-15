@@ -99,7 +99,7 @@
         function broken_fn_inner_bug(graph, district_nodes, district_index)
             "1" + 1 # this is an invalid operation
         end
-        inner_bug_score = PlanScore("broken2", broken_fn_inner_bug)
+        inner_bug_score = DistrictScore("broken2", broken_fn_inner_bug)
         @test_throws MethodError eval_score_on_district(
             graph,
             partition,

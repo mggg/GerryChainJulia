@@ -8,6 +8,7 @@ using DataStructures
 using Statistics
 using DelimitedFiles
 using PyPlot
+using ProgressBars
 import Shapefile
 import LibGEOS
 import LibSpatialIndex

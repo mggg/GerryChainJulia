@@ -163,11 +163,7 @@ votes that are either more than necessary than the party needed to win
 a seat or votes in a race that party lost. In a tie, all votes are
 considered to have been wasted.
 """
-<<<<<<< HEAD
-function wasted_votes(party₁_votes::Int, party₂_votes::Int)
-=======
 function wasted_votes(party₁_votes::Float64, party₂_votes::Float64)
->>>>>>> 64365dbf237112a52b1add1aeeefdc8358c69132
     total = party₁_votes + party₂_votes
 
     if party₁_votes > party₂_votes

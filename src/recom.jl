@@ -290,27 +290,37 @@ function recom_chain(
     acceptance_fn::F = always_accept,
     rng::AbstractRNG = Random.default_rng(),
     no_self_loops::Bool = false,
+    progress_bar = true,
 )::ChainScoreData where {F<:Function,S<:AbstractScore}
-    steps_taken = 0
     first_scores = score_initial_partition(graph, partition, scores)
     chain_scores = ChainScoreData(deepcopy(scores), [first_scores])
 
-    while steps_taken < num_steps
-        proposal = get_valid_proposal(graph, partition, pop_constraint, rng, num_tries)
-        custom_acceptance = acceptance_fn !== always_accept
-        update_partition!(partition, graph, proposal, custom_acceptance)
-        if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
-            # go back to the previous partition
-            partition = partition.parent
-            # if user specifies this behavior, we do not increment the steps
-            # taken if the acceptance function fails.
-            if no_self_loops
-                continue
-            end
-        end
-        score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
-        push!(chain_scores.step_values, score_vals)
-        steps_taken += 1
+    if progress_bar
+        iter = ProgressBar(1:num_steps)
+    else
+        iter = 1:num_steps
     end
+
+    for steps_taken in iter
+        step_completed = false
+        while !step_completed
+            proposal = get_valid_proposal(graph, partition, pop_constraint, rng, num_tries)
+            custom_acceptance = acceptance_fn !== always_accept
+            update_partition!(partition, graph, proposal, custom_acceptance)
+            if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
+                # go back to the previous partition
+                partition = partition.parent
+                # if user specifies this behavior, we do not increment the steps
+                # taken if the acceptance function fails.
+                if no_self_loops
+                    continue
+                end
+            end
+            score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+            push!(chain_scores.step_values, score_vals)
+            step_completed = true
+        end
+    end
+
     return chain_scores
 end

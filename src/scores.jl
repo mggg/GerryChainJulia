@@ -176,14 +176,14 @@ end
 """
     eval_score_on_district(graph::BaseGraph,
                            score::DistrictAggregate,
-                           dist_nodes::Array{Int})::Number
+                           dist_nodes::BitSet)::Number
 
-Evaluates a `DistrictAggregate` score on an array of nodes.
+Evaluates a `DistrictAggregate` score on a set of nodes.
 """
 function eval_score_on_district(
     graph::BaseGraph,
     score::DistrictAggregate,
-    dist_nodes::Array{Int}
+    dist_nodes::BitSet
 )::Number
     try
         sum = 0
@@ -230,14 +230,14 @@ end
 """
     eval_score_on_district(graph::BaseGraph,
                            score::DistrictScore,
-                           dist_nodes::Array{Int})
+                           dist_nodes::BitSet)
 
-Evaluates a user-supplied `DistrictScore` function on an array of nodes.
+Evaluates a user-supplied `DistrictScore` function on a set of nodes.
 """
 function eval_score_on_district(
     graph::BaseGraph,
     score::DistrictScore,
-    dist_nodes::Array{Int}
+    dist_nodes::BitSet
 )
     try
         return score.score_fn(graph, dist_nodes, district)

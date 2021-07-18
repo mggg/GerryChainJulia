@@ -169,9 +169,25 @@ function eval_score_on_district(
     score::DistrictAggregate,
     district::Int,
 )::Number
+    return eval_score_on_district(graph, partition.dist_nodes[district], score)
+end
+
+
+"""
+    eval_score_on_district(graph::BaseGraph,
+                           score::DistrictAggregate,
+                           dist_nodes::Array{Int})::Number
+
+Evaluates a `DistrictAggregate` score on an array of nodes.
+"""
+function eval_score_on_district(
+    graph::BaseGraph,
+    score::DistrictAggregate,
+    dist_nodes::Array{Int}
+)::Number
     try
         sum = 0
-        for node in partition.dist_nodes[district]
+        for node in dist_nodes
             sum += graph.attributes[node][score.key]
         end
         return sum
@@ -207,8 +223,24 @@ function eval_score_on_district(
     score::DistrictScore,
     district::Int,
 )
+    return eval_score_on_district(graph, score, partition.dist_nodes[district])
+end
+
+
+"""
+    eval_score_on_district(graph::BaseGraph,
+                           score::DistrictScore,
+                           dist_nodes::Array{Int})
+
+Evaluates a user-supplied `DistrictScore` function on an array of nodes.
+"""
+function eval_score_on_district(
+    graph::BaseGraph,
+    score::DistrictScore,
+    dist_nodes::Array{Int}
+)
     try
-        return score.score_fn(graph, partition.dist_nodes[district], district)
+        return score.score_fn(graph, dist_nodes, district)
     catch e # Check if the user-specified method was constructed incorrectly
         if !applicable(score.score_fn, graph, partition.dist_nodes[district], district)
             error_msg = "DistrictScore function must accept graph, array of nodes, and district index."
@@ -239,6 +271,29 @@ function eval_score_on_districts(
     districts::Array{Int,1},
 )::Array
     return [eval_score_on_district(graph, partition, score, d) for d in districts]
+end
+
+
+"""
+    eval_score_on_proposal(graph::BaseGraph,
+                           proposal::RecomProposal,
+                           score::Union{DistrictScore,DistrictAggregate}
+                           )::Array
+
+Evaluates a user-supplied `DistrictScore` function or `DistrictAggregate`
+score on a proposal.
+
+Returns an array of length 2, where the first entry is the score evaluated
+on district D₁ of `proposal` and the second entry is the score evaluated
+on district D₂.
+"""
+function eval_score_on_proposal(
+    graph::BaseGraph,
+    proposal::RecomProposal,
+    score::Union{DistrictScore,DistrictAggregate}
+)::Array
+    return [eval_score_on_district(graph, score, proposal.D₁_nodes),
+            eval_score_on_district(graph, score, proposal.D₂_nodes)]
 end
 
 
@@ -403,7 +458,7 @@ function score_partition_from_proposal(
             value = score_partition_from_proposal(graph, partition, proposal, s.scores)
             delete!(value, "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
-            value = eval_score_on_districts(graph, partition, s, Δ_districts)
+            value = eval_score_on_proposal(graph, proposal, s)
         end
         if !ismissing(s.name)
             score_values[s.name] = value

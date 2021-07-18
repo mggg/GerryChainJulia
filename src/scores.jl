@@ -167,9 +167,9 @@ function eval_score_on_district(
     graph::BaseGraph,
     partition::Partition,
     score::DistrictAggregate,
-    district::Int,
+    district::Int
 )::Number
-    return eval_score_on_district(graph, partition.dist_nodes[district], score)
+    return eval_score_on_district(graph, score, partition.dist_nodes[district])
 end
 
 
@@ -221,7 +221,7 @@ function eval_score_on_district(
     graph::BaseGraph,
     partition::Partition,
     score::DistrictScore,
-    district::Int,
+    district::Int
 )
     return eval_score_on_district(graph, score, partition.dist_nodes[district])
 end

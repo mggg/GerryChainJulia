@@ -289,12 +289,13 @@ on district D₂.
 """
 function eval_score_on_proposal(
     graph::BaseGraph,
-    proposal::RecomProposal,
+    proposal::AbstractProposal,
     score::Union{DistrictScore,DistrictAggregate}
 )::Array
     return [eval_score_on_district(graph, score, proposal.D₁_nodes),
             eval_score_on_district(graph, score, proposal.D₂_nodes)]
 end
+
 
 
 """
@@ -419,7 +420,8 @@ end
     score_partition_from_proposal(graph::BaseGraph,
                                   partition::Partition,
                                   proposal::AbstractProposal,
-                                  scores::Array{S, 1}) where {S<:AbstractScore}
+                                  scores::Array{S, 1},
+                                  update_partition!!::Function) where {S<:AbstractScore}
 
 Returns a Dictionary of
 - (a) updated district-level scores for districts that were altered
@@ -445,13 +447,19 @@ function score_partition_from_proposal(
     partition::Partition,
     proposal::AbstractProposal,
     scores::Array{S,1},
+    update_partition!::Function
 ) where {S<:AbstractScore}
     score_values = Dict{String,Any}()
     Δ_districts = [proposal.D₁, proposal.D₂]
     score_values["dists"] = Δ_districts
+    new_partition = nothing
     for s in scores
         if s isa PlanScore
-            value = eval_score_on_partition(graph, partition, s)
+            if isnothing(new_partition)
+                new_partition = spawn(partition)
+                update_partition!(new_partition, graph, proposal)
+            end
+            value = eval_score_on_partition(graph, new_partition, s)
         elseif s isa CompositeScore
             # ensure that district-level scores in the CompositeScore are only
             # evaluated on changed districts

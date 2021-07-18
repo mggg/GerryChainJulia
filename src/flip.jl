@@ -177,7 +177,8 @@ function flip_chain(
                 continue
             end
         end
-        score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+        score_vals = score_partition_from_proposal(graph, partition, proposal,
+                                                   scores, update_partition!)
         push!(chain_scores.step_values, score_vals)
         steps_taken += 1
     end

@@ -187,8 +187,13 @@ function flip_chain(
                 # Repeat the last scores upon rejection (when self-loops are enabled).
                 push!(chain_scores.step_values, copy(chain_scores.step_values[end]))
             else
-                score_vals = score_partition_from_proposal(graph, partition, proposal,
-                                                           scores, update_partition!)
+                score_vals = score_partition_from_proposal(
+                    graph,
+                    partition,
+                    proposal,
+                    scores,
+                    update_partition!,
+                )
                 push!(chain_scores.step_values, score_vals)
             end
             step_completed = true

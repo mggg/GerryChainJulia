@@ -172,7 +172,7 @@ function eval_score_on_district(
     graph::BaseGraph,
     partition::Partition,
     score::DistrictAggregate,
-    district::Int
+    district::Int,
 )::Number
     return eval_score_on_district(graph, score, partition.dist_nodes[district], district)
 end
@@ -189,7 +189,7 @@ function eval_score_on_district(
     graph::BaseGraph,
     score::DistrictAggregate,
     dist_nodes::BitSet,
-    district::Int
+    district::Int,
 )::Number
     try
         sum = 0
@@ -227,9 +227,9 @@ function eval_score_on_district(
     graph::BaseGraph,
     partition::Partition,
     score::DistrictScore,
-    district::Int
+    district::Int,
 )
-return eval_score_on_district(graph, score, partition.dist_nodes[district], district)
+    return eval_score_on_district(graph, score, partition.dist_nodes[district], district)
 end
 
 
@@ -244,7 +244,7 @@ function eval_score_on_district(
     graph::BaseGraph,
     score::DistrictScore,
     dist_nodes::BitSet,
-    district::Int
+    district::Int,
 )
     try
         return score.score_fn(graph, dist_nodes, district)
@@ -297,10 +297,12 @@ on district D₂.
 function eval_score_on_proposal(
     graph::BaseGraph,
     proposal::AbstractProposal,
-    score::Union{DistrictScore,DistrictAggregate}
+    score::Union{DistrictScore,DistrictAggregate},
 )::Array
-    return [eval_score_on_district(graph, score, proposal.D₁_nodes, proposal.D₁),
-            eval_score_on_district(graph, score, proposal.D₂_nodes, proposal.D₂)]    
+    return [
+        eval_score_on_district(graph, score, proposal.D₁_nodes, proposal.D₁),
+        eval_score_on_district(graph, score, proposal.D₂_nodes, proposal.D₂),
+    ]
 end
 
 
@@ -454,7 +456,7 @@ function score_partition_from_proposal(
     partition::Partition,
     proposal::AbstractProposal,
     scores::Array{S,1},
-    update_partition!::Function
+    update_partition!::Function,
 ) where {S<:AbstractScore}
     score_values = Dict{String,Any}()
     Δ_districts = [proposal.D₁, proposal.D₂]
@@ -470,7 +472,13 @@ function score_partition_from_proposal(
         elseif s isa CompositeScore
             # ensure that district-level scores in the CompositeScore are only
             # evaluated on changed districts
-            value = score_partition_from_proposal(graph, partition, proposal, s.scores, update_partition!)
+            value = score_partition_from_proposal(
+                graph,
+                partition,
+                proposal,
+                s.scores,
+                update_partition!,
+            )
             delete!(value, "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
             value = eval_score_on_proposal(graph, proposal, s)

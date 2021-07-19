@@ -196,7 +196,13 @@
             CompositeScore("votes", [votes_d, votes_r]),
         ]
 
-        score_vals = score_partition_from_proposal(graph, partition, proposal, scores, update_partition!)
+        score_vals = score_partition_from_proposal(
+            graph,
+            partition,
+            proposal,
+            scores,
+            update_partition!,
+        )
         @test score_vals["purple"] == [34, 22]
         @test score_vals["pink"] == [17, 9]
         @test score_vals["votes"] == Dict{}("electionD" => [8, 4], "electionR" => [6, 6])
@@ -225,7 +231,13 @@
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
-        step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores, update_partition!)
+        step_score_vals = score_partition_from_proposal(
+            graph,
+            partition,
+            proposal,
+            scores,
+            update_partition!,
+        )
         push!(chain_data.step_values, step_score_vals)
 
         # fetch first two scores for step 1
@@ -272,7 +284,13 @@
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
-        step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores, update_partition!)
+        step_score_vals = score_partition_from_proposal(
+            graph,
+            partition,
+            proposal,
+            scores,
+            update_partition!,
+        )
         push!(chain_data.step_values, step_score_vals)
 
         # check that return values look correct
@@ -314,7 +332,13 @@
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
-        step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores, update_partition!)
+        step_score_vals = score_partition_from_proposal(
+            graph,
+            partition,
+            proposal,
+            scores,
+            update_partition!,
+        )
         push!(chain_data.step_values, step_score_vals)
 
         # get complete score dictionaries
@@ -354,7 +378,13 @@
         # generate RecomProposal, update partition, and generate new set of scores
         proposal = RecomProposal(1, 2, 51, 31, BitSet([1, 2, 3, 5, 6]), BitSet([4, 7, 8]))
         update_partition!(partition, graph, proposal)
-        step_score_vals = score_partition_from_proposal(graph, partition, proposal, scores, update_partition!)
+        step_score_vals = score_partition_from_proposal(
+            graph,
+            partition,
+            proposal,
+            scores,
+            update_partition!,
+        )
         push!(chain_data.step_values, step_score_vals)
 
         # get complete score dictionaries

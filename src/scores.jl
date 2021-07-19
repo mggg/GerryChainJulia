@@ -149,8 +149,13 @@ function Base.iterate(query::ChainScoreQuery, state::Tuple)
     # update the dictionary of values to reflect districts changed in
     # the next state
     curr_scores = chain_data.step_values[step]
-    (D₁, D₂) = chain_data.step_values[step]["dists"]
-    update_dictionary!(score_vals, curr_scores, D₁, D₂)
+    if haskey(chain_data.step_values[step], "dists")
+        # TODO: we suppress updates to handle repetitions of the initial partition.
+        # Can we insert some sort of error handling here if there's no district delta
+        # _after_ the initial partition?
+        (D₁, D₂) = chain_data.step_values[step]["dists"]
+        update_dictionary!(score_vals, curr_scores, D₁, D₂)
+    end
     return score_vals, (step + 1, deepcopy(score_vals))
 end
 
@@ -169,7 +174,7 @@ function eval_score_on_district(
     score::DistrictAggregate,
     district::Int
 )::Number
-    return eval_score_on_district(graph, score, partition.dist_nodes[district])
+    return eval_score_on_district(graph, score, partition.dist_nodes[district], district)
 end
 
 
@@ -183,7 +188,8 @@ Evaluates a `DistrictAggregate` score on a set of nodes.
 function eval_score_on_district(
     graph::BaseGraph,
     score::DistrictAggregate,
-    dist_nodes::BitSet
+    dist_nodes::BitSet,
+    district::Int
 )::Number
     try
         sum = 0
@@ -223,7 +229,7 @@ function eval_score_on_district(
     score::DistrictScore,
     district::Int
 )
-    return eval_score_on_district(graph, score, partition.dist_nodes[district])
+return eval_score_on_district(graph, score, partition.dist_nodes[district], district)
 end
 
 
@@ -237,7 +243,8 @@ Evaluates a user-supplied `DistrictScore` function on a set of nodes.
 function eval_score_on_district(
     graph::BaseGraph,
     score::DistrictScore,
-    dist_nodes::BitSet
+    dist_nodes::BitSet,
+    district::Int
 )
     try
         return score.score_fn(graph, dist_nodes, district)
@@ -292,8 +299,8 @@ function eval_score_on_proposal(
     proposal::AbstractProposal,
     score::Union{DistrictScore,DistrictAggregate}
 )::Array
-    return [eval_score_on_district(graph, score, proposal.D₁_nodes),
-            eval_score_on_district(graph, score, proposal.D₂_nodes)]
+    return [eval_score_on_district(graph, score, proposal.D₁_nodes, proposal.D₁),
+            eval_score_on_district(graph, score, proposal.D₂_nodes, proposal.D₂)]    
 end
 
 

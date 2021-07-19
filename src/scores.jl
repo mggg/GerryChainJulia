@@ -470,7 +470,7 @@ function score_partition_from_proposal(
         elseif s isa CompositeScore
             # ensure that district-level scores in the CompositeScore are only
             # evaluated on changed districts
-            value = score_partition_from_proposal(graph, partition, proposal, s.scores)
+            value = score_partition_from_proposal(graph, partition, proposal, s.scores, update_partition!)
             delete!(value, "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
             value = eval_score_on_proposal(graph, proposal, s)

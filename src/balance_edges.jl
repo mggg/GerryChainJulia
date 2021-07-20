@@ -52,7 +52,7 @@ end
     random_kruskal_mst(graph::BaseGraph,
                        edges::Array{Int, 1},
                        nodes::Array{Int, 1},
-                       rng=MersenneTwister(1234))::BitSet
+                       rng=Random.default_rng())::BitSet
 
 Generates and returns a random minimum spanning tree from the subgraph induced
 by `edges` and `nodes`, using Kruskal's MST algorithm.
@@ -72,7 +72,7 @@ function random_kruskal_mst(
     graph::BaseGraph,
     edges::Array{Int,1},
     nodes::Array{Int,1},
-    rng = MersenneTwister(1234),
+    rng = Random.default_rng(),
 )::BitSet
     weights = rand(rng, length(edges))
     return kruskal_mst(graph, edges, nodes, weights)

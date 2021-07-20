@@ -189,7 +189,7 @@ function get_valid_proposal(
         D₁, D₂, sg_edges, sg_nodes = sample_subgraph(graph, partition, rng)
 
         for _ = 1:num_tries
-            mst_edges = random_kruskal_mst(graph, sg_edges, collect(sg_nodes))
+            mst_edges = random_kruskal_mst(graph, sg_edges, collect(sg_nodes), rng)
 
             # see if we can get a population-balanced cut in this mst
             proposal = get_balanced_proposal(

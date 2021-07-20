@@ -189,7 +189,7 @@ function get_valid_proposal(
         D₁, D₂, sg_edges, sg_nodes = sample_subgraph(graph, partition, rng)
 
         for _ = 1:num_tries
-            mst_edges = random_kruskal_mst(graph, sg_edges, collect(sg_nodes))
+            mst_edges = random_kruskal_mst(graph, sg_edges, collect(sg_nodes), rng)
 
             # see if we can get a population-balanced cut in this mst
             proposal = get_balanced_proposal(
@@ -315,8 +315,17 @@ function recom_chain(
                 if no_self_loops
                     continue
                 end
+                # Repeat the last scores upon rejection (when self-loops are enabled).
+                score_vals = copy(chain_scores.step_values[end])
+            else
+                score_vals = score_partition_from_proposal(
+                    graph,
+                    partition,
+                    proposal,
+                    scores,
+                    update_partition!,
+                )
             end
-            score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
             push!(chain_scores.step_values, score_vals)
             step_completed = true
         end

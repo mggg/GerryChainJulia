@@ -212,3 +212,18 @@ function update_partition_adjacency(partition::Partition, graph::BaseGraph)
         end
     end
 end
+
+
+"""
+    spawn(partition::Partition)::Partition
+
+Makes a copy of `partition` with `partition` as the copy's parent.
+"""
+function spawn(partition::Partition)::Partition
+    parent = partition.parent
+    partition.parent = nothing
+    child = deepcopy(partition)
+    child.parent = partition
+    partition.parent = parent
+    return child
+end

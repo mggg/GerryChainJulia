@@ -149,8 +149,13 @@ function Base.iterate(query::ChainScoreQuery, state::Tuple)
     # update the dictionary of values to reflect districts changed in
     # the next state
     curr_scores = chain_data.step_values[step]
-    (D₁, D₂) = chain_data.step_values[step]["dists"]
-    update_dictionary!(score_vals, curr_scores, D₁, D₂)
+    if haskey(chain_data.step_values[step], "dists")
+        # TODO: we suppress updates to handle repetitions of the initial partition.
+        # Can we insert some sort of error handling here if there's no district delta
+        # _after_ the initial partition?
+        (D₁, D₂) = chain_data.step_values[step]["dists"]
+        update_dictionary!(score_vals, curr_scores, D₁, D₂)
+    end
     return score_vals, (step + 1, deepcopy(score_vals))
 end
 
@@ -169,9 +174,26 @@ function eval_score_on_district(
     score::DistrictAggregate,
     district::Int,
 )::Number
+    return eval_score_on_district(graph, score, partition.dist_nodes[district], district)
+end
+
+
+"""
+    eval_score_on_district(graph::BaseGraph,
+                           score::DistrictAggregate,
+                           dist_nodes::BitSet)::Number
+
+Evaluates a `DistrictAggregate` score on a set of nodes.
+"""
+function eval_score_on_district(
+    graph::BaseGraph,
+    score::DistrictAggregate,
+    dist_nodes::BitSet,
+    district::Int,
+)::Number
     try
         sum = 0
-        for node in partition.dist_nodes[district]
+        for node in dist_nodes
             sum += graph.attributes[node][score.key]
         end
         return sum
@@ -207,10 +229,27 @@ function eval_score_on_district(
     score::DistrictScore,
     district::Int,
 )
+    return eval_score_on_district(graph, score, partition.dist_nodes[district], district)
+end
+
+
+"""
+    eval_score_on_district(graph::BaseGraph,
+                           score::DistrictScore,
+                           dist_nodes::BitSet)
+
+Evaluates a user-supplied `DistrictScore` function on a set of nodes.
+"""
+function eval_score_on_district(
+    graph::BaseGraph,
+    score::DistrictScore,
+    dist_nodes::BitSet,
+    district::Int,
+)
     try
-        return score.score_fn(graph, partition.dist_nodes[district], district)
+        return score.score_fn(graph, dist_nodes, district)
     catch e # Check if the user-specified method was constructed incorrectly
-        if !applicable(score.score_fn, graph, partition.dist_nodes[district], district)
+        if !applicable(score.score_fn, graph, dist_nodes, district)
             error_msg = "DistrictScore function must accept graph, array of nodes, and district index."
             throw(ArgumentError(error_msg))
         end
@@ -240,6 +279,32 @@ function eval_score_on_districts(
 )::Array
     return [eval_score_on_district(graph, partition, score, d) for d in districts]
 end
+
+
+"""
+    eval_score_on_proposal(graph::BaseGraph,
+                           proposal::RecomProposal,
+                           score::Union{DistrictScore,DistrictAggregate}
+                           )::Array
+
+Evaluates a user-supplied `DistrictScore` function or `DistrictAggregate`
+score on a proposal.
+
+Returns an array of length 2, where the first entry is the score evaluated
+on district D₁ of `proposal` and the second entry is the score evaluated
+on district D₂.
+"""
+function eval_score_on_proposal(
+    graph::BaseGraph,
+    proposal::AbstractProposal,
+    score::Union{DistrictScore,DistrictAggregate},
+)::Array
+    return [
+        eval_score_on_district(graph, score, proposal.D₁_nodes, proposal.D₁),
+        eval_score_on_district(graph, score, proposal.D₂_nodes, proposal.D₂),
+    ]
+end
+
 
 
 """
@@ -364,7 +429,8 @@ end
     score_partition_from_proposal(graph::BaseGraph,
                                   partition::Partition,
                                   proposal::AbstractProposal,
-                                  scores::Array{S, 1}) where {S<:AbstractScore}
+                                  scores::Array{S, 1},
+                                  update_partition!!::Function) where {S<:AbstractScore}
 
 Returns a Dictionary of
 - (a) updated district-level scores for districts that were altered
@@ -390,20 +456,32 @@ function score_partition_from_proposal(
     partition::Partition,
     proposal::AbstractProposal,
     scores::Array{S,1},
+    update_partition!::Function,
 ) where {S<:AbstractScore}
     score_values = Dict{String,Any}()
     Δ_districts = [proposal.D₁, proposal.D₂]
     score_values["dists"] = Δ_districts
+    new_partition = nothing
     for s in scores
         if s isa PlanScore
-            value = eval_score_on_partition(graph, partition, s)
+            if isnothing(new_partition)
+                new_partition = spawn(partition)
+                update_partition!(new_partition, graph, proposal)
+            end
+            value = eval_score_on_partition(graph, new_partition, s)
         elseif s isa CompositeScore
             # ensure that district-level scores in the CompositeScore are only
             # evaluated on changed districts
-            value = score_partition_from_proposal(graph, partition, proposal, s.scores)
+            value = score_partition_from_proposal(
+                graph,
+                partition,
+                proposal,
+                s.scores,
+                update_partition!,
+            )
             delete!(value, "dists") # remove redundant dists key
         else # efficiently calculate & store scores only on changed districts
-            value = eval_score_on_districts(graph, partition, s, Δ_districts)
+            value = eval_score_on_proposal(graph, proposal, s)
         end
         if !ismissing(s.name)
             score_values[s.name] = value

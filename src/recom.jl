@@ -177,6 +177,9 @@ end
     - pop_constraint: PopulationConstraint to adhere to
     - num_tries:      num times to try getting a balanced cut from a subgraph
                       before giving up
+    - rng:            A random number generator that implements the 
+                      [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG) 
+                      (e.g. `Random.default_rng()` or `MersenneTwister(1234)`)
 """
 function get_valid_proposal(
     graph::BaseGraph,

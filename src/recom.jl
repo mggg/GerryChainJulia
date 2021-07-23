@@ -275,7 +275,9 @@ step of the chain.
                     representing the likelihood of accepting the
                     proposal. Should accept a `Partition` as input.
 - rng:              Random number generator. The user can pass in their
-                    own; otherwise, we use the default RNG from Random.
+                    own; otherwise, we use the default RNG from Random. Must
+                    implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG) 
+                    (e.g. `Random.default_rng()` or `MersenneTwister(1234)`).
 - no\\_self\\_loops: If this is true, then a failure to accept a new state
                     is not considered a self-loop; rather, the chain
                     simply generates new proposals until the acceptance

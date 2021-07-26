@@ -285,7 +285,7 @@ of `(Partition, score_vals)`.
                     satisfied!
 - progress_bar      If this is true, a progress bar will be printed to stdout.
 """
-function recom_chain_iter end  # this is a workaround
+function recom_chain_iter end # this is a workaround (https://github.com/BenLauwens/ResumableFunctions.jl/issues/45)
 @resumable function recom_chain_iter(
     graph::BaseGraph,
     partition::Partition,

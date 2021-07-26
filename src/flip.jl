@@ -127,7 +127,7 @@ end
                num_steps::Int,
                scores::Array{S, 1};
                acceptance_fn::F=always_accept,
-               no_self_loops::Bool=false)
+               no_self_loops::Bool=false) where {F<:Function,S<:AbstractScore}
 
 Runs a Markov Chain for `num_steps` steps using Flip proposals. Returns
 an iterator of `(Partition, score_vals)`.

@@ -257,7 +257,7 @@ end
                 num_tries::Int=3,
                 acceptance_fn::F=always_accept,
                 rng::AbstractRNG=Random.default_rng(),
-                no_self_loops::Bool=false)
+                no_self_loops::Bool=false) where {F<:Function,S<:AbstractScore}
 
 Runs a Markov Chain for `num_steps` steps using ReCom. Returns an iterator
 of `(Partition, score_vals)`.

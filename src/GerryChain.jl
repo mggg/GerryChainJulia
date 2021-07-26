@@ -13,6 +13,7 @@ import Shapefile
 import LibGEOS
 import LibSpatialIndex
 using Logging
+using ResumableFunctions
 
 export AbstractGraph,
     BaseGraph,

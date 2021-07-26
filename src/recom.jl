@@ -285,7 +285,8 @@ step of the chain.
                     infinite loops if the acceptance function is never
                     satisfied!
 """
-function recom_chain(
+function recom_chain end  # this is a workaround
+@resumable function recom_chain(
     graph::BaseGraph,
     partition::Partition,
     pop_constraint::PopulationConstraint,
@@ -322,6 +323,7 @@ function recom_chain(
                 end
             end
             score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+            @yield partition, score_vals
             push!(chain_scores.step_values, score_vals)
             step_completed = true
         end

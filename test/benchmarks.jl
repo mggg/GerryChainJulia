@@ -15,6 +15,13 @@ pop_constraint = PopulationConstraint(graph, partition, 0.02)
 num_steps = 1000
 
 # Run the chain
-results = @benchmark recom_chain(graph, partition, pop_constraint, num_steps, [DistrictAggregate("presd", "PRES12D"),], progress_bar=false) seconds=600
+results = @benchmark recom_chain(
+    graph,
+    partition,
+    pop_constraint,
+    num_steps,
+    [DistrictAggregate("presd", "PRES12D")],
+    progress_bar = false,
+) seconds = 600
 display(results)
 @test true

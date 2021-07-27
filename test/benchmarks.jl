@@ -12,7 +12,7 @@ partition = Partition(graph, ASSIGNMENT_COL)
 
 # Define parameters of chain (number of steps and population constraint)
 pop_constraint = PopulationConstraint(graph, partition, 0.02)
-num_steps = 1000
+num_steps = 500
 
 # Run the chain
 results = @benchmark recom_chain(
@@ -22,6 +22,6 @@ results = @benchmark recom_chain(
     num_steps,
     [DistrictAggregate("presd", "PRES12D")],
     progress_bar = false,
-) seconds = 600
+) seconds = 300
 display(results)
 @test true

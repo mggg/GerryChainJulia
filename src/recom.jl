@@ -260,7 +260,9 @@ end
                 no_self_loops::Bool=false) where {F<:Function,S<:AbstractScore}
 
 Runs a Markov Chain for `num_steps` steps using ReCom. Returns an iterator
-of `(Partition, score_vals)`.
+of `(Partition, score_vals)`. Note that `Partition` is mutable and will change
+in-place with each iteration -- a `deepcopy()` is needed if you wish to interact 
+with the `Partition` object outside of the for loop.
 
 *Arguments:*
 - graph:            `BaseGraph`

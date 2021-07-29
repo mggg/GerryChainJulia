@@ -45,6 +45,7 @@ export AbstractGraph,
     recom_chain,
     recom_chain_iter,
     short_bursts_recom,
+    short_bursts_recom_iter,
 
     # flip
     flip_chain,

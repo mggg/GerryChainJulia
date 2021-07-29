@@ -1,5 +1,5 @@
 # TODO: force AbstractScore to have names
-function short_bursts_recom(
+@resumable function short_bursts_recom_iter(
     score::AbstractScore,
     burst_length::Int,
     num_bursts::Int,
@@ -8,7 +8,7 @@ function short_bursts_recom(
     pop_constraint::PopulationConstraint,
     acceptance_fn::F,
     verbose::Bool = true,
-)::Tuple{Partition,Float64} where {F<:Function,S<:AbstractScore}
+) where {F<:Function}
     best_partition = partition
     best_score = deepcopy(eval_score_on_partition(graph, partition, score))
     if verbose
@@ -31,8 +31,42 @@ function short_bursts_recom(
                 best_partition = deepcopy(partition)
                 best_score = deepcopy(eval_score_on_partition(graph, partition, score))
             end
-            if verbose
-                println(iter, stderr, best_score, "\n")
+            @yield partition, score_vals
+        end
+    end
+end
+
+function short_bursts_recom(
+    score::AbstractScore,
+    burst_length::Int,
+    num_bursts::Int,
+    graph::BaseGraph,
+    partition::Partition,
+    pop_constraint::PopulationConstraint,
+    acceptance_fn::F,
+    verbose::Bool = true,
+)::Tuple{Partition,Float64} where {F<:Function}
+    best_partition = partition
+    best_score = deepcopy(eval_score_on_partition(graph, partition, score))
+    if verbose
+        iter = ProgressBar(1:num_bursts)
+    else
+        iter = 1:num_bursts
+    end
+    for _ = iter
+        # for (partition, score_vals) in recom_chain_iter(graph, deepcopy(best_partition), pop_constraint, burst_length, [score], num_tries, acceptance_fn, rng, no_self_loops, progress_bar)
+        for (partition, score_vals) in recom_chain_iter(
+            graph,
+            deepcopy(best_partition),
+            pop_constraint,
+            burst_length,
+            [score],
+            acceptance_fn = acceptance_fn,
+            progress_bar = false
+        )
+            if score_vals[score.name] >= best_score
+                best_partition = deepcopy(partition)
+                best_score = deepcopy(eval_score_on_partition(graph, partition, score))
             end
         end
     end

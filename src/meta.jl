@@ -36,7 +36,7 @@ function probabilistic_hill_climb(graph::BaseGraph, score::AbstractScore)
         end
         partition_score = eval_score_on_partition(graph, partition, score)
 
-        parent_score = eval_score_on_partition(graph, partition, score)
+        parent_score = eval_score_on_partition(graph, partition.parent, score)
 
         if partition_score > parent_score
             return 1.0

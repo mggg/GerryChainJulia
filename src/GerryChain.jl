@@ -44,6 +44,7 @@ export AbstractGraph,
     update_partition!,
     recom_chain,
     recom_chain_iter,
+    short_bursts_recom,
 
     # flip
     flip_chain,
@@ -71,6 +72,7 @@ export AbstractGraph,
     # acceptance functions
     always_accept,
     satisfies_acceptance_fn,
+    probabilistic_hill_climb,
 
     # election
     AbstractElection,
@@ -96,6 +98,7 @@ include("./constraints.jl")
 include("./scores.jl")
 include("./recom.jl")
 include("./flip.jl")
+include("./meta.jl")
 include("./accept.jl")
 include("./election.jl")
 include("./plot.jl")

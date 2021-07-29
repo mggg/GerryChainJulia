@@ -13,6 +13,7 @@ import Shapefile
 import LibGEOS
 import LibSpatialIndex
 using Logging
+using ResumableFunctions
 
 export AbstractGraph,
     BaseGraph,
@@ -42,9 +43,13 @@ export AbstractGraph,
     # recom
     update_partition!,
     recom_chain,
+    recom_chain_iter,
+    short_bursts_recom,
+    short_bursts_recom_iter,
 
     # flip
     flip_chain,
+    flip_chain_iter,
 
     # scores
     DistrictAggregate,
@@ -68,6 +73,7 @@ export AbstractGraph,
     # acceptance functions
     always_accept,
     satisfies_acceptance_fn,
+    probabilistic_hill_climb,
 
     # election
     AbstractElection,
@@ -93,6 +99,7 @@ include("./constraints.jl")
 include("./scores.jl")
 include("./recom.jl")
 include("./flip.jl")
+include("./meta.jl")
 include("./accept.jl")
 include("./election.jl")
 include("./plot.jl")

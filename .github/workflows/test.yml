@@ -37,7 +37,7 @@ jobs:
         version: ${{ matrix.julia-version }}
     - name: "Julia format check"
       run: |
-        julia  -e 'using Pkg; Pkg.add(PackageSpec(name="JuliaFormatter"))'
+        julia  -e 'using Pkg; Pkg.add(Pkg.PackageSpec(name="JuliaFormatter"))'
         julia  -e 'using JuliaFormatter; format(".", verbose=true)'
 
         # Check diff, from the julia-format example:
@@ -67,7 +67,7 @@ jobs:
         version: ${{ matrix.julia-version }}
     - name: "Julia docs check"
       run: |
-        julia -e "using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();"
+        julia -e "using Pkg; Pkg.develop(Pkg.PackageSpec(path=pwd())); Pkg.instantiate();"
         julia --project=docs/ docs/make.jl
 
         # Check diff, from the julia-format example:
@@ -81,3 +81,22 @@ jobs:
             write(stdout, out)
             exit(1)
         end'
+
+  benchmark:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version: ['1.5.3']
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v1.0.0
+    - uses: actions/setup-python@v2
+    - run: pip install matplotlib
+    - uses: julia-actions/setup-julia@v1
+      with:
+        version: ${{ matrix.julia-version }}
+    - name: "Julia benchmark test"
+      run: |
+        julia -e 'using Pkg; Pkg.develop(Pkg.PackageSpec(path=pwd())); Pkg.add("BenchmarkTools"); Pkg.instantiate();'
+        cd test
+        julia benchmarks.jl

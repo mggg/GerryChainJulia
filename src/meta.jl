@@ -10,7 +10,7 @@ function short_bursts_recom(
 )::Tuple{Partition,Float64} where {F<:Function,S<:AbstractScore}
     best_partition = partition
     best_score = deepcopy(eval_score_on_partition(graph, partition, score))
-    for _ = 1:num_bursts
+    for _ = ProgressBar(1:num_bursts)
         # for (partition, score_vals) in recom_chain_iter(graph, deepcopy(best_partition), pop_constraint, burst_length, [score], num_tries, acceptance_fn, rng, no_self_loops, progress_bar)
         for (partition, score_vals) in recom_chain_iter(
             graph,
@@ -19,6 +19,7 @@ function short_bursts_recom(
             burst_length,
             [score],
             acceptance_fn = acceptance_fn,
+            progress_bar = false
         )
             if score_vals[score.name] >= best_score
                 best_partition = deepcopy(partition)

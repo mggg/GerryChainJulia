@@ -24,8 +24,26 @@ change our plan.
                   node level
 """
 function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
-    populations = graph.populations
     assignments = get_assignments(graph.attributes, assignment_col)
+    return Partition(graph, assignments)
+end
+
+"""
+    Partition(graph::BaseGraph,
+              assignments::Array{Int, 1})::Partition
+
+Partition represents a partition of the nodes of the graph.
+It contains plan-specific information that will change each time we
+change our plan.
+
+*Arguments:*
+- graph:          BaseGraph object that has the underlying network
+                  structure of the plan.
+- assignments:    the array of assignments, where `assignment[i]` is
+                  the district that node `i` is assigned to.
+"""
+function Partition(graph::BaseGraph, assignments::Array{Int, 1})::Partition
+    populations = graph.populations
     num_districts = length(Set(assignments))
 
     # get cut_edges, district_adjacencies
@@ -211,4 +229,8 @@ function update_partition_adjacency(partition::Partition, graph::BaseGraph)
             partition.cut_edges[i] = 0
         end
     end
+end
+
+function export(partition::Partition, output_stream::IO)
+    write(output_stream, join(string.(partition.assignments), "\n"), "END\n")
 end

@@ -231,6 +231,6 @@ function update_partition_adjacency(partition::Partition, graph::BaseGraph)
     end
 end
 
-function export (partition::Partition, output_stream::IO)
+function output(partition::Partition, output_stream::IO)
     write(output_stream, join(string.(partition.assignments), "\n"), "END\n")
 end

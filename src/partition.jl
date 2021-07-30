@@ -42,7 +42,7 @@ change our plan.
 - assignments:    the array of assignments, where `assignment[i]` is
                   the district that node `i` is assigned to.
 """
-function Partition(graph::BaseGraph, assignments::Array{Int, 1})::Partition
+function Partition(graph::BaseGraph, assignments::Array{Int,1})::Partition
     populations = graph.populations
     num_districts = length(Set(assignments))
 
@@ -231,6 +231,6 @@ function update_partition_adjacency(partition::Partition, graph::BaseGraph)
     end
 end
 
-function export(partition::Partition, output_stream::IO)
+function export (partition::Partition, output_stream::IO)
     write(output_stream, join(string.(partition.assignments), "\n"), "END\n")
 end

@@ -249,6 +249,86 @@ function update_partition!(
 end
 
 """
+    recom_chain_iter(graph::BaseGraph,
+                partition::Partition,
+                pop_constraint::PopulationConstraint,
+                num_steps::Int,
+                scores::Array{S, 1};
+                num_tries::Int=3,
+                acceptance_fn::F=always_accept,
+                rng::AbstractRNG=Random.default_rng(),
+                no_self_loops::Bool=false) where {F<:Function,S<:AbstractScore}
+
+Runs a Markov Chain for `num_steps` steps using ReCom. Returns an iterator
+of `(Partition, score_vals)`. Note that `Partition` is mutable and will change
+in-place with each iteration -- a `deepcopy()` is needed if you wish to interact 
+with the `Partition` object outside of the for loop.
+
+*Arguments:*
+- graph:            `BaseGraph`
+- partition:        `Partition` with the plan information
+- pop_constraint:   `PopulationConstraint`
+- num_steps:        Number of steps to run the chain for
+- scores:           Array of `AbstractScore`s to capture at each step
+- num_tries:        num times to try getting a balanced cut from a subgraph
+                    before giving up
+- acceptance_fn:    A function generating a probability in [0, 1]
+                    representing the likelihood of accepting the
+                    proposal. Should accept a `Partition` as input.
+- rng:              Random number generator. The user can pass in their
+                    own; otherwise, we use the default RNG from Random. Must
+                    implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG) 
+                    (e.g. `Random.default_rng()` or `MersenneTwister(1234)`).
+- no\\_self\\_loops: If this is true, then a failure to accept a new state
+                    is not considered a self-loop; rather, the chain
+                    simply generates new proposals until the acceptance
+                    function is satisfied. BEWARE - this can create
+                    infinite loops if the acceptance function is never
+                    satisfied!
+- progress_bar      If this is true, a progress bar will be printed to stdout.
+"""
+function recom_chain_iter end # this is a workaround (https://github.com/BenLauwens/ResumableFunctions.jl/issues/45)
+@resumable function recom_chain_iter(
+    graph::BaseGraph,
+    partition::Partition,
+    pop_constraint::PopulationConstraint,
+    num_steps::Int,
+    scores::Array{S,1};
+    num_tries::Int = 3,
+    acceptance_fn::F = always_accept,
+    rng::AbstractRNG = Random.default_rng(),
+    no_self_loops::Bool = false,
+    progress_bar = true,
+) where {F<:Function,S<:AbstractScore}
+    if progress_bar
+        iter = ProgressBar(1:num_steps)
+    else
+        iter = 1:num_steps
+    end
+
+    for steps_taken in iter
+        step_completed = false
+        while !step_completed
+            proposal = get_valid_proposal(graph, partition, pop_constraint, rng, num_tries)
+            custom_acceptance = acceptance_fn !== always_accept
+            update_partition!(partition, graph, proposal, custom_acceptance)
+            if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
+                # go back to the previous partition
+                partition = partition.parent
+                # if user specifies this behavior, we do not increment the steps
+                # taken if the acceptance function fails.
+                if no_self_loops
+                    continue
+                end
+            end
+            score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
+            @yield partition, score_vals
+            step_completed = true
+        end
+    end
+end
+
+"""
     recom_chain(graph::BaseGraph,
                 partition::Partition,
                 pop_constraint::PopulationConstraint,
@@ -276,7 +356,7 @@ step of the chain.
                     proposal. Should accept a `Partition` as input.
 - rng:              Random number generator. The user can pass in their
                     own; otherwise, we use the default RNG from Random. Must
-                    implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG) 
+                    implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG)
                     (e.g. `Random.default_rng()` or `MersenneTwister(1234)`).
 - no\\_self\\_loops: If this is true, then a failure to accept a new state
                     is not considered a self-loop; rather, the chain
@@ -284,6 +364,7 @@ step of the chain.
                     function is satisfied. BEWARE - this can create
                     infinite loops if the acceptance function is never
                     satisfied!
+- progress_bar      If this is true, a progress bar will be printed to stdout.
 """
 function recom_chain(
     graph::BaseGraph,
@@ -300,31 +381,19 @@ function recom_chain(
     first_scores = score_initial_partition(graph, partition, scores)
     chain_scores = ChainScoreData(deepcopy(scores), [first_scores])
 
-    if progress_bar
-        iter = ProgressBar(1:num_steps)
-    else
-        iter = 1:num_steps
-    end
-
-    for steps_taken in iter
-        step_completed = false
-        while !step_completed
-            proposal = get_valid_proposal(graph, partition, pop_constraint, rng, num_tries)
-            custom_acceptance = acceptance_fn !== always_accept
-            update_partition!(partition, graph, proposal, custom_acceptance)
-            if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
-                # go back to the previous partition
-                partition = partition.parent
-                # if user specifies this behavior, we do not increment the steps
-                # taken if the acceptance function fails.
-                if no_self_loops
-                    continue
-                end
-            end
-            score_vals = score_partition_from_proposal(graph, partition, proposal, scores)
-            push!(chain_scores.step_values, score_vals)
-            step_completed = true
-        end
+    for (_, score_vals) in recom_chain_iter(
+        graph,
+        partition,
+        pop_constraint,
+        num_steps,
+        scores;
+        num_tries,
+        acceptance_fn,
+        rng,
+        no_self_loops,
+        progress_bar,
+    )
+        push!(chain_scores.step_values, score_vals)
     end
 
     return chain_scores

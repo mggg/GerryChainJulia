@@ -13,6 +13,7 @@ import Shapefile
 import LibGEOS
 import LibSpatialIndex
 using Logging
+using ResumableFunctions
 
 export AbstractGraph,
     BaseGraph,
@@ -42,9 +43,11 @@ export AbstractGraph,
     # recom
     update_partition!,
     recom_chain,
+    recom_chain_iter,
 
     # flip
     flip_chain,
+    flip_chain_iter,
 
     # scores
     DistrictAggregate,

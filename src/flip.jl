@@ -8,13 +8,17 @@ Proposes a random boundary flip from the partition.
 *Arguments:*
 - graph:      BaseGraph
 - partition:  Partition
+- rng:        Random number generator. The user can pass in their
+              own; otherwise, we use the default RNG from Random. Must
+              implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG)
+              (e.g. `Random.default_rng()` or `MersenneTwister(1234)`).
 """
-function propose_random_flip(graph::BaseGraph, partition::Partition)
+function propose_random_flip(graph::BaseGraph, partition::Partition, rng::AbstractRNG = Random.default_rng())
     if partition.num_cut_edges == 0
         throw(ArgumentError("No cut edges in the districting plan"))
     end
     # select a random cut edge
-    cut_edge_idx = rand(1:partition.num_cut_edges)
+    cut_edge_idx = rand(rng, 1:partition.num_cut_edges)
     cut_edge_tracker = 0
     edge_idx = 0
     # iterate through array of bools indicating cut edge, stop at the
@@ -28,7 +32,7 @@ function propose_random_flip(graph::BaseGraph, partition::Partition)
     end
     # randomly choose which of the nodes from the edge get flipped
     edge = (graph.edge_src[edge_idx], graph.edge_dst[edge_idx])
-    index = rand((0, 1))
+    index = rand(rng, (0, 1))
     flipped_node, other_node = edge[index+1], edge[2-index]
     node_pop = graph.populations[flipped_node]
     # old district
@@ -67,7 +71,8 @@ end
     get_valid_proposal(graph::BaseGraph,
                        partition::Partition,
                        pop_constraint::PopulationConstraint,
-                       cont_constraint::ContiguityConstraint)
+                       cont_constraint::ContiguityConstraint,
+                       rng::AbstractRNG)
 
 Returns a population balanced FlipProposal subject to a contiguity
 constraint.
@@ -77,11 +82,12 @@ function get_valid_proposal(
     partition::Partition,
     pop_constraint::PopulationConstraint,
     cont_constraint::ContiguityConstraint,
+    rng::AbstractRNG = Random.default_rng(),
 )
-    proposal = propose_random_flip(graph, partition)
+    proposal = propose_random_flip(graph, partition, rng)
     # continuously generate new proposals until one satisfies our constraints
     while !is_valid(graph, partition, pop_constraint, cont_constraint, proposal)
-        proposal = propose_random_flip(graph, partition)
+        proposal = propose_random_flip(graph, partition, rng)
     end
     return proposal
 end
@@ -144,6 +150,10 @@ to interact with the `Partition` object outside of the for loop.
 - acceptance_fn:      A function generating a probability in [0, 1]
                       representing the likelihood of accepting the
                       proposal
+- rng:                Random number generator. The user can pass in their
+                      own; otherwise, we use the default RNG from Random. Must
+                      implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG)
+                      (e.g. `Random.default_rng()` or `MersenneTwister(1234)`).
 - no\\_self\\_loops:  If this is true, then a failure to accept a new state
                       is not considered a self-loop; rather, the chain
                       simply generates new proposals until the acceptance
@@ -154,13 +164,13 @@ to interact with the `Partition` object outside of the for loop.
 """
 function flip_chain_iter end # this is a workaround (https://github.com/BenLauwens/ResumableFunctions.jl/issues/45)
 @resumable function flip_chain_iter(
-    graph::BaseGraph,
     partition::Partition,
     pop_constraint::PopulationConstraint,
     cont_constraint::ContiguityConstraint,
     num_steps::Int,
     scores::Array{S,1};
     acceptance_fn::F = always_accept,
+    rng::AbstractRNG = Random.default_rng(),
     no_self_loops::Bool = false,
     progress_bar = true,
 ) where {F<:Function,S<:AbstractScore}
@@ -176,7 +186,7 @@ function flip_chain_iter end # this is a workaround (https://github.com/BenLauwe
             proposal = get_valid_proposal(graph, partition, pop_constraint, cont_constraint)
             custom_acceptance = acceptance_fn !== always_accept
             update_partition!(partition, graph, proposal, custom_acceptance)
-            if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn)
+            if custom_acceptance && !satisfies_acceptance_fn(partition, acceptance_fn, rng)
                 # go back to the previous partition
                 partition = partition.parent
                 # if user specifies this behavior, we do not increment the steps
@@ -216,6 +226,10 @@ every score at each step of the chain.
 - acceptance_fn:      A function generating a probability in [0, 1]
                       representing the likelihood of accepting the
                       proposal
+- rng:                Random number generator. The user can pass in their
+                      own; otherwise, we use the default RNG from Random. Must
+                      implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG)
+                      (e.g. `Random.default_rng()` or `MersenneTwister(1234)`).
 - no\\_self\\_loops:  If this is true, then a failure to accept a new state
                       is not considered a self-loop; rather, the chain
                       simply generates new proposals until the acceptance
@@ -232,6 +246,7 @@ function flip_chain(
     num_steps::Int,
     scores::Array{S,1};
     acceptance_fn::F = always_accept,
+    rng::AbstractRNG = Random.default_rng(),
     no_self_loops::Bool = false,
     progress_bar = true,
 )::ChainScoreData where {F<:Function,S<:AbstractScore}
@@ -246,6 +261,7 @@ function flip_chain(
         num_steps,
         scores;
         acceptance_fn,
+        rng,
         no_self_loops,
         progress_bar,
     )

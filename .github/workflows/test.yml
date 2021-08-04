@@ -37,8 +37,7 @@ jobs:
         version: ${{ matrix.julia-version }}
     - name: "Julia format check"
       run: |
-        julia  -e 'using Pkg; Pkg.add(PackageSpec(name="JuliaFormatter"))'
-        julia  -e 'using JuliaFormatter; format(".", verbose=true)'
+        julia test/format.jl
 
         # Check diff, from the julia-format example:
         # https://github.com/julia-actions/julia-format/blob/master/workflows/format_check.yml

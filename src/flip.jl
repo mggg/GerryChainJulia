@@ -133,7 +133,9 @@ end
                num_steps::Int,
                scores::Array{S, 1};
                acceptance_fn::F=always_accept,
-               no_self_loops::Bool=false) where {F<:Function,S<:AbstractScore}
+               rng::AbstractRNG = Random.default_rng(),
+               no_self_loops::Bool=false,
+               progress_bar = true) where {F<:Function,S<:AbstractScore}
 
 Runs a Markov Chain for `num_steps` steps using Flip proposals. Returns
 an iterator of `(Partition, score_vals)`. Note that `Partition` is mutable and
@@ -210,6 +212,7 @@ end
                num_steps::Int,
                scores::Array{S, 1};
                acceptance_fn::F=always_accept,
+               rng::AbstractRNG = Random.default_rng(),
                no_self_loops::Bool=false)::ChainScoreData where {F<:Function, S<:AbstractScore}
 
 Runs a Markov Chain for `num_steps` steps using Flip proposals. Returns

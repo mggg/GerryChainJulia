@@ -13,7 +13,11 @@ Proposes a random boundary flip from the partition.
               implement the [AbstractRNG type](https://docs.julialang.org/en/v1/stdlib/Random/#Random.AbstractRNG)
               (e.g. `Random.default_rng()` or `MersenneTwister(1234)`).
 """
-function propose_random_flip(graph::BaseGraph, partition::Partition, rng::AbstractRNG = Random.default_rng())
+function propose_random_flip(
+    graph::BaseGraph,
+    partition::Partition,
+    rng::AbstractRNG = Random.default_rng(),
+)
     if partition.num_cut_edges == 0
         throw(ArgumentError("No cut edges in the districting plan"))
     end

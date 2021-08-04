@@ -166,6 +166,7 @@ to interact with the `Partition` object outside of the for loop.
 """
 function flip_chain_iter end # this is a workaround (https://github.com/BenLauwens/ResumableFunctions.jl/issues/45)
 @resumable function flip_chain_iter(
+    graph::BaseGraph,
     partition::Partition,
     pop_constraint::PopulationConstraint,
     cont_constraint::ContiguityConstraint,

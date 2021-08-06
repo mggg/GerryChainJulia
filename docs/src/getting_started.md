@@ -12,9 +12,9 @@ commmand line.
 ```
 using GerryChain
 
-SHAPEFILE_PATH = "./PA_VTD.json"
-POPULATION_COL = "TOT_POP"
-ASSIGNMENT_COL = "538GOP_PL"
+SHAPEFILE_PATH = "./PA_VTD.json" # This file does not exist, but there is a file PA_VTDs.json in the python GerryChain repo
+POPULATION_COL = "TOT_POP"       # This col does not exist in the PA_VTDs.json file, but TOTPOP does.
+ASSIGNMENT_COL = "538GOP_PL"     # This col does not exist in the PA_VTDs.json file
 
 # Initialize graph and partition
 graph = BaseGraph(SHAPEFILE_PATH, POPULATION_COL)

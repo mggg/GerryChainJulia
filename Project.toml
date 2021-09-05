@@ -1,7 +1,7 @@
 name = "GerryChain"
 uuid = "e09a5c58-8952-4b57-bc02-56d902e45e6e"
 authors = ["Metric Geometry and Gerrymandering Group <contact@mggg.org>"]
-version = "0.1.3"
+version = "0.1.4"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -33,5 +33,6 @@ LibGEOS = "0.6.5"
 LibSpatialIndex = "0.2.0"
 LightGraphs = "1.3.0"
 PyPlot = "2.9.0"
+ProgressBars = "1.4.0"
 Shapefile = "0.6.2"
 julia = "1.3.1"

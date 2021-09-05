@@ -12,9 +12,10 @@ commmand line.
 ```
 using GerryChain
 
-SHAPEFILE_PATH = "./PA_VTD.json"
-POPULATION_COL = "TOT_POP"
-ASSIGNMENT_COL = "538GOP_PL"
+# Grab graph json from https://github.com/mggg/GerryChain/blob/main/docs/user/PA_VTDs.json
+SHAPEFILE_PATH = "./PA_VTDs.json"
+POPULATION_COL = "TOTPOP"
+ASSIGNMENT_COL = "CD_2011" 
 
 # Initialize graph and partition
 graph = BaseGraph(SHAPEFILE_PATH, POPULATION_COL)

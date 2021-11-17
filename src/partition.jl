@@ -21,7 +21,9 @@ change our plan.
 - graph:          BaseGraph object that has the underlying network
                   structure of the plan.
 - assignment_col: the key denoting the district assignment at the
-                  node level
+                  node level (where an assignment is represented by
+                  a string)
+
 """
 function Partition(graph::BaseGraph, assignment_col::AbstractString)::Partition
     populations = graph.populations

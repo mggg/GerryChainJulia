@@ -1,5 +1,4 @@
 .DS_Store
-Manifest.toml
 
 *.ipynb
 docs/build/
